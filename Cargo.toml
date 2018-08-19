@@ -1,0 +1,14 @@
+[package]
+name = "coinbase-pro-rs"
+version = "0.1.0"
+authors = ["unknown <inv2004@gmail.com>"]
+
+[dependencies]
+failure = "*"
+hyper = "*"
+hyper-tls = "*"
+serde = "*"
+serde_json = "*"
+serde_derive = "*"
+tokio = "*"
+futures = "0.1.21"
