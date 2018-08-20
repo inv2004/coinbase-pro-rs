@@ -8,5 +8,4 @@ pub enum CBError {
     Null
 }
 
-pub type Result<T> = super::std::result::Result<T, CBError>;
 

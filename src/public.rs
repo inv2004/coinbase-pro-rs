@@ -1,7 +1,40 @@
-use error::Result;
+extern crate serde;
+extern crate serde_json;
+extern crate tokio;
+
+use hyper::{Client, Body};
+use hyper::client::HttpConnector;
+use hyper_tls::HttpsConnector;
+
+use super::Result;
 use structs::*;
 
-pub trait Public {
+pub trait ApiPub {
     fn get_time(&self) -> Result<Time>;
     fn get_currencies(&self) -> Result<Vec<Currency>>;
 }
+
+pub struct Coinbase {
+    uri: String,
+    client: Client<HttpsConnector<HttpConnector>>
+}
+
+impl super::Api for Coinbase {
+    fn uri(&self) -> &str { &self.uri }
+    fn client<'a>(&'a self) -> &'a Client<HttpsConnector<HttpConnector>> { &self.client }
+}
+
+impl Coinbase {
+    pub fn new() -> Self {
+        let https = HttpsConnector::new(4).unwrap();
+        let client = Client::builder().build::<_, Body>(https);
+        let uri = "https://api-public.sandbox.pro.coinbase.com".to_string();
+
+        Self {
+            uri,
+            client
+        }
+    }
+}
+
+

@@ -7,48 +7,44 @@ extern crate serde_json;
 extern crate tokio;
 extern crate futures;
 
+use std::fmt::Debug;
+use hyper::{Client, Request, Body, Uri};
+use hyper::client::HttpConnector;
+use hyper_tls::HttpsConnector;
+use hyper::rt::{Future, Stream};
+use public::ApiPub;
+
+
 pub mod error;
 pub mod structs;
-pub mod public;
 mod utils;
+mod private;
+mod public;
 
-use error::*;
 use structs::*;
-use public::*;
-use hyper::{Client, Request};
-use hyper::rt::{Future, Stream};
-use hyper_tls::HttpsConnector;
+use error::*;
 
-struct Coinbase {
-    uri: String,
-    client: hyper::Client<hyper_tls::HttpsConnector<hyper::client::HttpConnector>>
+pub type Result<T> = std::result::Result<T, CBError>;
+
+trait Api {
+    fn uri(&self) -> &str;
+    fn client<'a>(&'a self) -> &'a Client<HttpsConnector<HttpConnector>>;
 }
+struct Coinbase<T>(T);
 
-impl Coinbase {
-    fn new() -> Self {
-        let https = HttpsConnector::new(4).unwrap();
-        let client = Client::builder().build::<_, hyper::Body>(https);
-//        let uri = "https://api.gdax.com".to_string();
-        let uri = "https://api-public.sandbox.pro.coinbase.com".to_string();
-
-        Self {
-            uri,
-            client
-        }
-    }
-
-    fn get<T>(&self, uri: &str) -> impl Future<Item=T, Error=CBError>
-        where for<'de> T: serde::Deserialize<'de>
+impl<T> Coinbase<T> where T: Api {
+    fn get<U>(&self, uri: &str) -> impl Future<Item=U, Error=CBError>
+        where for<'de> U: serde::Deserialize<'de>
     {
-        let uri: hyper::Uri = (self.uri.to_string() + uri).parse().unwrap();
+        let uri: Uri = (self.0.uri().to_string() + uri).parse().unwrap();
 //        println!("{:?}", uri);
 
-        let req = Request::get(uri)
+        let req = Request::get(uri )
             .header("User-Agent", "coinbase-pro-rs/0.1.0")
-            .body(hyper::Body::empty())
+            .body(Body::empty())
             .unwrap();
 
-        self.client
+        self.0.client()
             .request(req)
             .map_err(CBError::Http)
             .and_then(|res| {
@@ -60,17 +56,28 @@ impl Coinbase {
             })
     }
 
-    fn get_sync<T>(&self, uri: &str) -> Result<T>
-        where T: std::fmt::Debug + Send + 'static,
-              T: for<'de> serde::Deserialize<'de>
+    fn get_sync<U>(&self, uri: &str) -> Result<U>
+        where U: Debug + Send + 'static,
+              U: for<'de> serde::Deserialize<'de>
     {
         let mut rt = tokio::runtime::current_thread::Runtime::new().unwrap();
         rt.block_on(self.get(uri))
     }
-
 }
 
-impl Public for Coinbase {
+impl Coinbase<public::Coinbase> {
+    fn new() -> Self {
+        Coinbase(public::Coinbase::new())
+    }
+}
+
+impl Coinbase<private::Coinbase> {
+    fn new() -> Self {
+        Coinbase(private::Coinbase::new(KEY, SECRET, PASS))
+    }
+}
+
+impl<T> ApiPub for Coinbase<T> where T: Api {
     fn get_time(&self) -> Result<Time> {
         self.get_sync("/time")
     }
@@ -79,13 +86,18 @@ impl Public for Coinbase {
     }
 }
 
+
+static KEY: &str = "c4f2ffd72b20836a0dc4ff0b2b658f72";
+static PASS: &str = "testtesttest";
+static SECRET: &str = "0bmte68VNnO3lHTfQdE4c+zfhruI10OIBXk8aq81NxdjAaz3C2Wo2t5xURxnNulcszQzjrCbY5HJjQv2d/bIXg==";
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_get_time() {
-        let b = Coinbase::new();
+        let b = Coinbase::<public::Coinbase>::new();
         let t = b.get_time().unwrap();
         assert!(format!("{:?}", t).starts_with("Time {"));
         assert!(format!("{:?}", t).contains("iso:"));
@@ -95,7 +107,7 @@ mod tests {
 
     #[test]
     fn test_get_currencies() {
-        let b = Coinbase::new();
+        let b = Coinbase::<public::Coinbase>::new();
         let cs = b.get_currencies().unwrap();
         let c = cs.iter().find(|x| x.id == "BTC").unwrap();
         assert_eq!(format!("{:?}", c), "Currency { id: \"BTC\", name: \"Bitcoin\", min_size: 0.00000001 }");
@@ -104,7 +116,7 @@ mod tests {
     }
 
 //    #[test]
-//    fn test_tls() {
+//    fn test_tls() { // it hangs
 //        let https = HttpsConnector::new(4).unwrap();
 //        let client = Client::builder()
 //            .build::<_, hyper::Body>(https);
