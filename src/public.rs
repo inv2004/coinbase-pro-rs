@@ -37,4 +37,12 @@ impl Coinbase {
     }
 }
 
+impl<T> ApiPub for super::Coinbase<T> where T: super::Api {
+    fn get_time(&self) -> Result<Time> {
+        self.get_sync("/time")
+    }
+    fn get_currencies(&self) -> Result<Vec<Currency>> {
+        self.get_sync("/currencies")
+    }
+}
 

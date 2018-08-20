@@ -77,16 +77,6 @@ impl Coinbase<private::Coinbase> {
     }
 }
 
-impl<T> ApiPub for Coinbase<T> where T: Api {
-    fn get_time(&self) -> Result<Time> {
-        self.get_sync("/time")
-    }
-    fn get_currencies(&self) -> Result<Vec<Currency>> {
-        self.get_sync("/currencies")
-    }
-}
-
-
 static KEY: &str = "c4f2ffd72b20836a0dc4ff0b2b658f72";
 static PASS: &str = "testtesttest";
 static SECRET: &str = "0bmte68VNnO3lHTfQdE4c+zfhruI10OIBXk8aq81NxdjAaz3C2Wo2t5xURxnNulcszQzjrCbY5HJjQv2d/bIXg==";
