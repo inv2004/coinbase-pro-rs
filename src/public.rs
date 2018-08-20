@@ -21,7 +21,7 @@ pub struct Coinbase {
 
 impl super::Api for Coinbase {
     fn uri(&self) -> &str { &self.uri }
-    fn client<'a>(&'a self) -> &'a Client<HttpsConnector<HttpConnector>> { &self.client }
+    fn client(&self) -> &Client<HttpsConnector<HttpConnector>> { &self.client }
 }
 
 impl Coinbase {
