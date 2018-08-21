@@ -1,8 +1,11 @@
 use std::fmt;
 use serde_json::Value;
 use uuid::Uuid;
+use chrono;
 use utils::f64_from_string;
 use utils::usize_from_string;
+
+type DateTime = chrono::DateTime<chrono::Utc>;
 
 // Public
 
@@ -38,18 +41,27 @@ pub struct Account {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AccountHistory {
     pub id: usize,
-    pub created_at: String,
+    pub created_at: DateTime,
     #[serde(deserialize_with = "f64_from_string")]
     pub amount: f64,
     #[serde(deserialize_with = "f64_from_string")]
     pub balance: f64,
     #[serde(skip_deserializing)]
-    pub _type: String,
+    pub _type: AccountHistoryType,
     #[serde(flatten)]
     pub details: AccountHistoryDetails // variants are not not clear
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub enum AccountHistoryType {
+    Fee, Match, Rebate, Transfer, NotSet
+}
+
+impl Default for AccountHistoryType {
+    fn default() -> Self { AccountHistoryType::NotSet }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type", content = "details")]
 #[serde(rename_all = "camelCase")]
 pub enum AccountHistoryDetails {
@@ -73,17 +85,23 @@ pub enum AccountHistoryDetails {
     },
     Transfer {
         transfer_id: Uuid,
-        transfer_type: String
+        transfer_type: AccountHistoryDetailsTransferType
     }
 }
 
-impl AccountHistoryDetails {
-    pub fn kind_str(&self) -> &str {
-        match self {
-            AccountHistoryDetails::Fee { .. } => "fee",
-            AccountHistoryDetails::Match { .. } => "match",
-            AccountHistoryDetails::Transfer { .. } => "transfer",
-            AccountHistoryDetails::Rebate { .. } => "rebate"
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub enum AccountHistoryDetailsTransferType {
+    Deposit, Withdraw
+}
+
+impl From<AccountHistoryDetails> for AccountHistoryType {
+    fn from(item: AccountHistoryDetails) -> Self {
+        match item {
+            AccountHistoryDetails::Fee { .. } => AccountHistoryType::Fee,
+            AccountHistoryDetails::Match { .. } => AccountHistoryType::Match,
+            AccountHistoryDetails::Transfer { .. } => AccountHistoryType::Transfer,
+            AccountHistoryDetails::Rebate { .. } => AccountHistoryType::Rebate
         }
     }
 }
@@ -99,3 +117,4 @@ impl fmt::Display for Error {
         write!(f, "{}", self.message)
     }
 }
+

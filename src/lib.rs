@@ -9,6 +9,7 @@ extern crate tokio;
 extern crate futures;
 extern crate uuid;
 extern crate pretty_env_logger;
+extern crate chrono;
 
 pub mod error;
 pub mod structs;

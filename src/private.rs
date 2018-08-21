@@ -72,7 +72,7 @@ impl Private {
         self.get_sync(&format!("/accounts/{}/ledger", id))
             .map(|xs: Vec<AccountHistory>| xs.into_iter()
                  .map(|x| {
-                     let _type = x.details.kind_str().to_string();
+                     let _type = x.details.clone().into(); //clone???
                      AccountHistory{_type, ..x}
                  }).collect())
     }
@@ -119,6 +119,7 @@ mod tests {
         let account = client.get_account_hist(coin.id);
         let account_str = format!("{:?}", account);
         println!("{}", account_str);
+        assert!(false);
     }
 }
 
