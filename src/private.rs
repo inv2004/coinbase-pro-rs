@@ -71,10 +71,8 @@ impl Private {
     pub fn get_account_hist(&self, id: Uuid) -> Result<Vec<AccountHistory>> {
         self.get_sync(&format!("/accounts/{}/ledger", id))
             .map(|xs: Vec<AccountHistory>| xs.into_iter()
-                 .map(|x| {
-                     let _type = AccountHistoryType::from(&x.details);
-                     AccountHistory{_type, ..x}
-                 }).collect())
+                 .map(|x| AccountHistory{_type: (&x.details).into(), ..x})
+                    .collect())
     }
 }
 
