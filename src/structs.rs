@@ -106,7 +106,26 @@ impl<'a> From<&'a AccountHistoryDetails> for AccountHistoryType {
     }
 }
 
-// Messagec
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AccountHolds {
+    pub id: Uuid,
+    pub account_id: Uuid,
+    pub created_at: DateTime,
+    pub updated_at: DateTime,
+    pub amount: f64,
+    #[serde(rename = "type")]
+    pub _type: AccountHoldsType,
+    #[serde(rename = "ref")]
+    pub _ref: Uuid
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub enum AccountHoldsType {
+    Order, Transfer
+}
+
+// Message
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Error {
     message: String

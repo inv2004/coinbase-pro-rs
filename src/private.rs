@@ -74,6 +74,10 @@ impl Private {
                  .map(|x| AccountHistory{_type: (&x.details).into(), ..x})
                     .collect())
     }
+
+    pub fn get_account_holds(&self, id: Uuid) -> Result<Vec<AccountHolds>> {
+        self.get_sync(&format!("/accounts/{}/holds", id))
+    }
 }
 
 #[cfg(test)]
@@ -98,8 +102,8 @@ mod tests {
     fn test_get_account() {
 //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
         let client = Private::new(KEY, SECRET, PASS_PHRASE);
-        let coin = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "BTC").unwrap();
-        let account = client.get_account(coin.id);
+        let coin_acc = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "BTC").unwrap();
+        let account = client.get_account(coin_acc.id);
         let account_str = format!("{:?}", account);
         assert!(account_str.contains("id:"));
         assert!(account_str.contains("currency: \"BTC\""));
@@ -113,10 +117,22 @@ mod tests {
     fn test_get_account_hist() {
 //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
         let client = Private::new(KEY, SECRET, PASS_PHRASE);
-        let coin = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "USD").unwrap();
-        let account = client.get_account_hist(coin.id);
+        let coin_acc = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "USD").unwrap();
+        let account = client.get_account_hist(coin_acc.id);
         let account_str = format!("{:?}", account);
         assert!(account_str.contains("transfer_type: Deposit"));
+    }
+
+    #[test]
+    fn test_get_account_holds() {
+//        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
+        let client = Private::new(KEY, SECRET, PASS_PHRASE);
+        let coin_acc = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "USD").unwrap();
+        let acc_holds = client.get_account_holds(coin_acc.id);
+        let str = format!("{:?}", acc_holds);
+        //assert!(account_str.contains("transfer_type: Deposit"));
+        //println!("{:?}", str);
+        assert!(false);
     }
 }
 
