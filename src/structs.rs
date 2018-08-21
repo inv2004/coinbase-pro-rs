@@ -34,6 +34,23 @@ pub struct Account {
     pub profile_id: Uuid
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AccountHistory {
+    pub id: usize,
+    pub created_at: String,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub amount: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub balance: f64,
+    #[serde(rename = "type")]
+    pub _type: String,
+    pub details: AccountHistoryDetails,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AccountHistoryDetails {
+    order_id: Uuid
+}
 // Message
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Error {

@@ -67,6 +67,10 @@ impl Private {
     pub fn get_account(&self, id: Uuid) -> Result<Account> {
         self.get_sync(&format!("/accounts/{}", id))
     }
+
+    pub fn get_account_hist(&self, id: Uuid) -> Result<Vec<AccountHistory>> {
+        self.get_sync(&format!("/accounts/{}/ledger", id))
+    }
 }
 
 #[cfg(test)]
@@ -89,7 +93,7 @@ mod tests {
 
     #[test]
     fn test_get_account() {
-        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
+//        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
         let client = Private::new(KEY, SECRET, PASS_PHRASE);
         let coin = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "BTC").unwrap();
         let account = client.get_account(coin.id);
@@ -100,6 +104,16 @@ mod tests {
         assert!(account_str.contains("available:"));
         assert!(account_str.contains("hold:"));
         assert!(account_str.contains("profile_id:"));
+    }
+
+    #[test]
+    fn test_get_account_hist() {
+//        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
+        let client = Private::new(KEY, SECRET, PASS_PHRASE);
+        let coin = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "USD").unwrap();
+        let account = client.get_account_hist(coin.id);
+        let account_str = format!("{:?}", account);
+        println!("{}", account_str);
     }
 }
 
