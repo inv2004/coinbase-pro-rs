@@ -20,7 +20,7 @@ pub struct Public {
 }
 
 impl Public {
-    fn get_headers(&self) -> HeaderMap {
+    fn headers(&self) -> HeaderMap {
         HeaderMap::new()
     }
 
@@ -73,10 +73,10 @@ impl Public {
     }
 
     pub fn get_time(&self) -> Result<Time> {
-        self.get_sync("/time", self.get_headers())
+        self.get_sync("/time", self.headers())
     }
     pub fn get_currencies(&self) -> Result<Vec<Currency>> {
-        self.get_sync("/currencies", self.get_headers())
+        self.get_sync("/currencies", self.headers())
     }
 }
 
