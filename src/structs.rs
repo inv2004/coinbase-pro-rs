@@ -95,8 +95,8 @@ pub enum AccountHistoryDetailsTransferType {
     Deposit, Withdraw
 }
 
-impl From<AccountHistoryDetails> for AccountHistoryType {
-    fn from(item: AccountHistoryDetails) -> Self {
+impl<'a> From<&'a AccountHistoryDetails> for AccountHistoryType {
+    fn from(item: &'a AccountHistoryDetails) -> Self {
         match item {
             AccountHistoryDetails::Fee { .. } => AccountHistoryType::Fee,
             AccountHistoryDetails::Match { .. } => AccountHistoryType::Match,

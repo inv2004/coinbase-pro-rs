@@ -72,7 +72,7 @@ impl Private {
         self.get_sync(&format!("/accounts/{}/ledger", id))
             .map(|xs: Vec<AccountHistory>| xs.into_iter()
                  .map(|x| {
-                     let _type = x.details.clone().into(); //clone???
+                     let _type = AccountHistoryType::from(&x.details);
                      AccountHistory{_type, ..x}
                  }).collect())
     }
