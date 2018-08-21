@@ -44,13 +44,12 @@ impl Public {
             .and_then(|body| {
                 let res = serde_json::from_slice(&body)
                     .map_err(|e| {
-                        match serde_json::from_slice(&body) {
-                            Ok(e) => CBError::Coinbase(e),
-                            Err(_) => {
+                        serde_json::from_slice(&body)
+                            .map(CBError::Coinbase)
+                            .unwrap_or_else(|_| {
                                 let data = String::from_utf8(body.to_vec()).unwrap();
                                 CBError::Serde { error: e, data }
-                            }
-                        }
+                            })
                     })?;
                 Ok(res)
             })
