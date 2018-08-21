@@ -1,6 +1,8 @@
 
 use utils::f64_from_string;
 
+// Public
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Time {
     pub iso: String,
@@ -15,13 +17,18 @@ pub struct Currency {
     pub min_size: f64
 }
 
+// Private
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Account {
     pub id: String,
     pub currency: String,
-    pub balance: String,
-    pub available: String,
-    pub hold: String,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub balance: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub available: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub hold: f64,
     pub profile_id: String
 }
 

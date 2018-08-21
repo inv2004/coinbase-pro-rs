@@ -7,8 +7,6 @@ use hyper::{Client, Request, Body, Uri, HeaderMap};
 use hyper::client::HttpConnector;
 use hyper_tls::HttpsConnector;
 use hyper::rt::{Future, Stream};
-use hyper::header::HeaderValue;
-use failure::Fail;
 
 use super::Result;
 use error::*;

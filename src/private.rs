@@ -5,17 +5,12 @@ extern crate base64;
 extern crate hmac;
 extern crate sha2;
 
-use std::fmt::Debug;
-use hyper::{Client, Request, Body, Uri, HeaderMap};
-use hyper::client::HttpConnector;
+use hyper::{HeaderMap};
 use hyper::header::HeaderValue;
-use hyper_tls::HttpsConnector;
-use hyper::rt::{Future, Stream};
 use private::hmac::{Hmac, Mac};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use super::Result;
-use error::*;
 use structs::*;
 
 use public::Public;
@@ -31,7 +26,7 @@ impl Private {
     fn sign(&self, timestamp: u64, uri: &str) -> String {
         let key = base64::decode(&self.secret).expect("base64::decode secret");
         let mut mac: Hmac<sha2::Sha256> = Hmac::new_varkey(&key).expect("Hmac::new(key)");
-        mac.input(format!("{}{}{}{}", timestamp, "GET", uri, "").as_bytes());
+        mac.input((timestamp.to_string()+"GET"+uri+"").as_bytes());
         base64::encode(&mac.result().code())
     }
 
@@ -64,14 +59,16 @@ impl Private {
 mod tests {
     use super::*;
 
-    static KEY: &str = "c4f2ffd72b20836a0dc4ff0b2b658f72";
-    static PASS: &str = "testtesttest";
-    static SECRET: &str = "0bmte68VNnO3lHTfQdE4c+zfhruI10OIBXk8aq81NxdjAaz3C2Wo2t5xURxnNulcszQzjrCbY5HJjQv2d/bIXg==";
+    static KEY: &str = "1d0dc0f7b4e808d430b95d8fed7df3ea";
+    static PASS: &str = "sandbox";
+    static SECRET: &str = "dTUic8DZPqkS77vxhJFEX5IBr13FcFHTzWYOARgT9kDWGdN03uvxBbH/hVy8f4O5RDmuf+9wNpEfhYhw2FCWyA==";
 
     #[test]
     fn test_get_accounts() {
-        let b = Private::new(KEY, PASS, SECRET);
-        let t = b.get_accounts().unwrap();
+        let b = Private::new(KEY, SECRET, PASS);
+        let a = b.get_accounts().unwrap();
+        assert!(format!("{:?}", a)
+            .contains(r#"currency: "BCH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#));
     }
 }
 
