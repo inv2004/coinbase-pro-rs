@@ -15,4 +15,6 @@ futures = "0.1.21"
 base64 = "*"
 hmac = "*"
 sha2 = "*"
-uuid = "*"
+uuid = { version = "*", features = [ "serde", "v4" ] }
+log = "*"
+pretty_env_logger = "*"

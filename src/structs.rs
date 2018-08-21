@@ -1,5 +1,5 @@
 
-//use uuid::Uuid;
+use uuid::Uuid;
 use utils::f64_from_string;
 
 // Public
@@ -22,7 +22,7 @@ pub struct Currency {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Account {
-    pub id: String,
+    pub id: Uuid,
     pub currency: String,
     #[serde(deserialize_with = "f64_from_string")]
     pub balance: f64,
@@ -30,6 +30,11 @@ pub struct Account {
     pub available: f64,
     #[serde(deserialize_with = "f64_from_string")]
     pub hold: f64,
-    pub profile_id: String
+    pub profile_id: Uuid
 }
 
+// Message
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Error {
+    message: String
+}

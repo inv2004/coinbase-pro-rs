@@ -10,6 +10,7 @@ use hyper::{HeaderMap};
 use hyper::header::HeaderValue;
 use private::hmac::{Hmac, Mac};
 use std::time::{SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
 
 use super::Result;
 use structs::*;
@@ -46,6 +47,7 @@ impl Private {
         headers.insert("CB-ACCESS-SIGN", HeaderValue::from_str(&self.sign(timestamp, uri)).unwrap());
         headers.insert("CB-ACCESS-TIMESTAMP", HeaderValue::from_str(&timestamp.to_string()).unwrap());
         headers.insert("CB-ACCESS-PASSPHRASE", HeaderValue::from_str(&self.passphrase).unwrap());
+        trace!("{:?}", headers);
         headers
     }
 
@@ -62,8 +64,8 @@ impl Private {
         self.get_sync("/accounts")
     }
 
-    pub fn get_account(&self) -> Result<Vec<Account>> {
-        self.get_sync("/accounts")
+    pub fn get_account(&self, id: Uuid) -> Result<Account> {
+        self.get_sync(&format!("/account/{}", id))
     }
 }
 
@@ -81,6 +83,15 @@ mod tests {
         let a = b.get_accounts().unwrap();
         assert!(format!("{:?}", a)
             .contains(r#"currency: "BCH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#));
+    }
+
+    #[test]
+    fn test_get_account() {
+        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
+        let b = Private::new(KEY, SECRET, PASS);
+        let a = b.get_accounts().unwrap().into_iter().find(|x| x.currency == "BTC").unwrap();
+        let a = b.get_account(a.id);
+        println!("{:?}", a);
     }
 }
 

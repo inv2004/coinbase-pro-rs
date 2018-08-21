@@ -1,3 +1,5 @@
+use structs::Error;
+
 #[derive(Debug, Fail)]
 pub enum CBError {
     #[fail(display = "http: {}", _0)]
@@ -7,6 +9,8 @@ pub enum CBError {
         #[cause] error: super::serde_json::Error,
         data: String
     },
+    #[fail(display = "coinbase: {:?}", _0)]
+    Coinbase (Error),
     #[fail(display = "null")]
     Null
 }
