@@ -74,7 +74,7 @@ mod tests {
     use super::*;
 
     static KEY: &str = "1d0dc0f7b4e808d430b95d8fed7df3ea";
-    static PASS: &str = "sandbox";
+    static PASS_PHRASE: &str = "sandbox";
     static SECRET: &str = "dTUic8DZPqkS77vxhJFEX5IBr13FcFHTzWYOARgT9kDWGdN03uvxBbH/hVy8f4O5RDmuf+9wNpEfhYhw2FCWyA==";
 
     #[test]
@@ -88,7 +88,7 @@ mod tests {
     #[test]
     fn test_get_account() {
         super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
-        let b = Private::new(KEY, SECRET, PASS);
+        let b = Private::new(KEY, SECRET, PASS_PHRASE);
         let a = b.get_accounts().unwrap().into_iter().find(|x| x.currency == "BTC").unwrap();
         let a = b.get_account(a.id);
         println!("{:?}", a);
