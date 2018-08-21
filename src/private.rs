@@ -69,7 +69,16 @@ impl Private {
     }
 
     pub fn get_account_hist(&self, id: Uuid) -> Result<Vec<AccountHistory>> {
-        self.get_sync(&format!("/accounts/{}/ledger", id))
+        match self.get_sync(&format!("/accounts/{}/ledger", id)) {
+            Ok(xs) => {
+                let mut xss: Vec<AccountHistory> = xs;
+                xss.iter_mut().for_each(|x| {
+                    x._type = x.details.kind_str().to_string();
+                });
+                Ok(xss)
+            },
+            Err(e) => Err(e)
+        }
     }
 }
 

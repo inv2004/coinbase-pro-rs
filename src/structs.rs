@@ -1,7 +1,8 @@
 use std::fmt;
-
+use serde_json::Value;
 use uuid::Uuid;
 use utils::f64_from_string;
+use utils::usize_from_string;
 
 // Public
 
@@ -42,16 +43,45 @@ pub struct AccountHistory {
     pub amount: f64,
     #[serde(deserialize_with = "f64_from_string")]
     pub balance: f64,
-    #[serde(rename = "type")]
+    #[serde(skip_deserializing)]
     pub _type: String,
-    pub details: AccountHistoryDetails,
+    #[serde(flatten)]
+    pub details: AccountHistoryDetails // variants are not not clear
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct AccountHistoryDetails {
-    order_id: Uuid
+#[serde(tag = "type", content = "details")]
+#[serde(rename_all = "camelCase")]
+pub enum AccountHistoryDetails {
+    Fee {
+        order_id: Uuid,
+        product_id: String,
+        #[serde(deserialize_with = "usize_from_string")]
+        trade_id: usize
+    },
+    Match {
+        order_id: Uuid,
+        product_id: String,
+        #[serde(deserialize_with = "usize_from_string")]
+        trade_id: usize
+    },
+    Transfer {
+        transfer_id: Uuid,
+        transfer_type: String
+    }
 }
-// Message
+
+impl AccountHistoryDetails {
+    pub fn kind_str(&self) -> &str {
+        match self {
+            AccountHistoryDetails::Fee { .. } => "fee",
+            AccountHistoryDetails::Match { .. } => "match",
+            AccountHistoryDetails::Transfer { .. } => "transfer"
+        }
+    }
+}
+
+// Messagec
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Error {
     message: String
