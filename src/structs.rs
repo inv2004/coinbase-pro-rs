@@ -76,7 +76,8 @@ impl AccountHistoryDetails {
         match self {
             AccountHistoryDetails::Fee { .. } => "fee",
             AccountHistoryDetails::Match { .. } => "match",
-            AccountHistoryDetails::Transfer { .. } => "transfer"
+            AccountHistoryDetails::Transfer { .. } => "transfer",
+            AccountHistoryDetails::Rebate { .. } => "rebate"
         }
     }
 }
