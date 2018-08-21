@@ -65,6 +65,12 @@ pub enum AccountHistoryDetails {
         #[serde(deserialize_with = "usize_from_string")]
         trade_id: usize
     },
+    Rebate {
+        order_id: Uuid,
+        product_id: String,
+        #[serde(deserialize_with = "usize_from_string")]
+        trade_id: usize
+    },
     Transfer {
         transfer_id: Uuid,
         transfer_type: String
