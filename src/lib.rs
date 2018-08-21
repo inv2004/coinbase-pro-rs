@@ -6,6 +6,7 @@ extern crate serde;
 extern crate serde_json;
 extern crate tokio;
 extern crate futures;
+extern crate uuid;
 
 pub mod error;
 pub mod structs;

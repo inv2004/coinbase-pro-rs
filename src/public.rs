@@ -51,12 +51,19 @@ impl Public {
             })
     }
 
-    pub fn get_sync<U>(&self, uri: &str, headers: HeaderMap) -> Result<U>
+    pub fn get_sync_with_headers<U>(&self, uri: &str, headers: HeaderMap) -> Result<U>
         where U: Debug + Send + 'static,
               U: for<'de> serde::Deserialize<'de>
     {
         let mut rt = tokio::runtime::current_thread::Runtime::new().unwrap();
         rt.block_on(self.get(uri, headers))
+    }
+
+    pub fn get_sync<U>(&self, uri: &str) -> Result<U>
+        where U: Debug + Send + 'static,
+              U: for<'de> serde::Deserialize<'de>
+    {
+        self.get_sync_with_headers(uri, self.headers())
     }
 
     pub fn new() -> Self {
@@ -71,10 +78,10 @@ impl Public {
     }
 
     pub fn get_time(&self) -> Result<Time> {
-        self.get_sync("/time", self.headers())
+        self.get_sync("/time")
     }
     pub fn get_currencies(&self) -> Result<Vec<Currency>> {
-        self.get_sync("/currencies", self.headers())
+        self.get_sync("/currencies")
     }
 }
 

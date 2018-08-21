@@ -5,6 +5,7 @@ extern crate base64;
 extern crate hmac;
 extern crate sha2;
 
+use std::fmt::Debug;
 use hyper::{HeaderMap};
 use hyper::header::HeaderValue;
 use private::hmac::{Hmac, Mac};
@@ -23,6 +24,13 @@ pub struct Private {
 }
 
 impl Private {
+    pub fn get_sync<U>(&self, uri: &str) -> Result<U>
+        where U: Debug + Send + 'static,
+              U: for<'de> serde::Deserialize<'de>
+    {
+        self._pub.get_sync_with_headers(uri, self.headers(uri))
+    }
+
     fn sign(&self, timestamp: u64, uri: &str) -> String {
         let key = base64::decode(&self.secret).expect("base64::decode secret");
         let mut mac: Hmac<sha2::Sha256> = Hmac::new_varkey(&key).expect("Hmac::new(key)");
@@ -51,7 +59,11 @@ impl Private {
     }
 
     pub fn get_accounts(&self) -> Result<Vec<Account>> {
-        self._pub.get_sync("/accounts", self.headers("/accounts"))
+        self.get_sync("/accounts")
+    }
+
+    pub fn get_account(&self) -> Result<Vec<Account>> {
+        self.get_sync("/accounts")
     }
 }
 
