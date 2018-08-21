@@ -79,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_get_accounts() {
-        let b = Private::new(KEY, SECRET, PASS);
+        let b = Private::new(KEY, SECRET, PASS_PHRASE);
         let a = b.get_accounts().unwrap();
         assert!(format!("{:?}", a)
             .contains(r#"currency: "BCH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#));
