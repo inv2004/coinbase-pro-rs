@@ -2,29 +2,58 @@ extern crate serde;
 extern crate serde_json;
 extern crate tokio;
 
-use hyper::{Client, Body};
+use std::fmt::Debug;
+use hyper::{Client, Request, Body, Uri};
 use hyper::client::HttpConnector;
 use hyper_tls::HttpsConnector;
+use hyper::rt::{Future, Stream};
+use failure::Fail;
 
 use super::Result;
+use error::*;
 use structs::*;
 
-pub trait ApiPub {
-    fn get_time(&self) -> Result<Time>;
-    fn get_currencies(&self) -> Result<Vec<Currency>>;
-}
-
-pub struct Coinbase {
+pub struct Public {
     uri: String,
     client: Client<HttpsConnector<HttpConnector>>
 }
 
-impl super::Api for Coinbase {
-    fn uri(&self) -> &str { &self.uri }
-    fn client(&self) -> &Client<HttpsConnector<HttpConnector>> { &self.client }
-}
+impl Public {
+    pub fn get<U>(&self, uri: &str) -> impl Future<Item=U, Error=CBError>
+        where for<'de> U: serde::Deserialize<'de>
+    {
+        let uri: Uri = (self.uri.to_string() + uri).parse().unwrap();
+//        println!("{:?}", uri);
 
-impl Coinbase {
+        let req = Request::get(uri )
+            .header("User-Agent", "coinbase-pro-rs/0.1.0")
+            .body(Body::empty())
+            .unwrap();
+
+        self.client
+            .request(req)
+            .map_err(CBError::Http)
+            .and_then(|res| {
+                res.into_body().concat2().map_err(CBError::Http)
+            })
+            .and_then(|body| {
+                let res = serde_json::from_slice(&body)
+                    .map_err(|e| {
+                        let data = String::from_utf8(body.to_vec()).unwrap();
+                        CBError::Serde{error: e, data}
+                    })?;
+                Ok(res)
+            })
+    }
+
+    pub fn get_sync<U>(&self, uri: &str) -> Result<U>
+        where U: Debug + Send + 'static,
+              U: for<'de> serde::Deserialize<'de>
+    {
+        let mut rt = tokio::runtime::current_thread::Runtime::new().unwrap();
+        rt.block_on(self.get(uri))
+    }
+
     pub fn new() -> Self {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder().build::<_, Body>(https);
@@ -35,14 +64,55 @@ impl Coinbase {
             client
         }
     }
-}
 
-impl<T> ApiPub for super::Coinbase<T> where T: super::Api {
-    fn get_time(&self) -> Result<Time> {
+    pub fn get_time(&self) -> Result<Time> {
         self.get_sync("/time")
     }
-    fn get_currencies(&self) -> Result<Vec<Currency>> {
+    pub fn get_currencies(&self) -> Result<Vec<Currency>> {
         self.get_sync("/currencies")
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_time() {
+        let b = Public::new();
+        let t = b.get_time().unwrap();
+        assert!(format!("{:?}", t).starts_with("Time {"));
+        assert!(format!("{:?}", t).contains("iso:"));
+        assert!(format!("{:?}", t).contains("epoch:"));
+        assert!(format!("{:?}", t).ends_with("}"));
+    }
+
+    #[test]
+    fn test_get_currencies() {
+        let b = Public::new();
+        let cs = b.get_currencies().unwrap();
+        let c = cs.iter().find(|x| x.id == "BTC").unwrap();
+        assert_eq!(format!("{:?}", c), "Currency { id: \"BTC\", name: \"Bitcoin\", min_size: 0.00000001 }");
+        let c = cs.iter().find(|x| x.id == "LTC").unwrap();
+        assert_eq!(format!("{:?}", c), "Currency { id: \"LTC\", name: \"Litecoin\", min_size: 0.00000001 }");
+    }
+
+//    #[test]
+//    fn test_tls() { // it hangs
+//        let https = HttpsConnector::new(4).unwrap();
+//        let client = Client::builder()
+//            .build::<_, hyper::Body>(https);
+//        let ft = client
+//            .get("https://hyper.rs".parse().unwrap())
+//            .map_err(|_| ())
+//            .and_then(|res| {
+//                res.into_body().concat2().map_err(|_| ())
+//            })
+//            .and_then(|body| {
+//                println!("body: {:?}", &body);
+//                Ok(())
+//            });
+//        rt::run(ft);
+//    }
 }
 

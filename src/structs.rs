@@ -15,3 +15,13 @@ pub struct Currency {
     pub min_size: f64
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Account {
+    pub id: String,
+    pub currency: String,
+    pub balance: String,
+    pub available: String,
+    pub hold: String,
+    pub profile_id: String
+}
+
