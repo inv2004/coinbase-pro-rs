@@ -95,22 +95,23 @@ mod tests {
 
     #[test]
     fn test_get_time() {
-        let b = Public::new();
-        let t = b.get_time().unwrap();
-        assert!(format!("{:?}", t).starts_with("Time {"));
-        assert!(format!("{:?}", t).contains("iso:"));
-        assert!(format!("{:?}", t).contains("epoch:"));
-        assert!(format!("{:?}", t).ends_with("}"));
+        let client = Public::new();
+        let time = client.get_time().unwrap();
+        let time_str = format!("{:?}", time);
+        assert!(time_str.starts_with("Time {"));
+        assert!(time_str.contains("iso:"));
+        assert!(time_str.contains("epoch:"));
+        assert!(time_str.ends_with("}"));
     }
 
     #[test]
     fn test_get_currencies() {
-        let b = Public::new();
-        let cs = b.get_currencies().unwrap();
-        let c = cs.iter().find(|x| x.id == "BTC").unwrap();
-        assert_eq!(format!("{:?}", c), "Currency { id: \"BTC\", name: \"Bitcoin\", min_size: 0.00000001 }");
-        let c = cs.iter().find(|x| x.id == "LTC").unwrap();
-        assert_eq!(format!("{:?}", c), "Currency { id: \"LTC\", name: \"Litecoin\", min_size: 0.00000001 }");
+        let client = Public::new();
+        let currencies = client.get_currencies().unwrap();
+        let currency = currencies.iter().find(|x| x.id == "BTC").unwrap();
+        assert_eq!(format!("{:?}", currency), "Currency { id: \"BTC\", name: \"Bitcoin\", min_size: 0.00000001 }");
+        let currency = currencies.iter().find(|x| x.id == "LTC").unwrap();
+        assert_eq!(format!("{:?}", currency), "Currency { id: \"LTC\", name: \"Litecoin\", min_size: 0.00000001 }");
     }
 
 //    #[test]

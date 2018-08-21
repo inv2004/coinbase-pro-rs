@@ -65,7 +65,7 @@ impl Private {
     }
 
     pub fn get_account(&self, id: Uuid) -> Result<Account> {
-        self.get_sync(&format!("/account/{}", id))
+        self.get_sync(&format!("/accounts/{}", id))
     }
 }
 
@@ -79,19 +79,27 @@ mod tests {
 
     #[test]
     fn test_get_accounts() {
-        let b = Private::new(KEY, SECRET, PASS_PHRASE);
-        let a = b.get_accounts().unwrap();
-        assert!(format!("{:?}", a)
+        let client = Private::new(KEY, SECRET, PASS_PHRASE);
+        let accounts = client.get_accounts().unwrap();
+        assert!(format!("{:?}", accounts)
             .contains(r#"currency: "BCH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#));
+        assert!(format!("{:?}", accounts)
+            .contains(r#"currency: "ETH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#));
     }
 
     #[test]
     fn test_get_account() {
         super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
-        let b = Private::new(KEY, SECRET, PASS_PHRASE);
-        let a = b.get_accounts().unwrap().into_iter().find(|x| x.currency == "BTC").unwrap();
-        let a = b.get_account(a.id);
-        println!("{:?}", a);
+        let client = Private::new(KEY, SECRET, PASS_PHRASE);
+        let coin = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "BTC").unwrap();
+        let account = client.get_account(coin.id);
+        let account_str = format!("{:?}", account);
+        assert!(account_str.contains("id:"));
+        assert!(account_str.contains("currency: \"BTC\""));
+        assert!(account_str.contains("balance:"));
+        assert!(account_str.contains("available:"));
+        assert!(account_str.contains("hold:"));
+        assert!(account_str.contains("profile_id:"));
     }
 }
 
