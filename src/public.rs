@@ -3,10 +3,11 @@ extern crate serde_json;
 extern crate tokio;
 
 use std::fmt::Debug;
-use hyper::{Client, Request, Body, Uri};
+use hyper::{Client, Request, Body, Uri, HeaderMap};
 use hyper::client::HttpConnector;
 use hyper_tls::HttpsConnector;
 use hyper::rt::{Future, Stream};
+use hyper::header::HeaderValue;
 use failure::Fail;
 
 use super::Result;
@@ -19,19 +20,25 @@ pub struct Public {
 }
 
 impl Public {
-    pub fn get<U>(&self, uri: &str) -> impl Future<Item=U, Error=CBError>
+    fn get_headers(&self) -> HeaderMap {
+        HeaderMap::new()
+    }
+
+    pub fn get<U>(&self, uri: &str, headers: HeaderMap) -> impl Future<Item=U, Error=CBError>
         where for<'de> U: serde::Deserialize<'de>
     {
         let uri: Uri = (self.uri.to_string() + uri).parse().unwrap();
 //        println!("{:?}", uri);
 
-        let req = Request::get(uri )
-            .header("User-Agent", "coinbase-pro-rs/0.1.0")
-            .body(Body::empty())
-            .unwrap();
+        let mut req = Request::get(uri);
+        req.header("User-Agent", "coinbase-pro-rs/0.1.0");
+
+        headers.iter().for_each(|(k,v)| {
+            req.header(k, v);
+        });
 
         self.client
-            .request(req)
+            .request(req.body(Body::empty()).unwrap())
             .map_err(CBError::Http)
             .and_then(|res| {
                 res.into_body().concat2().map_err(CBError::Http)
@@ -46,12 +53,12 @@ impl Public {
             })
     }
 
-    pub fn get_sync<U>(&self, uri: &str) -> Result<U>
+    pub fn get_sync<U>(&self, uri: &str, headers: HeaderMap) -> Result<U>
         where U: Debug + Send + 'static,
               U: for<'de> serde::Deserialize<'de>
     {
         let mut rt = tokio::runtime::current_thread::Runtime::new().unwrap();
-        rt.block_on(self.get(uri))
+        rt.block_on(self.get(uri, headers))
     }
 
     pub fn new() -> Self {
@@ -66,10 +73,10 @@ impl Public {
     }
 
     pub fn get_time(&self) -> Result<Time> {
-        self.get_sync("/time")
+        self.get_sync("/time", self.get_headers())
     }
     pub fn get_currencies(&self) -> Result<Vec<Currency>> {
-        self.get_sync("/currencies")
+        self.get_sync("/currencies", self.get_headers())
     }
 }
 
