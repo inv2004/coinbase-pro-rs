@@ -118,8 +118,7 @@ mod tests {
         let coin = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "USD").unwrap();
         let account = client.get_account_hist(coin.id);
         let account_str = format!("{:?}", account);
-        println!("{}", account_str);
-        assert!(false);
+        assert!(account_str.contains("transfer_type: Deposit"));
     }
 }
 
