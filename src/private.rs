@@ -1,5 +1,4 @@
 extern crate serde;
-extern crate serde_json;
 extern crate tokio;
 extern crate base64;
 extern crate hmac;
@@ -11,6 +10,7 @@ use hyper::header::HeaderValue;
 use private::hmac::{Hmac, Mac};
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
+use serde_json::Value;
 
 use super::Result;
 use structs::private::*;
@@ -29,24 +29,26 @@ impl Private {
         where U: Debug + Send + 'static,
               U: for<'de> serde::Deserialize<'de>
     {
-        self._pub.get_sync_with_req(self.request(Method::GET, uri))
+        self._pub.get_sync_with_req(self.request(Method::GET, uri, "".to_string()))
     }
 
-    pub fn set_sync<U>(&self, uri: &str) -> Result<U>
+    pub fn post_sync<U>(&self, uri: &str, json: Value) -> Result<U>
         where U: Debug + Send + 'static,
               U: for<'de> serde::Deserialize<'de>
     {
-        self._pub.get_sync_with_req(self.request(Method::GET, uri))
+        let body_str = json.to_string();
+        self._pub.get_sync_with_req(self.request(Method::POST, uri, body_str))
     }
 
-    fn sign(&self, timestamp: u64, method: Method, uri: &str) -> String {
+    fn sign(&self, timestamp: u64, method: Method, uri: &str, body_str: &str) -> String {
         let key = base64::decode(&self.secret).expect("base64::decode secret");
         let mut mac: Hmac<sha2::Sha256> = Hmac::new_varkey(&key).expect("Hmac::new(key)");
-        mac.input((timestamp.to_string()+method.as_str()+uri+"").as_bytes());
+        mac.input((timestamp.to_string()+method.as_str()+uri+body_str).as_bytes());
+        println!("DEBUG: {}", timestamp.to_string()+method.as_str()+uri+body_str);
         base64::encode(&mac.result().code())
     }
 
-    fn request(&self, method: Method, _uri: &str) -> Request<Body> {
+    fn request(&self, method: Method, _uri: &str, body_str: String) -> Request<Body> {
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).expect("leap-second").as_secs();
 
         let uri: Uri = (self._pub.uri.to_string() + _uri).parse().unwrap();
@@ -57,13 +59,11 @@ impl Private {
 
         req.header("User-Agent", Public::USER_AGENT);
         req.header("CB-ACCESS-KEY", HeaderValue::from_str(&self.key).unwrap());
-        req.header("CB-ACCESS-SIGN", HeaderValue::from_str(&self.sign(timestamp, method, _uri)).unwrap());
+        req.header("CB-ACCESS-SIGN", HeaderValue::from_str(&self.sign(timestamp, method, _uri, &body_str)).unwrap());
         req.header("CB-ACCESS-TIMESTAMP", HeaderValue::from_str(&timestamp.to_string()).unwrap());
         req.header("CB-ACCESS-PASSPHRASE", HeaderValue::from_str(&self.passphrase).unwrap());
 
-        trace!("{:?}", req);
-
-        req.body(Body::empty()).unwrap()
+        req.body(body_str.into()).unwrap()
     }
 
     pub fn new(key: &str, secret: &str, passphrase: &str) -> Self {
@@ -95,7 +95,13 @@ impl Private {
     }
 
     pub fn set_order(&self) -> Result<Order> {
-        self.set_sync(&format!("/orders"))
+        let json = json!({
+            "size": 0.001.to_string(),
+            "price": 0.001.to_string(),
+            "side": "buy",
+            "product_id": "BTC-USD"
+            });
+        self.post_sync(&format!("/orders"), json)
     }
 }
 
@@ -153,6 +159,17 @@ mod tests {
         //assert!(account_str.contains("transfer_type: Deposit"));
         //println!("{:?}", str);
         assert!(false); // TODO: holds are empty now
+    }
+
+    #[test]
+    fn test_set_order() {
+//        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
+        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let order = client.set_order();
+        let str = format!("{:?}", order);
+        //assert!(account_str.contains("transfer_type: Deposit"));
+        println!("{:?}", str);
+        assert!(false);
     }
 }
 
