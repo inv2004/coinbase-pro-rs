@@ -29,14 +29,14 @@ impl Private {
         where U: Debug + Send + 'static,
               U: for<'de> serde::Deserialize<'de>
     {
-        self._pub.get_sync_with_req(self.request(Method::GET, uri, ""))
+        self._pub.get_sync_with_req(self.request(Method::GET, uri, "".to_string()))
     }
 
     pub fn post_sync<U>(&self, uri: &str, json: Value) -> Result<U>
         where U: Debug + Send + 'static,
               U: for<'de> serde::Deserialize<'de>
     {
-        let body_str = &json.to_string();
+        let body_str = json.to_string();
         self._pub.get_sync_with_req(self.request(Method::POST, uri, body_str))
     }
 
@@ -48,7 +48,7 @@ impl Private {
         base64::encode(&mac.result().code())
     }
 
-    fn request(&self, method: Method, _uri: &str, body_str: &str) -> Request<Body> {
+    fn request(&self, method: Method, _uri: &str, body_str: String) -> Request<Body> {
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).expect("leap-second").as_secs();
 
         let uri: Uri = (self._pub.uri.to_string() + _uri).parse().unwrap();
