@@ -6,7 +6,7 @@ extern crate hmac;
 extern crate sha2;
 
 use std::fmt::Debug;
-use hyper::{HeaderMap};
+use hyper::{HeaderMap, Request, Body, Uri, Method};
 use hyper::header::HeaderValue;
 use private::hmac::{Hmac, Mac};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -29,26 +29,41 @@ impl Private {
         where U: Debug + Send + 'static,
               U: for<'de> serde::Deserialize<'de>
     {
-        self._pub.get_sync_with_headers(uri, self.headers(uri))
+        self._pub.get_sync_with_req(self.request(Method::GET, uri))
     }
 
-    fn sign(&self, timestamp: u64, uri: &str) -> String {
+    pub fn set_sync<U>(&self, uri: &str) -> Result<U>
+        where U: Debug + Send + 'static,
+              U: for<'de> serde::Deserialize<'de>
+    {
+        self._pub.get_sync_with_req(self.request(Method::GET, uri))
+    }
+
+    fn sign(&self, timestamp: u64, method: Method, uri: &str) -> String {
         let key = base64::decode(&self.secret).expect("base64::decode secret");
         let mut mac: Hmac<sha2::Sha256> = Hmac::new_varkey(&key).expect("Hmac::new(key)");
-        mac.input((timestamp.to_string()+"GET"+uri+"").as_bytes());
+        mac.input((timestamp.to_string()+method.as_str()+uri+"").as_bytes());
         base64::encode(&mac.result().code())
     }
 
-    fn headers(&self, uri: &str) -> HeaderMap {
+    fn request(&self, method: Method, _uri: &str) -> Request<Body> {
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).expect("leap-second").as_secs();
 
-        let mut headers = HeaderMap::new();
-        headers.insert("CB-ACCESS-KEY", HeaderValue::from_str(&self.key).unwrap());
-        headers.insert("CB-ACCESS-SIGN", HeaderValue::from_str(&self.sign(timestamp, uri)).unwrap());
-        headers.insert("CB-ACCESS-TIMESTAMP", HeaderValue::from_str(&timestamp.to_string()).unwrap());
-        headers.insert("CB-ACCESS-PASSPHRASE", HeaderValue::from_str(&self.passphrase).unwrap());
-        trace!("{:?}", headers);
-        headers
+        let uri: Uri = (self._pub.uri.to_string() + _uri).parse().unwrap();
+
+        let mut req = Request::builder();
+        req.method(method.as_str());
+        req.uri(uri);
+
+        req.header("User-Agent", Public::USER_AGENT);
+        req.header("CB-ACCESS-KEY", HeaderValue::from_str(&self.key).unwrap());
+        req.header("CB-ACCESS-SIGN", HeaderValue::from_str(&self.sign(timestamp, method, _uri)).unwrap());
+        req.header("CB-ACCESS-TIMESTAMP", HeaderValue::from_str(&timestamp.to_string()).unwrap());
+        req.header("CB-ACCESS-PASSPHRASE", HeaderValue::from_str(&self.passphrase).unwrap());
+
+        trace!("{:?}", req);
+
+        req.body(Body::empty()).unwrap()
     }
 
     pub fn new(key: &str, secret: &str, passphrase: &str) -> Self {
@@ -79,9 +94,9 @@ impl Private {
         self.get_sync(&format!("/accounts/{}/holds", id))
     }
 
-//    pub fn set_order(&self) -> Result<Order> {
-//
-//    }
+    pub fn set_order(&self) -> Result<Order> {
+        self.set_sync(&format!("/orders"))
+    }
 }
 
 #[cfg(test)]
@@ -128,6 +143,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_get_account_holds() {
 //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
         let client = Private::new(KEY, SECRET, PASSPHRASE);

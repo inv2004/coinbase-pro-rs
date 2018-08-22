@@ -13,30 +13,28 @@ use error::*;
 use structs::public::*;
 
 pub struct Public {
-    uri: String,
-    client: Client<HttpsConnector<HttpConnector>>
+    pub uri: String,
+    client: Client<HttpsConnector<HttpConnector>>,
 }
 
 impl Public {
-    fn headers(&self) -> HeaderMap {
-        HeaderMap::new()
-    }
+    pub const USER_AGENT: &'static str = "coinbase-pro-rs/0.1.0";
 
-    pub fn get<U>(&self, uri: &str, headers: HeaderMap) -> impl Future<Item=U, Error=CBError>
-        where for<'de> U: serde::Deserialize<'de>
-    {
+    fn request(&self, uri: &str) -> Request<Body> {
         let uri: Uri = (self.uri.to_string() + uri).parse().unwrap();
-//        println!("{:?}", uri);
 
         let mut req = Request::get(uri);
-        req.header("User-Agent", "coinbase-pro-rs/0.1.0");
+        req.header("User-Agent", Self::USER_AGENT);
+        req.body(Body::empty()).unwrap()
+    }
 
-        headers.iter().for_each(|(k,v)| {
-            req.header(k, v);
-        });
+    pub fn get<U>(&self, request: Request<Body>) -> impl Future<Item=U, Error=CBError>
+        where for<'de> U: serde::Deserialize<'de>
+    {
+        debug!("{:?}", request);
 
         self.client
-            .request(req.body(Body::empty()).unwrap())
+            .request(request)
             .map_err(CBError::Http)
             .and_then(|res| {
                 res.into_body().concat2().map_err(CBError::Http)
@@ -55,19 +53,19 @@ impl Public {
             })
     }
 
-    pub fn get_sync_with_headers<U>(&self, uri: &str, headers: HeaderMap) -> Result<U>
+    pub fn get_sync_with_req<U>(&self, request: Request<Body>) -> Result<U>
         where U: Debug + Send + 'static,
               U: for<'de> serde::Deserialize<'de>
     {
         let mut rt = tokio::runtime::current_thread::Runtime::new().unwrap();
-        rt.block_on(self.get(uri, headers))
+        rt.block_on(self.get(request))
     }
 
     pub fn get_sync<U>(&self, uri: &str) -> Result<U>
         where U: Debug + Send + 'static,
               U: for<'de> serde::Deserialize<'de>
     {
-        self.get_sync_with_headers(uri, self.headers())
+        self.get_sync_with_req(self.request(uri))
     }
 
     pub fn new() -> Self {
