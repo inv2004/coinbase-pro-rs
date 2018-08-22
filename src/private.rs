@@ -37,6 +37,7 @@ impl Private {
               U: for<'de> serde::Deserialize<'de>
     {
         let body_str = json.to_string();
+//        self._pub.get_sync_with_req(self.request(Method::POST, uri, body_str))
         self._pub.get_sync_with_req(self.request(Method::POST, uri, body_str))
     }
 
@@ -54,16 +55,19 @@ impl Private {
         let uri: Uri = (self._pub.uri.to_string() + _uri).parse().unwrap();
 
         let mut req = Request::builder();
-        req.method(method.as_str());
+        req.method(&method);
         req.uri(uri);
+
+        let sign = self.sign(timestamp, method, _uri, &body_str);
+        println!("DEBUG2: {}", sign);
 
         req.header("User-Agent", Public::USER_AGENT);
         req.header("CB-ACCESS-KEY", HeaderValue::from_str(&self.key).unwrap());
-        req.header("CB-ACCESS-SIGN", HeaderValue::from_str(&self.sign(timestamp, method, _uri, &body_str)).unwrap());
+        req.header("CB-ACCESS-SIGN", HeaderValue::from_str(&sign).unwrap());
         req.header("CB-ACCESS-TIMESTAMP", HeaderValue::from_str(&timestamp.to_string()).unwrap());
         req.header("CB-ACCESS-PASSPHRASE", HeaderValue::from_str(&self.passphrase).unwrap());
 
-        req.body(body_str.into()).unwrap()
+        req.body("".into()).unwrap()
     }
 
     pub fn new(key: &str, secret: &str, passphrase: &str) -> Self {
