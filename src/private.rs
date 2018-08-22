@@ -85,12 +85,12 @@ mod tests {
     use super::*;
 
     static KEY: &str = "1d0dc0f7b4e808d430b95d8fed7df3ea";
-    static PASS_PHRASE: &str = "sandbox";
+    static PASSPHRASE: &str = "sandbox";
     static SECRET: &str = "dTUic8DZPqkS77vxhJFEX5IBr13FcFHTzWYOARgT9kDWGdN03uvxBbH/hVy8f4O5RDmuf+9wNpEfhYhw2FCWyA==";
 
     #[test]
     fn test_get_accounts() {
-        let client = Private::new(KEY, SECRET, PASS_PHRASE);
+        let client = Private::new(KEY, SECRET, PASSPHRASE);
         let accounts = client.get_accounts().unwrap();
         assert!(format!("{:?}", accounts)
             .contains(r#"currency: "BCH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#));
@@ -101,7 +101,7 @@ mod tests {
     #[test]
     fn test_get_account() {
 //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
-        let client = Private::new(KEY, SECRET, PASS_PHRASE);
+        let client = Private::new(KEY, SECRET, PASSPHRASE);
         let coin_acc = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "BTC").unwrap();
         let account = client.get_account(coin_acc.id);
         let account_str = format!("{:?}", account);
@@ -116,7 +116,7 @@ mod tests {
     #[test]
     fn test_get_account_hist() {
 //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
-        let client = Private::new(KEY, SECRET, PASS_PHRASE);
+        let client = Private::new(KEY, SECRET, PASSPHRASE);
         let coin_acc = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "USD").unwrap();
         let account = client.get_account_hist(coin_acc.id);
         let account_str = format!("{:?}", account);
@@ -126,7 +126,7 @@ mod tests {
     #[test]
     fn test_get_account_holds() {
 //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
-        let client = Private::new(KEY, SECRET, PASS_PHRASE);
+        let client = Private::new(KEY, SECRET, PASSPHRASE);
         let coin_acc = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "USD").unwrap();
         let acc_holds = client.get_account_holds(coin_acc.id);
         let str = format!("{:?}", acc_holds);
