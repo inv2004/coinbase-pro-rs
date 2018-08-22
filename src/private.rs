@@ -13,7 +13,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use super::Result;
-use structs::*;
+use structs::private::*;
 
 use public::Public;
 
@@ -78,6 +78,10 @@ impl Private {
     pub fn get_account_holds(&self, id: Uuid) -> Result<Vec<AccountHolds>> {
         self.get_sync(&format!("/accounts/{}/holds", id))
     }
+
+//    pub fn set_order(&self) -> Result<Order> {
+//
+//    }
 }
 
 #[cfg(test)]
@@ -132,7 +136,7 @@ mod tests {
         let str = format!("{:?}", acc_holds);
         //assert!(account_str.contains("transfer_type: Deposit"));
         //println!("{:?}", str);
-        assert!(false);
+        assert!(false); // TODO: holds are empty now
     }
 }
 

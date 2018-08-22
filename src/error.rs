@@ -1,4 +1,4 @@
-use structs::Error;
+use structs::other::Error;
 
 #[derive(Debug, Fail)]
 pub enum CBError {

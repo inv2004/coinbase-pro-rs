@@ -10,7 +10,7 @@ use hyper::rt::{Future, Stream};
 
 use super::Result;
 use error::*;
-use structs::*;
+use structs::public::*;
 
 pub struct Public {
     uri: String,

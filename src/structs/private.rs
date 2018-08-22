@@ -1,27 +1,9 @@
 use std::fmt;
 use serde_json::Value;
 use uuid::Uuid;
-use chrono;
 use utils::f64_from_string;
 use utils::usize_from_string;
-
-type DateTime = chrono::DateTime<chrono::Utc>;
-
-// Public
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Time {
-    pub iso: String,
-    pub epoch: f64
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Currency {
-    pub id: String,
-    pub name: String,
-    #[serde(deserialize_with = "f64_from_string")]
-    pub min_size: f64
-}
+use super::DateTime;
 
 // Private
 
@@ -125,15 +107,28 @@ pub enum AccountHoldsType {
     Order, Transfer
 }
 
-// Message
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Error {
-    message: String
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
+pub struct Order {
+    id: Uuid,
+    #[serde(deserialize_with = "f64_from_string")]
+    price: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    size: f64,
+    product_id: String,
+    side: String,
+    stp: String,
+    #[serde(rename = "type")]
+    _type: String,
+    time_in_force: String,
+    post_only: bool,
+    created_at: DateTime,
+    #[serde(deserialize_with = "f64_from_string")]
+    fill_fees: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    filled_size: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    executed_value: f64,
+    status: String,
+    settled: bool
 }
 
