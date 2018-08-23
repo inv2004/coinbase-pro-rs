@@ -2,6 +2,7 @@ use std::fmt;
 use serde_json::Value;
 use uuid::Uuid;
 use utils::f64_from_string;
+use utils::f64_opt_from_string;
 use utils::usize_from_string;
 use super::DateTime;
 
@@ -107,19 +108,20 @@ pub enum AccountHoldsType {
     Order, Transfer
 }
 
+
+// limit:{"id":"e9d0ff7a-ed50-4040-87a7-c884ae562807","price":"1.12000000","size":"1.00000000","product_id":"BTC-USD","side":"buy","stp":"dc","type":"limit","time_in_force":"GTC","post_only":true,"created_at":"2018-08-23T18:53:42.144811Z","fill_fees":"0.0000000000000000","filled_size":"0.00000000","executed_value":"0.0000000000000000","status":"pending","settled":false}
+// market:{"id":"ea565dc3-1656-49d7-bcdb-d99981ce35a7","size":"0.00100000","product_id":"BTC-USD","side":"buy","stp":"dc","funds":"28.2449436100000000","type":"market","post_only":false,"created_at":"2018-08-23T18:43:18.964413Z","fill_fees":"0.0000000000000000","filled_size":"0.00000000","executed_value":"0.0000000000000000","status":"pending","settled":false}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Order {
     id: Uuid,
     #[serde(deserialize_with = "f64_from_string")]
-    price: f64,
-    #[serde(deserialize_with = "f64_from_string")]
     size: f64,
     product_id: String,
-    side: String,
+    side: super::reqs::OrderSide,
     stp: String,
-    #[serde(rename = "type")]
-    _type: String,
-    time_in_force: String,
+    #[serde(flatten)]
+    _type: OrderType,
     post_only: bool,
     created_at: DateTime,
     #[serde(deserialize_with = "f64_from_string")]
@@ -128,7 +130,32 @@ pub struct Order {
     filled_size: f64,
     #[serde(deserialize_with = "f64_from_string")]
     executed_value: f64,
-    status: String,
+    status: OrderStatus,
     settled: bool
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "type")]
+enum OrderType {
+    Limit {
+        #[serde(deserialize_with = "f64_from_string")]
+        price: f64,
+        #[serde(flatten)]
+        time_in_force: super::reqs::OrderTimeInForce
+    },
+    Market {
+        #[serde(default)]
+//        #[serde(deserialize_with = "f64_opt_from_string")]
+//        funds: Option<f64>
+        #[serde(deserialize_with = "f64_from_string")]
+        funds: f64
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub enum OrderStatus {
+    Open, Done, Pending
 }
 

@@ -10,10 +10,11 @@ use hyper::header::HeaderValue;
 use private::hmac::{Hmac, Mac};
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
-use serde_json::Value;
+use serde_json::{self, Value};
 
 use super::Result;
 use structs::private::*;
+use structs::reqs;
 
 use public::Public;
 
@@ -32,12 +33,12 @@ impl Private {
         self._pub.get_sync_with_req(self.request(Method::GET, uri, "".to_string()))
     }
 
-    pub fn post_sync<U>(&self, uri: &str, json: Value) -> Result<U>
+    pub fn post_sync<U>(&self, uri: &str, order: reqs::Order) -> Result<U>
         where U: Debug + Send + 'static,
               U: for<'de> serde::Deserialize<'de>
     {
-        let body_str = json.to_string();
-//        self._pub.get_sync_with_req(self.request(Method::POST, uri, body_str))
+        let body_str = serde_json::to_string(&order)
+            .expect("cannot to_string post body");
         self._pub.get_sync_with_req(self.request(Method::POST, uri, body_str))
     }
 
@@ -114,10 +115,30 @@ impl Private {
         self.get_sync(&format!("/accounts/{}/holds", id))
     }
 
-    fn set_order(&self) -> Result<Order> {
-        let json = json!({"price":"1.0","size":"1.0","side":"buy","product_id":"BTC-USD"});
-        // not sure if struct ser is better than json-Value is the case
-        self.post_sync(&format!("/orders"), json)
+    fn set_order(&self, order: reqs::Order) -> Result<Order> {
+        self.post_sync(&format!("/orders"), order)
+    }
+
+    pub fn buy_limit(&self, product_id: &str, size: f64
+        , price: f64, post_only: bool) -> Result<Order> {
+        self.set_order(reqs::Order::limit(product_id
+            , reqs::OrderSide::Buy, size, price, post_only))
+    }
+
+    pub fn sell_limit(&self, product_id: &str, size: f64
+        , price: f64, post_only: bool) -> Result<Order> {
+        self.set_order(reqs::Order::limit(product_id
+            , reqs::OrderSide::Sell, size, price, post_only))
+    }
+
+    pub fn buy_market(&self, product_id: &str, size: f64) -> Result<Order> {
+        self.set_order(reqs::Order::market(product_id
+            , reqs::OrderSide::Buy, size))
+    }
+
+    pub fn sell_market(&self, product_id: &str, size: f64) -> Result<Order> {
+        self.set_order(reqs::Order::market(product_id
+            , reqs::OrderSide::Sell, size))
     }
 
 }
@@ -179,14 +200,49 @@ mod tests {
     }
 
     #[test]
-    fn test_set_order() {
-//        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
+    fn test_new_order_ser() {
+        let order = reqs::Order::market("BTC-UST", reqs::OrderSide::Buy, 1.1);
+        let str = serde_json::to_string(&order).unwrap();
+        assert_eq!(vec![0],
+                   str.match_indices("{").map(|(x,_)| x).collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn test_set_order_limit() {
         let client = Private::new(KEY, SECRET, PASSPHRASE);
-        let order = client.set_order();
+        let order = client.buy_limit("BTC-USD", 1.0, 1.12, true).unwrap();
         let str = format!("{:?}", order);
-        //assert!(account_str .contains("transfer_type: Deposit"));
-        println!("{:?}", str);
-        assert!(false);
+        assert!(str.contains("side: Buy"));
+        assert!(str.contains("_type: Limit {"));
+        let order = client.sell_limit("BTC-USD", 0.001, 100000.0, true).unwrap();
+        let str = format!("{:?}", order);
+        assert!(str.contains("side: Sell"));
+        assert!(str.contains("_type: Limit {"));
+    }
+
+    #[test]
+    fn test_set_order_limit_gtc() {
+        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let order = client.buy_limit("BTC-USD", 1.0, 1.12, true).unwrap();
+        let str = format!("{:?}", order);
+        assert!(str.contains("side: Buy"));
+        assert!(str.contains("_type: Limit {"));
+    }
+
+    #[test]
+    fn test_set_order_market() {
+        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let order = client.buy_market("BTC-USD", 0.001).unwrap();
+        let str = format!("{:?}", order);
+        println!("{}", str);
+        assert!(str.contains("side: Buy"));
+        assert!(str.contains("_type: Market {"));
+        let order = client.sell_market("BTC-USD", 0.001).unwrap();
+        let str = format!("{:?}", order);
+        assert!(str.contains("side: Sell"));
+        assert!(str.contains("_type: Market {"));
     }
 }
+
+
 
