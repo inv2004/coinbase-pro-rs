@@ -41,13 +41,28 @@ impl Private {
         self._pub.get_sync_with_req(self.request(Method::POST, uri, body_str))
     }
 
-    fn sign(&self, timestamp: u64, method: Method, uri: &str, body_str: &str) -> String {
+    fn  sign(&self, timestamp: u64, method: Method, uri: &str, body_str: &str) -> String {
         let key = base64::decode(&self.secret).expect("base64::decode secret");
         let mut mac: Hmac<sha2::Sha256> = Hmac::new_varkey(&key).expect("Hmac::new(key)");
         mac.input((timestamp.to_string()+method.as_str()+uri+body_str).as_bytes());
-        println!("DEBUG: {}", timestamp.to_string()+method.as_str()+uri+body_str);
         base64::encode(&mac.result().code())
     }
+
+//   from python
+//POST /orders HTTP/1.1
+//Host: localhost:3000
+//User-Agent: python-requests/2.13.0
+//Accept-Encoding: gzip, deflate
+//Accept: */*
+//Connection: keep-alive
+//Content-Length: 92
+//Content-Type: Application/JSON
+//CB-ACCESS-SIGN: Hy8vbkj3r/XoaT46oQveZs8OIl6zX/xRR6lKTSvfxuk=
+//CB-ACCESS-TIMESTAMP: 1535003621.005189
+//CB-ACCESS-KEY: 1d0dc0f7b4e808d430b95d8fed7df3ea
+//CB-ACCESS-PASSPHRASE: sandbox
+//
+//{"product_id": "BTC-USD", "side": "buy", "type": "limit", "price": "100.00", "size": "0.01"}
 
     fn request(&self, method: Method, _uri: &str, body_str: String) -> Request<Body> {
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).expect("leap-second").as_secs();
@@ -59,15 +74,16 @@ impl Private {
         req.uri(uri);
 
         let sign = self.sign(timestamp, method, _uri, &body_str);
-        println!("DEBUG2: {}", sign);
 
         req.header("User-Agent", Public::USER_AGENT);
+        req.header("Content-Type", "Application/JSON");
+//        req.header("Accept", "*/*");
         req.header("CB-ACCESS-KEY", HeaderValue::from_str(&self.key).unwrap());
         req.header("CB-ACCESS-SIGN", HeaderValue::from_str(&sign).unwrap());
         req.header("CB-ACCESS-TIMESTAMP", HeaderValue::from_str(&timestamp.to_string()).unwrap());
         req.header("CB-ACCESS-PASSPHRASE", HeaderValue::from_str(&self.passphrase).unwrap());
 
-        req.body("".into()).unwrap()
+        req.body(body_str.into()).unwrap()
     }
 
     pub fn new(key: &str, secret: &str, passphrase: &str) -> Self {
@@ -98,14 +114,14 @@ impl Private {
         self.get_sync(&format!("/accounts/{}/holds", id))
     }
 
-    pub fn set_order(&self) -> Result<Order> {
-        let json = json!({
-            "size": 0.001.to_string(),
-            "price": 0.001.to_string(),
-            "side": "buy",
-            "product_id": "BTC-USD"
-            });
+    fn set_order(&self) -> Result<Order> {
+        let json = json!({"price":"1.0","size":"1.0","side":"buy","product_id":"BTC-USD"});
+        // not sure if struct ser is better than json-Value is the case
         self.post_sync(&format!("/orders"), json)
+    }
+
+    pub fn buy_market(&self, product_id: &str, price: f64, size: f64) -> Result<Order> {
+
     }
 }
 
@@ -171,7 +187,7 @@ mod tests {
         let client = Private::new(KEY, SECRET, PASSPHRASE);
         let order = client.set_order();
         let str = format!("{:?}", order);
-        //assert!(account_str.contains("transfer_type: Deposit"));
+        //assert!(account_str .contains("transfer_type: Deposit"));
         println!("{:?}", str);
         assert!(false);
     }
