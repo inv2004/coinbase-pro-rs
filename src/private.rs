@@ -120,9 +120,6 @@ impl Private {
         self.post_sync(&format!("/orders"), json)
     }
 
-    pub fn buy_market(&self, product_id: &str, price: f64, size: f64) -> Result<Order> {
-
-    }
 }
 
 #[cfg(test)]
