@@ -39,6 +39,7 @@ impl Private {
     {
         let body_str = serde_json::to_string(&order)
             .expect("cannot to_string post body");
+        println!("DEBUG1: {}", body_str);
         self._pub.get_sync_with_req(self.request(Method::POST, uri, body_str))
     }
 
@@ -119,16 +120,16 @@ impl Private {
         self.post_sync(&format!("/orders"), order)
     }
 
-    pub fn buy_limit(&self, product_id: &str, size: f64
-        , price: f64, post_only: bool) -> Result<Order> {
+    pub fn buy_limit(&self, product_id: &str, size: f64, price: f64, post_only: bool
+                     , time_in_force: Option<reqs::OrderTimeInForce>) -> Result<Order> {
         self.set_order(reqs::Order::limit(product_id
-            , reqs::OrderSide::Buy, size, price, post_only))
+            , reqs::OrderSide::Buy, size, price, post_only, time_in_force))
     }
 
-    pub fn sell_limit(&self, product_id: &str, size: f64
-        , price: f64, post_only: bool) -> Result<Order> {
+    pub fn sell_limit(&self, product_id: &str, size: f64, price: f64, post_only: bool
+                      , time_in_force: Option<reqs::OrderTimeInForce>) -> Result<Order> {
         self.set_order(reqs::Order::limit(product_id
-            , reqs::OrderSide::Sell, size, price, post_only))
+            , reqs::OrderSide::Sell, size, price, post_only, time_in_force))
     }
 
     pub fn buy_market(&self, product_id: &str, size: f64) -> Result<Order> {
@@ -183,7 +184,8 @@ mod tests {
         let coin_acc = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "USD").unwrap();
         let account = client.get_account_hist(coin_acc.id);
         let account_str = format!("{:?}", account);
-        assert!(account_str.contains("transfer_type: Deposit"));
+//        println!("{}", account_str);
+        assert!(account_str.contains("type: Match, details: Match"));
     }
 
     #[test]
@@ -194,7 +196,7 @@ mod tests {
         let coin_acc = client.get_accounts().unwrap().into_iter().find(|x| x.currency == "USD").unwrap();
         let acc_holds = client.get_account_holds(coin_acc.id);
         let str = format!("{:?}", acc_holds);
-        //assert!(account_str.contains("transfer_type: Deposit"));
+//        assert!(account_str.contains("transfer_type: Deposit"));
         //println!("{:?}", str);
         assert!(false); // TODO: holds are empty now
     }
@@ -210,11 +212,11 @@ mod tests {
     #[test]
     fn test_set_order_limit() {
         let client = Private::new(KEY, SECRET, PASSPHRASE);
-        let order = client.buy_limit("BTC-USD", 1.0, 1.12, true).unwrap();
+        let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
         let str = format!("{:?}", order);
         assert!(str.contains("side: Buy"));
         assert!(str.contains("_type: Limit {"));
-        let order = client.sell_limit("BTC-USD", 0.001, 100000.0, true).unwrap();
+        let order = client.sell_limit("BTC-USD", 0.001, 100000.0, true, None).unwrap();
         let str = format!("{:?}", order);
         assert!(str.contains("side: Sell"));
         assert!(str.contains("_type: Limit {"));
@@ -223,10 +225,12 @@ mod tests {
     #[test]
     fn test_set_order_limit_gtc() {
         let client = Private::new(KEY, SECRET, PASSPHRASE);
-        let order = client.buy_limit("BTC-USD", 1.0, 1.12, true).unwrap();
+        let order = client.buy_limit("BTC-USD", 1.0, 1.12, true
+            , Some(reqs::OrderTimeInForce::GTT {
+                cancel_after: reqs::OrderTimeInForceCancelAfter::Min
+            })).unwrap();
         let str = format!("{:?}", order);
-        assert!(str.contains("side: Buy"));
-        assert!(str.contains("_type: Limit {"));
+        assert!(str.contains("time_in_force: GTT { expire_time: 2"));
     }
 
     #[test]
@@ -234,7 +238,6 @@ mod tests {
         let client = Private::new(KEY, SECRET, PASSPHRASE);
         let order = client.buy_market("BTC-USD", 0.001).unwrap();
         let str = format!("{:?}", order);
-        println!("{}", str);
         assert!(str.contains("side: Buy"));
         assert!(str.contains("_type: Market {"));
         let order = client.sell_market("BTC-USD", 0.001).unwrap();

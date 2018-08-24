@@ -19,7 +19,9 @@ pub enum OrderType {
     Limit {
         price: f64,
         size: f64,
-        post_only: bool
+        post_only: bool,
+        #[serde(flatten)]
+        time_in_force: Option<OrderTimeInForce>
     },
     Market {
         #[serde(flatten)]
@@ -48,11 +50,12 @@ impl<'a> Order<'a> {
         }
     }
 
-    pub fn limit(product_id: &'a str, side: OrderSide, size: f64, price: f64, post_only: bool) -> Self {
+    pub fn limit(product_id: &'a str, side: OrderSide, size: f64
+                 , price: f64, post_only: bool, time_in_force: Option<OrderTimeInForce>) -> Self {
         Order {
             product_id,
             side,
-            _type: OrderType::Limit{price, size, post_only}
+            _type: OrderType::Limit{price, size, post_only, time_in_force}
         }
     }
 }
@@ -61,7 +64,6 @@ impl<'a> Order<'a> {
 #[serde(tag = "time_in_force")]
 pub enum OrderTimeInForce {
     GTC, GTT {
-        #[serde(flatten)]
         cancel_after: OrderTimeInForceCancelAfter
     }, IOC, FOK
 }

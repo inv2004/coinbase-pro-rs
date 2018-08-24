@@ -28,3 +28,11 @@ pub fn usize_from_string<'de, D>(d: D) -> Result<usize, D::Error>
 {
     from_string(d)
 }
+
+pub fn datetime_from_string<'de, D>(d: D) -> Result<super::structs::DateTime, D::Error>
+    where D: Deserializer<'de>
+{
+    let s = String::deserialize(d)?;
+    (s+"Z").parse().map_err(de::Error::custom)
+}
+

@@ -3,6 +3,7 @@ use serde_json::Value;
 use uuid::Uuid;
 use utils::f64_from_string;
 use utils::f64_opt_from_string;
+use utils::datetime_from_string;
 use utils::usize_from_string;
 use super::DateTime;
 
@@ -142,7 +143,7 @@ enum OrderType {
         #[serde(deserialize_with = "f64_from_string")]
         price: f64,
         #[serde(flatten)]
-        time_in_force: super::reqs::OrderTimeInForce
+        time_in_force: OrderTimeInForce
     },
     Market {
         #[serde(default)]
@@ -151,6 +152,15 @@ enum OrderType {
         #[serde(deserialize_with = "f64_from_string")]
         funds: f64
     }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "time_in_force")]
+pub enum OrderTimeInForce {
+    GTC, GTT {
+        #[serde(deserialize_with = "datetime_from_string")]
+        expire_time: DateTime
+    }, IOC, FOK
 }
 
 #[derive(Serialize, Deserialize, Debug)]
