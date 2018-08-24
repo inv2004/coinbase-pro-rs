@@ -2,32 +2,32 @@
 Supports SYNC and ASYNC operations.
 
 ## Api supported:
-SYNC:  done
-ASYNC: NONE
+* SYNC:  done
+* ASYNC: NONE
 
 ## Methods
 * Public:
-.. * /time
-    * /products          NONE
-    * /currencies
+* /time
+* /products          NONE
+* /currencies
 
 Private:
-    * /accounts          GET
-    * /accounts/*
-    * /accounts/*/ledger
-    * /accounts/*/holds
-    * /orders            POST types: limit, market, stop, time_in_force, post
-    * /orders/*          DELETE
-    * /orders            DELETE
-    * /orders            GET
-    * /orders/*          GET
-    * /fills             GET
-    * /deposits          NONE
-    * /withdrawals       NONE
-    * /payment-methods   NONE
-    * /coinbase-accounts NONE
-    * /reports           NONE
-    * /users/self/trailing-volume  NONE
+* /accounts          GET
+* /accounts/*
+* /accounts/*/ledger
+* /accounts/*/holds
+* /orders            POST types: limit, market, stop, time_in_force, post
+* /orders/*          DELETE
+* /orders            DELETE
+* /orders            GET
+* /orders/*          GET
+* /fills             GET
+* /deposits          NONE
+* /withdrawals       NONE
+* /payment-methods   NONE
+* /coinbase-accounts NONE
+* /reports           NONE
+* /users/self/trailing-volume  NONE
 
 ## WebSocket:  NONE
 * heartbeat
