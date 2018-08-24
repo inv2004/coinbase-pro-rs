@@ -6,8 +6,8 @@ SYNC:  done
 ASYNC: NONE
 
 ## Methods
-Public:
-    * /time
+* Public:
+.. * /time
     * /products          NONE
     * /currencies
 
@@ -30,12 +30,12 @@ Private:
     * /users/self/trailing-volume  NONE
 
 ## WebSocket:  NONE
-    * heartbeat
-    * ticker
-    * level2
-    * user
-    * matches
-    * full
+* heartbeat
+* ticker
+* level2
+* user
+* matches
+* full
 
 ## OrderBook
 After websocket
