@@ -194,3 +194,14 @@ pub enum FillLiquidity {
     M, T
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TrailingVolume {
+    product_id: String,
+    #[serde(deserialize_with = "f64_from_string")]
+    exchange_volume: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    volume: f64,
+    recorded_at: DateTime
+}
+
+

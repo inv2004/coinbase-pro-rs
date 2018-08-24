@@ -194,6 +194,10 @@ impl Private {
         }
         self.get_sync(&format!("/fills{}", String::from_utf8(param).unwrap()))
     }
+
+    pub fn get_trailing_volume(&self) -> Result<Vec<TrailingVolume>> {
+        self.get_sync("/users/self/trailing-volume")
+    }
 }
 
 #[cfg(test)]
@@ -341,6 +345,14 @@ mod tests {
         let fills = client.get_fills(None, Some("BTC-USD")).unwrap();
         let str = format!("{:?}", fills);
         assert!(str.contains("Fill { trade_id: "));
+    }
+
+    #[test]
+    fn test_get_trailing_volume() {
+        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let vols = client.get_trailing_volume().unwrap();
+        let str = format!("{:?}", vols);
+        assert!(str == "[]"); // nothing now
     }
 }
 
