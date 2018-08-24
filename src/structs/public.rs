@@ -115,5 +115,34 @@ pub struct Trades {
     side: super::reqs::OrderSide
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Candles (
+    usize, // time
+    f64,   // low
+    f64,   // high
+    f64,   // open
+    f64,   // close
+    f64    // volume
+)
 
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Stats24H {
+    #[serde(deserialize_with = "f64_from_string")]
+    open: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    high: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    low: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    volume: f64
+}
+
+pub enum Granularity {
+    1M = 60,
+    5M = 300,
+    15M = 900,
+    1H = 3600,
+    6H = 21600,
+    1D = 86400
+}

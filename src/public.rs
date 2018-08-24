@@ -104,6 +104,11 @@ impl Public {
         self.get_sync(&format!("/products/{}/trades", product_id))
     }
 
+    pub fn get_candles(&self, product_id: &str, start: Option<DateTime>
+        , end: Option<DateTime>, granularity: Granularity) -> Result<Vec<Trades>> {
+        self.get_sync(&format!("/products/{}/candles", product_id))
+    }
+
     pub fn get_currencies(&self) -> Result<Vec<Currency>> {
         self.get_sync("/currencies")
     }
