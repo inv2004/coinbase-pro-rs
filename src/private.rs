@@ -30,7 +30,7 @@ impl Private {
         where U: Debug + Send + 'static,
               U: for<'de> serde::Deserialize<'de>
     {
-        self._pub.get_sync_with_req(self.request(Method::GET, uri, "".to_string()))
+        self._pub.get_sync_with_req(self.request(Method::GET, uri, "".to_string())) // TODO: to &str
     }
 
     pub fn post_sync<U>(&self, uri: &str, order: reqs::Order) -> Result<U>
@@ -39,8 +39,14 @@ impl Private {
     {
         let body_str = serde_json::to_string(&order)
             .expect("cannot to_string post body");
-        println!("DEBUG1: {}", body_str);
         self._pub.get_sync_with_req(self.request(Method::POST, uri, body_str))
+    }
+
+    pub fn delete_sync<U>(&self, uri: &str) -> Result<U>
+        where U: Debug + Send + 'static,
+              U: for<'de> serde::Deserialize<'de>
+    {
+        self._pub.get_sync_with_req(self.request(Method::DELETE, uri, "".to_string()))
     }
 
     fn  sign(&self, timestamp: u64, method: Method, uri: &str, body_str: &str) -> String {
@@ -116,7 +122,7 @@ impl Private {
         self.get_sync(&format!("/accounts/{}/holds", id))
     }
 
-    fn set_order(&self, order: reqs::Order) -> Result<Order> {
+    pub fn set_order(&self, order: reqs::Order) -> Result<Order> {
         self.post_sync(&format!("/orders"), order)
     }
 
@@ -142,6 +148,19 @@ impl Private {
             , reqs::OrderSide::Sell, size))
     }
 
+//    pub fn buy<'a>(&self) -> OrderBuilder<'a> {}    // TODO: OrderBuilder
+
+    pub fn cancel_order(&self, id: Uuid) -> Result<Uuid> {
+        self.delete_sync(&format!("/orders/{}", id))
+            .map(|r: Vec<Uuid>| r.first().unwrap().clone())
+    }
+
+    pub fn cancel_all(&self, product_id: Option<&str>) -> Result<Vec<Uuid>> {
+        let param = product_id
+            .map(|x| format!("?product_id={}", x))
+            .unwrap_or_default();
+        self.delete_sync(&format!("/orders{}", param))
+    }
 }
 
 #[cfg(test)]
@@ -229,6 +248,7 @@ mod tests {
             , Some(reqs::OrderTimeInForce::GTT {
                 cancel_after: reqs::OrderTimeInForceCancelAfter::Min
             })).unwrap();
+//        let order = client.buy("BTC-USD", 1.0).limit(1.0, 1.12).post_only().gtt(min).send()
         let str = format!("{:?}", order);
         assert!(str.contains("time_in_force: GTT { expire_time: 2"));
     }
@@ -244,6 +264,24 @@ mod tests {
         let str = format!("{:?}", order);
         assert!(str.contains("side: Sell"));
         assert!(str.contains("_type: Market {"));
+    }
+
+    #[test]
+    fn test_cancel_order() {
+        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
+        let res = client.cancel_order(order.id).unwrap();
+        assert_eq!(order.id, res);
+    }
+
+    #[test]
+    fn test_cancel_all() {
+        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let order1 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
+        let order2 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
+        let res = client.cancel_all(Some("BTC-USD")).unwrap();
+        assert!(res.iter().find(|x| **x == order1.id).is_some());
+        assert!(res.iter().find(|x| **x == order2.id).is_some());
     }
 }
 

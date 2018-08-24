@@ -115,7 +115,7 @@ pub enum AccountHoldsType {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Order {
-    id: Uuid,
+    pub id: Uuid,
     #[serde(deserialize_with = "f64_from_string")]
     size: f64,
     product_id: String,

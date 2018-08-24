@@ -4,6 +4,8 @@ pub struct Order<'a> {
     product_id: &'a str,
     #[serde(flatten)]
     _type: OrderType,
+    #[serde(flatten)]
+    stop: Option<OrderStop>
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -46,7 +48,8 @@ impl<'a> Order<'a> {
         Order {
             product_id,
             side,
-            _type: OrderType::Market{_type: MarketType::Size {size}}
+            _type: OrderType::Market{_type: MarketType::Size {size}},
+            stop: None
         }
     }
 
@@ -55,7 +58,8 @@ impl<'a> Order<'a> {
         Order {
             product_id,
             side,
-            _type: OrderType::Limit{price, size, post_only, time_in_force}
+            _type: OrderType::Limit{price, size, post_only, time_in_force},
+            stop: None
         }
     }
 }
@@ -72,5 +76,18 @@ pub enum OrderTimeInForce {
 #[serde(rename_all = "camelCase")]
 pub enum OrderTimeInForceCancelAfter {
     Min, Hour, Day
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct OrderStop {
+    stop_price: f64,
+    _type: OrderStopType
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub enum OrderStopType {
+    Loss, Entry
 }
 
