@@ -2,40 +2,40 @@
 Supports SYNC and ASYNC operations.
 
 ## Api supported:
-`RGB(0,255,0)` SYNC:  done
-`RGB(255,0,0)` ASYNC: NONE
+SYNC:  done
+ASYNC: NONE
 
 ## Methods
 Public:
-    /time
-    /products          NONE
-    /currencies
+    * /time
+    * /products          NONE
+    * /currencies
 
 Private:
-    `RGB(0,255,0)` /accounts          GET
-    `RGB(0,255,0)` /accounts/*
-    `RGB(0,255,0)` /accounts/*/ledger
-    `RGB(0,255,0)` /accounts/*/holds
-    `RGB(0,255,0)` /orders            POST types: limit, market, stop, time_in_force, post
-    `RGB(0,255,0)` /orders/*          DELETE
-    `RGB(0,255,0)` /orders            DELETE
-    `RGB(0,255,0)` /orders            GET
-    `RGB(0,255,0)` /orders/*          GET
-    `RGB(0,255,0)` /fills             GET
-    `RGB(255,0,0)` /deposits          NONE
-    `RGB(255,0,0)` /withdrawals       NONE
-    `RGB(255,0,0)` /payment-methods   NONE
-    `RGB(255,0,0)` /coinbase-accounts NONE
-    `RGB(255,0,0)` /reports           NONE
-    `RGB(255,0,0)` /users/self/trailing-volume  NONE
+    * /accounts          GET
+    * /accounts/*
+    * /accounts/*/ledger
+    * /accounts/*/holds
+    * /orders            POST types: limit, market, stop, time_in_force, post
+    * /orders/*          DELETE
+    * /orders            DELETE
+    * /orders            GET
+    * /orders/*          GET
+    * /fills             GET
+    * /deposits          NONE
+    * /withdrawals       NONE
+    * /payment-methods   NONE
+    * /coinbase-accounts NONE
+    * /reports           NONE
+    * /users/self/trailing-volume  NONE
 
 ## WebSocket:  NONE
-    heartbeat
-    ticker
-    level2
-    user
-    matches
-    full
+    * heartbeat
+    * ticker
+    * level2
+    * user
+    * matches
+    * full
 
 ## OrderBook
 After websocket
