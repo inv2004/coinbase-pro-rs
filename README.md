@@ -17,7 +17,7 @@ Private:
 * /accounts/*/ledger
 * /accounts/*/holds
 * /orders            POST types: limit, market, stop, time_in_force, post
-* /orders/*          DELETE
+** /orders/*          DELETE
 * /orders            DELETE
 * /orders            GET
 * /orders/*          GET
