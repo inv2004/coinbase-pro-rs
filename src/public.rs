@@ -96,6 +96,14 @@ impl Public {
         self.get_sync(&format!("/products/{}/book?level={}", product_id, T::level()))
     }
 
+    pub fn get_ticker(&self, product_id: &str) -> Result<Ticker> {
+        self.get_sync(&format!("/products/{}/ticker", product_id))
+    }
+
+    pub fn get_trades(&self, product_id: &str) -> Result<Vec<Trades>> {
+        self.get_sync(&format!("/products/{}/trades", product_id))
+    }
+
     pub fn get_currencies(&self) -> Result<Vec<Currency>> {
         self.get_sync("/currencies")
     }

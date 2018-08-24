@@ -88,4 +88,32 @@ impl BookLevel for BookRecordL3 {
     fn level() -> u8 { 3 }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Ticker {
+    trade_id: usize,
+    #[serde(deserialize_with = "f64_from_string")]
+    price: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    size: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    bid: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    ask: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    volume: f64,
+    time: DateTime
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Trades {
+    time: DateTime,
+    trade_id: usize,
+    #[serde(deserialize_with = "f64_from_string")]
+    price: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    size: f64,
+    side: super::reqs::OrderSide
+}
+
+
 
