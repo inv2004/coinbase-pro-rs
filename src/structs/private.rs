@@ -171,3 +171,26 @@ pub enum OrderStatus {
     Open, Done, Pending, Active
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Fill {
+    pub trade_id: usize,
+    pub product_id: String,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub price: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub size: f64,
+    pub order_id: Uuid,
+    pub created_at: DateTime,
+    pub liquidity: FillLiquidity,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub fee: f64,
+    settled: bool,
+    side: super::reqs::OrderSide
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum FillLiquidity {
+    M, T
+}
+

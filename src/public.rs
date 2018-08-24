@@ -82,6 +82,7 @@ impl Public {
     pub fn get_time(&self) -> Result<Time> {
         self.get_sync("/time")
     }
+//    pub fn get_products(&self) -> Result<Vec<Product>> { self.get_sync}
     pub fn get_currencies(&self) -> Result<Vec<Currency>> {
         self.get_sync("/currencies")
     }

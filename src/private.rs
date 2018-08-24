@@ -180,7 +180,20 @@ impl Private {
         self.get_sync(&format!("/orders/{}", id))
     }
 
-
+    // DEPRECATION NOTICE - Requests without either order_id or product_id will be rejected after 8/23/18.
+    pub fn get_fills(&self, order_id: Option<Uuid>, product_id: Option<&str>) -> Result<Vec<Fill>> {
+        let param_order = order_id
+            .map(|x| format!("&order_id={}", x))
+            .unwrap_or_default();
+        let param_product = product_id
+            .map(|x| format!("&product_id={}", x))
+            .unwrap_or_default();
+        let mut param = (param_order + &param_product).into_bytes();
+        if param.len() > 0 {
+            param[0] = b'?';
+        }
+        self.get_sync(&format!("/fills{}", String::from_utf8(param).unwrap()))
+    }
 }
 
 #[cfg(test)]
@@ -321,7 +334,13 @@ mod tests {
         let order_res = client.get_order(order.id).unwrap();
         assert_eq!(order.id, order_res.id);
     }
+
+    #[test]
+    fn test_get_fills() {
+        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let fills = client.get_fills(None, Some("BTC-USD")).unwrap();
+        let str = format!("{:?}", fills);
+        assert!(str.contains("Fill { trade_id: "));
+    }
 }
-
-
 
