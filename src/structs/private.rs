@@ -112,6 +112,8 @@ pub enum AccountHoldsType {
 
 // limit:{"id":"e9d0ff7a-ed50-4040-87a7-c884ae562807","price":"1.12000000","size":"1.00000000","product_id":"BTC-USD","side":"buy","stp":"dc","type":"limit","time_in_force":"GTC","post_only":true,"created_at":"2018-08-23T18:53:42.144811Z","fill_fees":"0.0000000000000000","filled_size":"0.00000000","executed_value":"0.0000000000000000","status":"pending","settled":false}
 // market:{"id":"ea565dc3-1656-49d7-bcdb-d99981ce35a7","size":"0.00100000","product_id":"BTC-USD","side":"buy","stp":"dc","funds":"28.2449436100000000","type":"market","post_only":false,"created_at":"2018-08-23T18:43:18.964413Z","fill_fees":"0.0000000000000000","filled_size":"0.00000000","executed_value":"0.0000000000000000","status":"pending","settled":false}
+// get:[{"id":"063da13d-6aba-45e1-91ca-89f8514da989","price":"100000.00000000","size":"0.00100000","product_id":"BTC-USD","side":"sell","type":"limit","time_in_force":"GTC","post_only":true,"created_at":"2018-08-24T04:50:01.139098Z","fill_fees":"0.0000000000000000","filled_size":"0.00000000","executed_value":"0.0000000000000000","status":"open","settled":false}]
+
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Order {
@@ -120,7 +122,7 @@ pub struct Order {
     size: f64,
     product_id: String,
     side: super::reqs::OrderSide,
-    stp: String,
+    stp: Option<String>, // Options because its not in get_orders, but in set_order
     #[serde(flatten)]
     _type: OrderType,
     post_only: bool,
@@ -166,6 +168,6 @@ pub enum OrderTimeInForce {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub enum OrderStatus {
-    Open, Done, Pending
+    Open, Done, Pending, Active
 }
 

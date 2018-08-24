@@ -161,6 +161,26 @@ impl Private {
             .unwrap_or_default();
         self.delete_sync(&format!("/orders{}", param))
     }
+
+    pub fn get_orders(&self, status: Option<OrderStatus>, product_id: Option<&str>) -> Result<Vec<Order>> { // TODO rewrite
+        let param_status = product_id
+            .map(|x| format!("&product_id={}", x))
+            .unwrap_or_default();
+        let param_product = product_id
+            .map(|x| format!("&product_id={}", x))
+            .unwrap_or_default();
+        let mut param = (param_status + &param_product).into_bytes();
+        if param.len() > 0 {
+            param[0] = b'?';
+        }
+        self.get_sync(&format!("/orders{}", String::from_utf8(param).unwrap()))
+    }
+
+    pub fn get_order(&self, id: Uuid) -> Result<Order> {
+        self.get_sync(&format!("/orders/{}", id))
+    }
+
+
 }
 
 #[cfg(test)]
@@ -282,6 +302,24 @@ mod tests {
         let res = client.cancel_all(Some("BTC-USD")).unwrap();
         assert!(res.iter().find(|x| **x == order1.id).is_some());
         assert!(res.iter().find(|x| **x == order2.id).is_some());
+    }
+
+    #[test]
+    #[ignore]
+    fn test_get_orders() {
+        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let orders = client.get_orders(None, None).unwrap();
+        let str = format!("{:?}", orders);
+        println!("{}", str);
+        assert!(false);
+    }
+
+    #[test]
+    fn test_get_order() {
+        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
+        let order_res = client.get_order(order.id).unwrap();
+        assert_eq!(order.id, order_res.id);
     }
 }
 
