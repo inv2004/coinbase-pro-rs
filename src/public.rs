@@ -7,6 +7,7 @@ use hyper::{Client, Request, Body, Uri, HeaderMap};
 use hyper::client::HttpConnector;
 use hyper_tls::HttpsConnector;
 use hyper::rt::{Future, Stream};
+use serde::Deserialize;
 
 use super::Result;
 use error::*;
@@ -82,7 +83,19 @@ impl Public {
     pub fn get_time(&self) -> Result<Time> {
         self.get_sync("/time")
     }
-//    pub fn get_products(&self) -> Result<Vec<Product>> { self.get_sync}
+
+    pub fn get_products(&self) -> Result<Vec<Product>> {
+        self.get_sync("/products")
+    }
+
+    pub fn get_book<T>(&self, product_id: &str) -> Result<Book<T>>
+        where T: BookLevel + Debug + 'static,
+              T: super::std::marker::Send,
+              T: for<'de> Deserialize<'de>
+    {
+        self.get_sync(&format!("/products/{}/book?level={}", product_id, T::level()))
+    }
+
     pub fn get_currencies(&self) -> Result<Vec<Currency>> {
         self.get_sync("/currencies")
     }
