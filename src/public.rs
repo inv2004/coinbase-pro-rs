@@ -12,6 +12,7 @@ use serde::Deserialize;
 use super::Result;
 use error::*;
 use structs::public::*;
+use structs::DateTime;
 
 pub struct Public {
     pub uri: String,
@@ -100,12 +101,12 @@ impl Public {
         self.get_sync(&format!("/products/{}/ticker", product_id))
     }
 
-    pub fn get_trades(&self, product_id: &str) -> Result<Vec<Trades>> {
+    pub fn get_trades(&self, product_id: &str) -> Result<Vec<Trade>> {
         self.get_sync(&format!("/products/{}/trades", product_id))
     }
 
     pub fn get_candles(&self, product_id: &str, start: Option<DateTime>
-        , end: Option<DateTime>, granularity: Granularity) -> Result<Vec<Trades>> {
+        , end: Option<DateTime>, granularity: Granularity) -> Result<Vec<Trade>> {
         self.get_sync(&format!("/products/{}/candles", product_id))
     }
 
@@ -127,6 +128,49 @@ mod tests {
         assert!(time_str.contains("iso:"));
         assert!(time_str.contains("epoch:"));
         assert!(time_str.ends_with("}"));
+    }
+
+    #[test]
+    fn test_get_products() {
+        let client = Public::new();
+        let products = client.get_products().unwrap();
+        let str = format!("{:?}", products);
+        assert!(str.contains("{ id: \"BTC-USD\""));
+    }
+
+    #[test]
+    fn test_get_book() {
+        let client = Public::new();
+        let book_l1 = client.get_book::<BookRecordL1>("BTC-USD").unwrap();
+        let str1 = format!("{:?}", book_l1);
+        assert_eq!(1, book_l1.bids.len());
+        assert!(str1.contains("bids: [BookRecordL1"));
+        let book_l2 = client.get_book::<BookRecordL2>("BTC-USD").unwrap();
+        let str2 = format!("{:?}", book_l2);
+        assert!(book_l2.bids.len() > 1);
+        assert!(str2.contains("[BookRecordL2("));
+        let book_l3 = client.get_book::<BookRecordL3>("BTC-USD").unwrap();
+        let str3 = format!("{:?}", book_l3);
+        assert!(book_l2.bids.len() > 1);
+        assert!(str2.contains("[BookRecordL2("));
+    }
+
+    #[test]
+    fn test_get_ticker() {
+        let client = Public::new();
+        let ticker = client.get_ticker("BTC-USD").unwrap();
+        let str = format!("{:?}", ticker);
+        assert!(str.starts_with("Ticker { trade_id:"));
+        assert!(str.contains("time:"));
+    }
+
+    #[test]
+    fn test_get_trades() {
+        let client = Public::new();
+        let trades = client.get_trades("BTC-USD").unwrap();
+        assert!(trades.len() > 1);
+        let str = format!("{:?}", trades);
+        assert!(str.starts_with("[Trade { time: "));
     }
 
     #[test]

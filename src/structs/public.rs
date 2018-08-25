@@ -36,11 +36,9 @@ pub struct Product {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Book<T> {
-    #[serde(deserialize_with = "usize_from_string")]
-    sequence: usize,
-    bids: Vec<T>,
-    asks: Vec<T>
-
+    pub sequence: usize,
+    pub bids: Vec<T>,
+    pub asks: Vec<T>
 }
 
 pub trait BookLevel {
@@ -53,7 +51,6 @@ pub struct BookRecordL1 (
     f64,
     #[serde(deserialize_with = "f64_from_string")]
     f64,
-    #[serde(deserialize_with = "usize_from_string")]
     usize
 );
 
@@ -67,7 +64,6 @@ pub struct BookRecordL2 (
     f64,
     #[serde(deserialize_with = "f64_from_string")]
     f64,
-    #[serde(deserialize_with = "usize_from_string")]
     usize
 );
 
@@ -105,7 +101,7 @@ pub struct Ticker {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Trades {
+pub struct Trade {
     time: DateTime,
     trade_id: usize,
     #[serde(deserialize_with = "f64_from_string")]
@@ -123,7 +119,7 @@ pub struct Candles (
     f64,   // open
     f64,   // close
     f64    // volume
-)
+);
 
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -139,10 +135,11 @@ pub struct Stats24H {
 }
 
 pub enum Granularity {
-    1M = 60,
-    5M = 300,
-    15M = 900,
-    1H = 3600,
-    6H = 21600,
-    1D = 86400
+    M1 = 60,
+    M5 = 300,
+    M15 = 900,
+    H1 = 3600,
+    H6 = 21600,
+    D1 = 86400
 }
+
