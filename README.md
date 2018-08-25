@@ -2,15 +2,14 @@
 Supports SYNC and ASYNC operations.
 
 ## Api supported:
-* SYNC:  done
-* ASYNC: NONE
-
+- [x] SYNC
+- [ ] ASYNC
 
 ## API
 - [x] Requests
 - [ ] Pagination
 - [x] Types
-- Private
+- [x] Private
   - [x] Authentication
   - [x] Accounts
   - [x] Orders
@@ -25,7 +24,7 @@ Supports SYNC and ASYNC operations.
   - [x] Products
   - [x] Currencies
   - [x] Time
-- [] Websocket Feed
+- [ ] Websocket Feed
   - [ ] heartbeat
   - [ ] ticker
   - [ ] level2
