@@ -1,16 +1,16 @@
-use std::fmt;
+use super::DateTime;
 use serde_json::Value;
-use uuid::Uuid;
+use std::fmt;
 use utils::f64_from_string;
 use utils::usize_from_string;
-use super::DateTime;
+use uuid::Uuid;
 
 // Public
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Time {
     pub iso: String,
-    pub epoch: f64
+    pub epoch: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -18,7 +18,7 @@ pub struct Currency {
     pub id: String,
     pub name: String,
     #[serde(deserialize_with = "f64_from_string")]
-    pub min_size: f64
+    pub min_size: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -38,7 +38,7 @@ pub struct Product {
 pub struct Book<T> {
     pub sequence: usize,
     pub bids: Vec<T>,
-    pub asks: Vec<T>
+    pub asks: Vec<T>,
 }
 
 pub trait BookLevel {
@@ -46,42 +46,42 @@ pub trait BookLevel {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct BookRecordL1 (
-    #[serde(deserialize_with = "f64_from_string")]
-    f64,
-    #[serde(deserialize_with = "f64_from_string")]
-    f64,
-    usize
+pub struct BookRecordL1(
+    #[serde(deserialize_with = "f64_from_string")] f64,
+    #[serde(deserialize_with = "f64_from_string")] f64,
+    usize,
 );
 
 impl BookLevel for BookRecordL1 {
-    fn level() -> u8 { 1 }
+    fn level() -> u8 {
+        1
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct BookRecordL2 (
-    #[serde(deserialize_with = "f64_from_string")]
-    f64,
-    #[serde(deserialize_with = "f64_from_string")]
-    f64,
-    usize
+pub struct BookRecordL2(
+    #[serde(deserialize_with = "f64_from_string")] f64,
+    #[serde(deserialize_with = "f64_from_string")] f64,
+    usize,
 );
 
 impl BookLevel for BookRecordL2 {
-    fn level() -> u8 { 2 }
+    fn level() -> u8 {
+        2
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct BookRecordL3 (
-    #[serde(deserialize_with = "f64_from_string")]
-    f64,
-    #[serde(deserialize_with = "f64_from_string")]
-    f64,
-    Uuid
+pub struct BookRecordL3(
+    #[serde(deserialize_with = "f64_from_string")] f64,
+    #[serde(deserialize_with = "f64_from_string")] f64,
+    Uuid,
 );
 
 impl BookLevel for BookRecordL3 {
-    fn level() -> u8 { 3 }
+    fn level() -> u8 {
+        3
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -97,7 +97,7 @@ pub struct Ticker {
     ask: f64,
     #[serde(deserialize_with = "f64_from_string")]
     volume: f64,
-    time: DateTime
+    time: DateTime,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -108,19 +108,18 @@ pub struct Trade {
     price: f64,
     #[serde(deserialize_with = "f64_from_string")]
     size: f64,
-    side: super::reqs::OrderSide
+    side: super::reqs::OrderSide,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Candle (
+pub struct Candle(
     pub usize, // time
-    f64,   // low
-    f64,   // high
-    f64,   // open
-    f64,   // close
-    f64    // volume
+    f64,       // low
+    f64,       // high
+    f64,       // open
+    f64,       // close
+    f64,       // volume
 );
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Stats24H {
@@ -131,7 +130,7 @@ pub struct Stats24H {
     #[serde(deserialize_with = "f64_from_string")]
     low: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    volume: f64
+    volume: f64,
 }
 
 pub enum Granularity {
@@ -140,6 +139,5 @@ pub enum Granularity {
     M15 = 900,
     H1 = 3600,
     H6 = 21600,
-    D1 = 86400
+    D1 = 86400,
 }
-
