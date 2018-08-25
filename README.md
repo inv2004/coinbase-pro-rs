@@ -39,7 +39,8 @@ by request
 after Websocket
 
 ### test results
-cargo test -- --test-threads=1    // to avoid "Rate limit exceeded" error
+cargo test -- --test-threads=1
+// to avoid "Rate limit exceeded" error
 
 ```
 running 22 tests
