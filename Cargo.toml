@@ -2,6 +2,8 @@
 name = "coinbase-pro-rs"
 version = "0.1.0"
 authors = ["unknown <inv2004@gmail.com>"]
+description = "Coinbase pro client for Rust"
+license = "MIT/Apache-2.0"
 
 [dependencies]
 failure = "*"

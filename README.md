@@ -1,4 +1,4 @@
-# Coinbase Pro client for Rust
+# Coinbase pro client for Rust
 Supports SYNC and ASYNC operations.
 
 ## Api supported:
