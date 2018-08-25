@@ -10,6 +10,7 @@ extern crate futures;
 extern crate uuid;
 extern crate pretty_env_logger;
 extern crate chrono;
+extern crate time;
 
 pub mod error;
 pub mod structs;

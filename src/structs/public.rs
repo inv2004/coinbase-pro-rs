@@ -112,8 +112,8 @@ pub struct Trade {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Candles (
-    usize, // time
+pub struct Candle (
+    pub usize, // time
     f64,   // low
     f64,   // high
     f64,   // open

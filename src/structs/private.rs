@@ -2,7 +2,7 @@ use std::fmt;
 use serde_json::Value;
 use uuid::Uuid;
 use utils::f64_from_string;
-use utils::f64_opt_from_string;
+//use utils::f64_opt_from_string;
 use utils::datetime_from_string;
 use utils::usize_from_string;
 use super::DateTime;

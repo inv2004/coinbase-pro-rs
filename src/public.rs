@@ -105,9 +105,20 @@ impl Public {
         self.get_sync(&format!("/products/{}/trades", product_id))
     }
 
-    pub fn get_candles(&self, product_id: &str, start: Option<DateTime>
-        , end: Option<DateTime>, granularity: Granularity) -> Result<Vec<Trade>> {
-        self.get_sync(&format!("/products/{}/candles", product_id))
+    pub fn get_candles(&self, product_id: &str, start: Option<DateTime>, end: Option<DateTime>, granularity: Granularity) -> Result<Vec<Candle>> {
+        let param_start = start
+            .map(|x| format!("&start={}", x.to_rfc3339()))
+            .unwrap_or_default();
+        let param_end = end
+            .map(|x| format!("&end={}", x.to_rfc3339()))
+            .unwrap_or_default();
+
+        let req = format!("/products/{}/candles?granularity={}{}{}", product_id, granularity as usize, param_start, param_end);
+        self.get_sync(&req)
+    }
+
+    pub fn get_stats24h(&self, product_id: &str) -> Result<Stats24H> {
+        self.get_sync(&format!("/products/{}/stats", product_id))
     }
 
     pub fn get_currencies(&self) -> Result<Vec<Currency>> {
@@ -118,6 +129,8 @@ impl Public {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::prelude::*;
+    use time::Duration;
 
     #[test]
     fn test_get_time() {
@@ -171,6 +184,28 @@ mod tests {
         assert!(trades.len() > 1);
         let str = format!("{:?}", trades);
         assert!(str.starts_with("[Trade { time: "));
+    }
+
+    #[test]
+    fn test_get_candles() {
+        let client = Public::new();
+        let end = Utc::now();
+//        let start = end - Duration::minutes(10);
+        let candles = client.get_candles("BTC-USD", None, Some(end), Granularity::M1).unwrap();
+        let str = format!("{:?}", candles);
+//        println!("{}", str);
+        assert!(candles[0].0 > candles[1].0);
+    }
+
+    #[test]
+    fn test_get_stats24h() {
+        let client = Public::new();
+        let stats24h = client.get_stats24h("BTC-USD").unwrap();
+        let str = format!("{:?}", stats24h);
+        assert!(str.contains("open:"));
+        assert!(str.contains("high:"));
+        assert!(str.contains("low:"));
+        assert!(str.contains("volume:"));
     }
 
     #[test]

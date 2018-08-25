@@ -19,4 +19,5 @@ uuid = { version = "*", features = [ "serde", "v4" ] }
 log = "*"
 pretty_env_logger = "*"
 chrono = { version = "*", features = [ "serde" ] }
+time = "*"
 

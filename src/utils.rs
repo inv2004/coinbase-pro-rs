@@ -17,11 +17,11 @@ pub fn f64_from_string<'de, D>(d: D) -> Result<f64, D::Error>
     from_string(d)
 }
 
-pub fn f64_opt_from_string<'de, D>(d: D) -> Result<Option<f64>, D::Error>
-    where D: Deserializer<'de>
-{
-    from_string(d).map(Some)
-}
+//pub fn f64_opt_from_string<'de, D>(d: D) -> Result<Option<f64>, D::Error>
+//    where D: Deserializer<'de>
+//{
+//    from_string(d).map(Some)
+//}
 
 pub fn usize_from_string<'de, D>(d: D) -> Result<usize, D::Error>
     where D: Deserializer<'de>
