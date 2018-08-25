@@ -125,28 +125,28 @@ pub enum AccountHoldsType {
 pub struct Order {
     pub id: Uuid,
     #[serde(deserialize_with = "f64_from_string")]
-    size: f64,
-    product_id: String,
-    side: super::reqs::OrderSide,
-    stp: Option<String>, // Options because its not in get_orders, but in set_order
+    pub size: f64,
+    pub product_id: String,
+    pub side: super::reqs::OrderSide,
+    pub stp: Option<String>, // Options because its not in get_orders, but in set_order
     #[serde(flatten)]
-    _type: OrderType,
-    post_only: bool,
-    created_at: DateTime,
+    pub _type: OrderType,
+    pub post_only: bool,
+    pub created_at: DateTime,
     #[serde(deserialize_with = "f64_from_string")]
-    fill_fees: f64,
+    pub fill_fees: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    filled_size: f64,
+    pub filled_size: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    executed_value: f64,
-    status: OrderStatus,
-    settled: bool,
+    pub executed_value: f64,
+    pub status: OrderStatus,
+    pub settled: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "type")]
-enum OrderType {
+pub enum OrderType {
     Limit {
         #[serde(deserialize_with = "f64_from_string")]
         price: f64,
@@ -196,8 +196,8 @@ pub struct Fill {
     pub liquidity: FillLiquidity,
     #[serde(deserialize_with = "f64_from_string")]
     pub fee: f64,
-    settled: bool,
-    side: super::reqs::OrderSide,
+    pub settled: bool,
+    pub side: super::reqs::OrderSide,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -209,10 +209,10 @@ pub enum FillLiquidity {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TrailingVolume {
-    product_id: String,
+    pub product_id: String,
     #[serde(deserialize_with = "f64_from_string")]
-    exchange_volume: f64,
+    pub exchange_volume: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    volume: f64,
-    recorded_at: DateTime,
+    pub volume: f64,
+    pub recorded_at: DateTime,
 }

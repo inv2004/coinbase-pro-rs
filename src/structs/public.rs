@@ -24,14 +24,14 @@ pub struct Currency {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Product {
     pub id: String,
-    base_currency: String,
-    quote_currency: String,
+    pub base_currency: String,
+    pub quote_currency: String,
     #[serde(deserialize_with = "f64_from_string")]
-    base_min_size: f64,
+    pub base_min_size: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    base_max_size: f64,
+    pub base_max_size: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    quote_increment: f64,
+    pub quote_increment: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -47,9 +47,11 @@ pub trait BookLevel {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BookRecordL1(
-    #[serde(deserialize_with = "f64_from_string")] f64,
-    #[serde(deserialize_with = "f64_from_string")] f64,
-    usize,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub f64,
+    pub usize,
 );
 
 impl BookLevel for BookRecordL1 {
@@ -60,9 +62,11 @@ impl BookLevel for BookRecordL1 {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BookRecordL2(
-    #[serde(deserialize_with = "f64_from_string")] f64,
-    #[serde(deserialize_with = "f64_from_string")] f64,
-    usize,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub f64,
+    pub usize,
 );
 
 impl BookLevel for BookRecordL2 {
@@ -73,9 +77,11 @@ impl BookLevel for BookRecordL2 {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BookRecordL3(
-    #[serde(deserialize_with = "f64_from_string")] f64,
-    #[serde(deserialize_with = "f64_from_string")] f64,
-    Uuid,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub f64,
+    pub Uuid,
 );
 
 impl BookLevel for BookRecordL3 {
@@ -86,51 +92,51 @@ impl BookLevel for BookRecordL3 {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Ticker {
-    trade_id: usize,
+    pub trade_id: usize,
     #[serde(deserialize_with = "f64_from_string")]
-    price: f64,
+    pub price: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    size: f64,
+    pub size: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    bid: f64,
+    pub bid: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    ask: f64,
+    pub ask: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    volume: f64,
-    time: DateTime,
+    pub volume: f64,
+    pub time: DateTime,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Trade {
-    time: DateTime,
-    trade_id: usize,
+    pub time: DateTime,
+    pub trade_id: usize,
     #[serde(deserialize_with = "f64_from_string")]
-    price: f64,
+    pub price: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    size: f64,
-    side: super::reqs::OrderSide,
+    pub size: f64,
+    pub side: super::reqs::OrderSide,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Candle(
     pub usize, // time
-    f64,       // low
-    f64,       // high
-    f64,       // open
-    f64,       // close
-    f64,       // volume
+    pub f64,   // low
+    pub f64,   // high
+    pub f64,   // open
+    pub f64,   // close
+    pub f64,   // volume
 );
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Stats24H {
     #[serde(deserialize_with = "f64_from_string")]
-    open: f64,
+    pub open: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    high: f64,
+    pub high: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    low: f64,
+    pub low: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    volume: f64,
+    pub volume: f64,
 }
 
 pub enum Granularity {
