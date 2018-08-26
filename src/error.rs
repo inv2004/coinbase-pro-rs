@@ -6,13 +6,12 @@ pub enum CBError {
     Http(#[cause] super::hyper::Error),
     #[fail(display = "serde: {}\n    {}", error, data)]
     Serde {
-        #[cause] error: super::serde_json::Error,
-        data: String
+        #[cause]
+        error: super::serde_json::Error,
+        data: String,
     },
     #[fail(display = "coinbase: {}", _0)]
-    Coinbase (Error),
+    Coinbase(Error),
     #[fail(display = "null")]
-    Null
+    Null,
 }
-
-

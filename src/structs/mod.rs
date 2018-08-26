@@ -1,7 +1,7 @@
 use chrono;
 pub type DateTime = chrono::DateTime<chrono::Utc>;
 
-pub mod public;
-pub mod private;
 pub mod other;
+pub mod private;
+pub mod public;
 pub mod reqs;

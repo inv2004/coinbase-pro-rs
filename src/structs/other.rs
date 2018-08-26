@@ -3,7 +3,7 @@ use std::fmt;
 // Message
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Error {
-    message: String
+    message: String,
 }
 
 impl fmt::Display for Error {
@@ -11,4 +11,3 @@ impl fmt::Display for Error {
         write!(f, "{}", self.message)
     }
 }
-
