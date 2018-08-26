@@ -17,8 +17,8 @@ extern crate tokio;
 extern crate uuid;
 
 pub mod error;
-mod private;
-mod public;
+pub mod private;
+pub mod public;
 pub mod structs;
 mod utils;
 
