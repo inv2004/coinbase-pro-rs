@@ -14,8 +14,8 @@ extern crate chrono;
 pub mod error;
 pub mod structs;
 mod utils;
-mod private;
-mod public;
+pub mod private;
+pub mod public;
 
 use error::*;
 
