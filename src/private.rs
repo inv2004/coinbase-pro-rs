@@ -17,11 +17,12 @@ use super::Result;
 use structs::private::*;
 use structs::reqs;
 use adapters::*;
+use adapters::Adapter;
 use error::*;
 
 use public::Public;
 
-pub struct Private<Adapter> {
+pub struct Private<Adapter>{
     _pub: Public<Adapter>,
     key: String,
     secret: String,
@@ -116,23 +117,32 @@ impl<A> Private<A> {
         A::process(self.get_get(&format!("/accounts/{}", id)))
     }
 
-    pub fn get_account_hist(&self, id: Uuid) -> Result<Vec<AccountHistory>> {
-        self.get_sync(&format!("/accounts/{}/ledger", id))
+    pub fn get_account_hist(&self, id: Uuid) -> A::Result
+        where A: Adapter<Vec<AccountHistory>>
+    {
+        A::process(self.get_get(&format!("/accounts/{}/ledger", id))
             .map(|xs: Vec<AccountHistory>| {
                 xs.into_iter()
                     .map(|x| AccountHistory {
                         _type: (&x.details).into(),
                         ..x
                     }).collect()
-            })
+            }))
     }
 
-    pub fn get_account_holds(&self, id: Uuid) -> Result<Vec<AccountHolds>> {
+    pub fn get_account_holds(&self, id: Uuid) -> A::Result
+        where A: Adapter<Vec<AccountHolds>>
+    {
         A::process(self.get_get(&format!("/accounts/{}/holds", id)))
     }
 
-    pub fn set_order(&self, order: reqs::Order) -> Result<Order> {
-        self.post_sync(&format!("/orders"), order)
+    pub fn set_order(&self, order: reqs::Order) -> A::Result
+        where A: Adapter<Order>
+    {
+        let body_str = serde_json::to_string(&order)
+            .expect("cannot to_string post body");
+
+        A::process(self.get(Method::POST, &format!("/orders"), &body_str))
     }
 
     pub fn buy_limit(
@@ -142,7 +152,9 @@ impl<A> Private<A> {
         price: f64,
         post_only: bool,
         time_in_force: Option<reqs::OrderTimeInForce>,
-    ) -> Result<Order> {
+    ) -> A::Result
+        where A: Adapter<Order>
+    {
         self.set_order(reqs::Order::limit(
             product_id,
             reqs::OrderSide::Buy,
@@ -160,7 +172,9 @@ impl<A> Private<A> {
         price: f64,
         post_only: bool,
         time_in_force: Option<reqs::OrderTimeInForce>,
-    ) -> Result<Order> {
+    ) -> A::Result
+        where A: Adapter<Order>
+    {
         self.set_order(reqs::Order::limit(
             product_id,
             reqs::OrderSide::Sell,
@@ -171,33 +185,45 @@ impl<A> Private<A> {
         ))
     }
 
-    pub fn buy_market(&self, product_id: &str, size: f64) -> Result<Order> {
+    pub fn buy_market(&self, product_id: &str, size: f64) -> A::Result
+        where A: Adapter<Order>
+    {
         self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Buy, size))
     }
 
-    pub fn sell_market(&self, product_id: &str, size: f64) -> Result<Order> {
+    pub fn sell_market(&self, product_id: &str, size: f64) -> A::Result
+        where A: Adapter<Order>
+    {
         self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Sell, size))
     }
 
     //    pub fn buy<'a>(&self) -> OrderBuilder<'a> {}    // TODO: OrderBuilder
 
-    pub fn cancel_order(&self, id: Uuid) -> Result<Uuid> {
-        self.delete_sync(&format!("/orders/{}", id))
-            .map(|r: Vec<Uuid>| r.first().unwrap().clone())
+    pub fn cancel_order(&self, id: Uuid) -> A::Result
+        where A: Adapter<Uuid>
+    {
+        A::process(
+            self.get(Method::DELETE, &format!("/orders/{}", id), "")
+               .map(|r: Vec<Uuid>| r.first().unwrap().clone())
+        )
     }
 
-    pub fn cancel_all(&self, product_id: Option<&str>) -> Result<Vec<Uuid>> {
+    pub fn cancel_all(&self, product_id: Option<&str>) -> A::Result
+        where A: Adapter<Vec<Uuid>>
+    {
         let param = product_id
             .map(|x| format!("?product_id={}", x))
             .unwrap_or_default();
-        self.delete_sync(&format!("/orders{}", param))
+        A::process(self.get(Method::DELETE, &format!("/orders{}", param), ""))
     }
 
     pub fn get_orders(
         &self,
         status: Option<OrderStatus>,
         product_id: Option<&str>,
-    ) -> Result<Vec<Order>> {
+    ) -> A::Result
+        where A: Adapter<Vec<Order>>
+    {
         // TODO rewrite
         let param_status = product_id
             .map(|x| format!("&product_id={}", x))
@@ -209,15 +235,19 @@ impl<A> Private<A> {
         if param.len() > 0 {
             param[0] = b'?';
         }
-        self.get_sync(&format!("/orders{}", String::from_utf8(param).unwrap()))
+        A::process(self.get_get(&format!("/orders{}", String::from_utf8(param).unwrap())))
     }
 
-    pub fn get_order(&self, id: Uuid) -> Result<Order> {
-        self.get_sync(&format!("/orders/{}", id))
+    pub fn get_order(&self, id: Uuid) -> A::Result
+        where A: Adapter<Order>
+    {
+        A::process(self.get_get(&format!("/orders/{}", id)))
     }
 
     // DEPRECATION NOTICE - Requests without either order_id or product_id will be rejected after 8/23/18.
-    pub fn get_fills(&self, order_id: Option<Uuid>, product_id: Option<&str>) -> Result<Vec<Fill>> {
+    pub fn get_fills(&self, order_id: Option<Uuid>, product_id: Option<&str>) -> A::Result
+        where A: Adapter<Vec<Fill>>
+    {
         let param_order = order_id
             .map(|x| format!("&order_id={}", x))
             .unwrap_or_default();
@@ -228,11 +258,13 @@ impl<A> Private<A> {
         if param.len() > 0 {
             param[0] = b'?';
         }
-        self.get_sync(&format!("/fills{}", String::from_utf8(param).unwrap()))
+        A::process(self.get_get(&format!("/fills{}", String::from_utf8(param).unwrap())))
     }
 
-    pub fn get_trailing_volume(&self) -> Result<Vec<TrailingVolume>> {
-        self.get_sync("/users/self/trailing-volume")
+    pub fn get_trailing_volume(&self) -> A::Result
+        where A: Adapter<Vec<TrailingVolume>>
+    {
+        A::process(self.get_get("/users/self/trailing-volume"))
     }
 }
 
