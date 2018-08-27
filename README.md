@@ -3,7 +3,7 @@ Supports SYNC and ASYNC operations.
 
 ## Api supported:
 - [x] SYNC
-- [ ] ASYNC
+- [x] ASYNC
 
 ## API
 - [x] Requests
@@ -43,7 +43,9 @@ cargo test -- --test-threads=1
 // to avoid "Rate limit exceeded" error
 
 ```
-running 22 tests
+running 25 tests
+test adapters::tests::test_async ... ok
+test adapters::tests::test_sync ... ok
 test private::tests::test_cancel_all ... ok
 test private::tests::test_cancel_order ... ok
 test private::tests::test_get_account ... ok
@@ -53,6 +55,7 @@ test private::tests::test_get_accounts ... ok
 test private::tests::test_get_fills ... ok
 test private::tests::test_get_order ... ok
 test private::tests::test_get_orders ... ignored
+test private::tests::test_get_pub ... ok
 test private::tests::test_get_trailing_volume ... ok
 test private::tests::test_new_order_ser ... ok
 test private::tests::test_set_order_limit ... ok
@@ -67,5 +70,5 @@ test public::tests::test_get_ticker ... ok
 test public::tests::test_get_time ... ok
 test public::tests::test_get_trades ... ok
 
-test result: ok. 20 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out
+test result: ok. 23 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out
 ```
