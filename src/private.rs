@@ -279,6 +279,11 @@ impl<A> Private<A> {
     {
         self.call_get("/users/self/trailing-volume")
     }
+
+    pub fn public(&self) -> &Public<A> {
+        &self._pub
+    }
+
 }
 
 #[cfg(test)]
@@ -466,5 +471,16 @@ mod tests {
         let vols = client.get_trailing_volume().unwrap();
         let str = format!("{:?}", vols);
         assert!(str == "[]"); // nothing now
+    }
+
+    #[test]
+    fn test_get_pub() {
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let time = client.public().get_time().unwrap();
+        let time_str = format!("{:?}", time);
+        assert!(time_str.starts_with("Time {"));
+        assert!(time_str.contains("iso:"));
+        assert!(time_str.contains("epoch:"));
+        assert!(time_str.ends_with("}"));
     }
 }
