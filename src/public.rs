@@ -157,13 +157,14 @@ impl<A> Public<A> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::super::*;
+    use super::super::structs::public::*;
     use chrono::prelude::*;
     use time::Duration;
 
     #[test]
     fn test_get_time() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let time = client.get_time().unwrap();
         let time_str = format!("{:?}", time);
         assert!(time_str.starts_with("Time {"));
@@ -174,7 +175,7 @@ mod tests {
 
     #[test]
     fn test_get_products() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let products = client.get_products().unwrap();
         let str = format!("{:?}", products);
         assert!(str.contains("{ id: \"BTC-USD\""));
@@ -182,7 +183,7 @@ mod tests {
 
     #[test]
     fn test_get_book() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let book_l1 = client.get_book::<BookRecordL1>("BTC-USD").unwrap();
         let str1 = format!("{:?}", book_l1);
         assert_eq!(1, book_l1.bids.len());
@@ -199,7 +200,7 @@ mod tests {
 
     #[test]
     fn test_get_ticker() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let ticker = client.get_ticker("BTC-USD").unwrap();
         let str = format!("{:?}", ticker);
         assert!(str.starts_with("Ticker { trade_id:"));
@@ -208,7 +209,7 @@ mod tests {
 
     #[test]
     fn test_get_trades() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let trades = client.get_trades("BTC-USD").unwrap();
         assert!(trades.len() > 1);
         let str = format!("{:?}", trades);
@@ -217,7 +218,7 @@ mod tests {
 
     #[test]
     fn test_get_candles() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let end = Utc::now();
         //        let start = end - Duration::minutes(10);
         let candles = client
@@ -230,7 +231,7 @@ mod tests {
 
     #[test]
     fn test_get_stats24h() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let stats24h = client.get_stats24h("BTC-USD").unwrap();
         let str = format!("{:?}", stats24h);
         assert!(str.contains("open:"));
@@ -241,7 +242,7 @@ mod tests {
 
     #[test]
     fn test_get_currencies() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let currencies = client.get_currencies().unwrap();
         let currency = currencies.iter().find(|x| x.id == "BTC").unwrap();
         assert_eq!(
@@ -273,3 +274,4 @@ mod tests {
     //        rt::run(ft);
     //    }
 }
+
