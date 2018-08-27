@@ -1,3 +1,19 @@
+//! Coinbase pro client with sync and async support
+//!
+//! ## Example
+//!
+//! ```
+//! extern crate coinbase_pro_rs;
+//!
+//! use coinbase_pro_rs::{Public, Sync};
+//!
+//! fn main() {
+//!    let client: Public<Sync> = Public::new();
+//!    let time = client.get_time().unwrap();
+//!    println!("Coinbase.time: {}", time.iso);
+//!}
+//! ```
+
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
@@ -29,3 +45,4 @@ pub use error::CBError;
 pub use adapters::{Sync, ASync};
 
 pub type Result<T> = std::result::Result<T, CBError>;
+
