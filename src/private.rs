@@ -159,7 +159,7 @@ impl<A> Private<A> {
         let body_str = serde_json::to_string(&order)
             .expect("cannot to_string post body");
 
-        self.call(Method::POST, &format!("/orders"), &body_str)
+        self.call(Method::POST, "/orders", &body_str)
     }
 
     pub fn buy_limit(
@@ -220,7 +220,7 @@ impl<A> Private<A> {
         where A: Adapter<Uuid> + 'static
     {
         let f = self.call_feature(Method::DELETE, &format!("/orders/{}", id), "")
-           .map(|r: Vec<Uuid>| r.first().unwrap().clone());
+           .map(|r: Vec<Uuid>| *r.first().unwrap());
 
         A::process(f)
     }
@@ -250,7 +250,7 @@ impl<A> Private<A> {
             .map(|x| format!("&product_id={}", x))
             .unwrap_or_default();
         let mut param = (param_status + &param_product).into_bytes();
-        if param.len() > 0 {
+        if !param.is_empty() {
             param[0] = b'?';
         }
 
@@ -274,7 +274,7 @@ impl<A> Private<A> {
             .map(|x| format!("&product_id={}", x))
             .unwrap_or_default();
         let mut param = (param_order + &param_product).into_bytes();
-        if param.len() > 0 {
+        if !param.is_empty() {
             param[0] = b'?';
         }
         self.call_get(&format!("/fills{}", String::from_utf8(param).unwrap()))

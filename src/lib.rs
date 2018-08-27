@@ -54,7 +54,9 @@ pub use adapters::{Sync, ASync};
 
 pub type Result<T> = std::result::Result<T, CBError>;
 
-pub const MAIN_URL: &'static str = "https://api.pro.coinbase.com";
-pub const SANDBOX_URL: &'static str = "https://api-public.sandbox.pro.coinbase.com";
+/// https://api.pro.coinbase.com
+pub const MAIN_URL: &str = "https://api.pro.coinbase.com";
+/// https://api-public.sandbox.pro.coinbase.com
+pub const SANDBOX_URL: &str = "https://api-public.sandbox.pro.coinbase.com";
 
 
