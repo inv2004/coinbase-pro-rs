@@ -2,8 +2,7 @@ extern crate hyper;
 extern crate tokio;
 extern crate coinbase_pro_rs;
 
-use hyper::rt::{Future, Stream};
-use tokio::prelude::*;
+use hyper::rt::Future;
 use coinbase_pro_rs::{Public, ASync, SANDBOX_URL};
 
 fn main() {
