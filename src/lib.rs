@@ -1,14 +1,22 @@
 //! Coinbase pro client with sync and async support
 //!
+//! ## Structure
+//!
+//! There are two main structures to work with: [`Private`] and [`Public`], which provide interfaces to
+//! work with [https://docs.pro.coinbase.com](https://docs.pro.coinbase.com) .
+//! The structures should be parametrised with: [`Sync`] or [`ASync`] adapter-type, which blocks
+//! future and returns result of its execution for Sync adapter or returns Future for ASync
+//! adapter.
+//!
 //! ## Example
 //!
 //! ```
 //! extern crate coinbase_pro_rs;
 //!
-//! use coinbase_pro_rs::{Public, Sync};
+//! use coinbase_pro_rs::{Public, Sync, SANDBOX_URL};
 //!
 //! fn main() {
-//!    let client: Public<Sync> = Public::new();
+//!    let client: Public<Sync> = Public::new(SANDBOX_URL);
 //!    let time = client.get_time().unwrap();
 //!    println!("Coinbase.time: {}", time.iso);
 //!}
@@ -45,4 +53,8 @@ pub use error::CBError;
 pub use adapters::{Sync, ASync};
 
 pub type Result<T> = std::result::Result<T, CBError>;
+
+pub const MAIN_URL: &'static str = "https://api.pro.coinbase.com";
+pub const SANDBOX_URL: &'static str = "https://api-public.sandbox.pro.coinbase.com";
+
 

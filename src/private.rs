@@ -1,3 +1,5 @@
+//! Structure to provide access to Private section of Coinbase api
+
 extern crate base64;
 extern crate hmac;
 extern crate serde;
@@ -37,13 +39,13 @@ impl<A> Private<A> {
         base64::encode(&mac.result().code())
     }
 
-    pub fn call_feature<U>(&self, method: Method, uri: &str, body_str: &str) -> impl Future<Item = U, Error = CBError>
+    fn call_feature<U>(&self, method: Method, uri: &str, body_str: &str) -> impl Future<Item = U, Error = CBError>
         where for<'de> U: serde::Deserialize<'de>
     {
-        self._pub.get_feature(self.request(method, uri, body_str.to_string()))
+        self._pub.call_feature(self.request(method, uri, body_str.to_string()))
     }
 
-    pub fn call<U>(&self, method: Method, uri: &str, body_str: &str) -> A::Result
+    fn call<U>(&self, method: Method, uri: &str, body_str: &str) -> A::Result
         where A: Adapter<U> + 'static,
             U: 'static,
               for<'de> U: serde::Deserialize<'de>
@@ -51,7 +53,7 @@ impl<A> Private<A> {
         self._pub.call(self.request(method, uri, body_str.to_string()))
     }
 
-    pub fn call_get<U>(&self, uri: &str) -> A::Result
+    fn call_get<U>(&self, uri: &str) -> A::Result
         where A: Adapter<U> + 'static,
             U: 'static,
               for<'de> U: serde::Deserialize<'de>
@@ -105,15 +107,19 @@ impl<A> Private<A> {
         req.body(body_str.into()).unwrap()
     }
 
-    pub fn new(key: &str, secret: &str, passphrase: &str) -> Self {
+    /// Creates a new Private struct
+    pub fn new(uri: &str, key: &str, secret: &str, passphrase: &str) -> Self {
         Self {
-            _pub: Public::new(),
+            _pub: Public::new(uri),
             key: key.to_string(),
             secret: secret.to_string(),
             passphrase: passphrase.to_string(),
         }
     }
 
+    /// Get a list of trading accounts
+    ///
+    /// 
     pub fn get_accounts(&self) -> A::Result
         where A: Adapter<Vec<Account>> + 'static
     {

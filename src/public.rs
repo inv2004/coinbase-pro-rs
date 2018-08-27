@@ -17,13 +17,13 @@ use structs::public::*;
 use structs::DateTime;
 
 pub struct Public<Adapter> {
-    pub uri: String,
+    pub(crate) uri: String,
     client: Client<HttpsConnector<HttpConnector>>,
     adapter: PhantomData<Adapter>
 }
 
 impl<A> Public<A> {
-    pub const USER_AGENT: &'static str = "coinbase-pro-rs/0.1.0";
+    pub(crate) const USER_AGENT: &'static str = "coinbase-pro-rs/0.1.0";
 
     fn request(&self, uri: &str) -> Request<Body> {
         let uri: Uri = (self.uri.to_string() + uri).parse().unwrap();
@@ -33,7 +33,7 @@ impl<A> Public<A> {
         req.body(Body::empty()).unwrap()
     }
 
-    pub fn get_pub<U>(&self, uri: &str) -> A::Result
+    fn get_pub<U>(&self, uri: &str) -> A::Result
         where
             A: Adapter<U> + 'static,
             U: 'static,
@@ -42,7 +42,7 @@ impl<A> Public<A> {
         self.call(self.request(uri))
     }
 
-    pub fn get_feature<U>(&self, request: Request<Body>) -> impl Future<Item = U, Error = CBError>
+    pub(crate) fn call_feature<U>(&self, request: Request<Body>) -> impl Future<Item = U, Error = CBError>
         where for<'de> U: serde::Deserialize<'de>,
     {
         debug!("{:?}", request);
@@ -64,19 +64,19 @@ impl<A> Public<A> {
             })
     }
 
-    pub fn call<U>(&self, request: Request<Body>) -> A::Result
+    pub(crate) fn call<U>(&self, request: Request<Body>) -> A::Result
         where
             A: Adapter<U> + 'static,
             U: 'static,
             for<'de> U: serde::Deserialize<'de>,
     {
-        A::process(self.get_feature(request))
+        A::process(self.call_feature(request))
     }
 
-    pub fn new() -> Self {
+    pub fn new(uri: &str) -> Self {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder().build::<_, Body>(https);
-        let uri = "https://api-public.sandbox.pro.coinbase.com".to_string();
+        let uri = uri.to_string();
 
         Self { uri, client, adapter: PhantomData }
     }

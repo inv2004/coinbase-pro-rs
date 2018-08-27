@@ -1,10 +1,13 @@
 [package]
 name = "coinbase-pro-rs"
-version = "0.1.2"
+version = "0.1.4"
 authors = ["ae <inv2004@gmail.com>"]
 repository = "https://github.com/inv2004/coinbase-pro-rs"
 description = "Coinbase pro client for Rust"
 license = "MIT/Apache-2.0"
+readme = "README.md"
+categories = [ "api-bindings" ]
+keywords = [ "exchange", "coinbase", "bitcoin" ]
 
 [dependencies]
 failure = "0.1.2"
