@@ -1,3 +1,4 @@
+extern crate hyper;
 extern crate tokio;
 extern crate coinbase_pro_rs;
 

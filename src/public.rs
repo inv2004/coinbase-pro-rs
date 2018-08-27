@@ -36,7 +36,7 @@ impl<A> Public<A> {
     fn get_pub<U>(&self, uri: &str) -> A::Result
         where
             A: Adapter<U> + 'static,
-            U: 'static,
+            U: Send + 'static,
             for <'de> U: serde::Deserialize<'de>
     {
         self.call(self.request(uri))
@@ -67,7 +67,7 @@ impl<A> Public<A> {
     pub(crate) fn call<U>(&self, request: Request<Body>) -> A::Result
         where
             A: Adapter<U> + 'static,
-            U: 'static,
+            U: Send + 'static,
             for<'de> U: serde::Deserialize<'de>,
     {
         A::process(self.call_feature(request))

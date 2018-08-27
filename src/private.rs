@@ -47,7 +47,7 @@ impl<A> Private<A> {
 
     fn call<U>(&self, method: Method, uri: &str, body_str: &str) -> A::Result
         where A: Adapter<U> + 'static,
-            U: 'static,
+            U: Send + 'static,
               for<'de> U: serde::Deserialize<'de>
     {
         self._pub.call(self.request(method, uri, body_str.to_string()))
@@ -55,7 +55,7 @@ impl<A> Private<A> {
 
     fn call_get<U>(&self, uri: &str) -> A::Result
         where A: Adapter<U> + 'static,
-            U: 'static,
+            U: Send + 'static,
               for<'de> U: serde::Deserialize<'de>
     {
         self.call(Method::GET, uri, "")
