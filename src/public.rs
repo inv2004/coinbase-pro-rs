@@ -35,7 +35,8 @@ impl<A> Public<A> {
 
     pub fn get_pub<U>(&self, uri: &str) -> A::Result
         where
-            A: Adapter<U>,
+            A: Adapter<U> + 'static,
+            U: 'static,
             for <'de> U: serde::Deserialize<'de>
     {
         self.call(self.request(uri))
@@ -65,7 +66,8 @@ impl<A> Public<A> {
 
     pub fn call<U>(&self, request: Request<Body>) -> A::Result
         where
-            A: Adapter<U>,
+            A: Adapter<U> + 'static,
+            U: 'static,
             for<'de> U: serde::Deserialize<'de>,
     {
         A::process(self.get_feature(request))
@@ -80,19 +82,19 @@ impl<A> Public<A> {
     }
 
     pub fn get_time(&self) -> A::Result
-        where A: Adapter<Time>
+        where A: Adapter<Time> + 'static
     {
         self.get_pub("/time")
     }
 
     pub fn get_products(&self) -> A::Result
-        where A: Adapter<Vec<Product>>
+        where A: Adapter<Vec<Product>> + 'static
     {
         self.get_pub("/products")
     }
 
     pub fn get_book<T>(&self, product_id: &str) -> A::Result
-        where A: Adapter<Book<T>>,
+        where A: Adapter<Book<T>> + 'static,
               T: BookLevel + Debug + 'static,
               T: super::std::marker::Send,
               T: for<'de> Deserialize<'de>
@@ -105,13 +107,13 @@ impl<A> Public<A> {
     }
 
     pub fn get_ticker(&self, product_id: &str) -> A::Result
-        where A: Adapter<Ticker>
+        where A: Adapter<Ticker> + 'static
     {
         self.get_pub(&format!("/products/{}/ticker", product_id))
     }
 
     pub fn get_trades(&self, product_id: &str) -> A::Result
-        where A: Adapter<Vec<Trade>>
+        where A: Adapter<Vec<Trade>> + 'static
     {
         self.get_pub(&format!("/products/{}/trades", product_id))
     }
@@ -123,7 +125,7 @@ impl<A> Public<A> {
         end: Option<DateTime>,
         granularity: Granularity,
     ) -> A::Result
-        where A: Adapter<Vec<Candle>>
+        where A: Adapter<Vec<Candle>> + 'static
     {
         let param_start = start
             .map(|x| format!("&start={}", x.to_rfc3339()))
@@ -140,14 +142,14 @@ impl<A> Public<A> {
     }
 
     pub fn get_stats24h(&self, product_id: &str) -> A::Result
-        where A: Adapter<Stats24H>
+        where A: Adapter<Stats24H> + 'static
     {
 
         self.get_pub(&format!("/products/{}/stats", product_id))
     }
 
     pub fn get_currencies(&self) -> A::Result
-        where A: Adapter<Vec<Currency>>
+        where A: Adapter<Vec<Currency>> + 'static
     {
         self.get_pub("/currencies")
     }
