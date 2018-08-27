@@ -1,3 +1,5 @@
+//! Structure to provide access to Private section of Coinbase api
+
 extern crate base64;
 extern crate hmac;
 extern crate serde;
@@ -37,23 +39,23 @@ impl<A> Private<A> {
         base64::encode(&mac.result().code())
     }
 
-    pub fn call_feature<U>(&self, method: Method, uri: &str, body_str: &str) -> impl Future<Item = U, Error = CBError>
+    fn call_feature<U>(&self, method: Method, uri: &str, body_str: &str) -> impl Future<Item = U, Error = CBError>
         where for<'de> U: serde::Deserialize<'de>
     {
         self._pub.call_feature(self.request(method, uri, body_str.to_string()))
     }
 
-    pub fn call<U>(&self, method: Method, uri: &str, body_str: &str) -> A::Result
+    fn call<U>(&self, method: Method, uri: &str, body_str: &str) -> A::Result
         where A: Adapter<U> + 'static,
-            U: 'static,
+            U: Send + 'static,
               for<'de> U: serde::Deserialize<'de>
     {
         self._pub.call(self.request(method, uri, body_str.to_string()))
     }
 
-    pub fn call_get<U>(&self, uri: &str) -> A::Result
+    fn call_get<U>(&self, uri: &str) -> A::Result
         where A: Adapter<U> + 'static,
-            U: 'static,
+            U: Send + 'static,
               for<'de> U: serde::Deserialize<'de>
     {
         self.call(Method::GET, uri, "")
@@ -105,15 +107,19 @@ impl<A> Private<A> {
         req.body(body_str.into()).unwrap()
     }
 
-    pub fn new(key: &str, secret: &str, passphrase: &str) -> Self {
+    /// Creates a new Private struct
+    pub fn new(uri: &str, key: &str, secret: &str, passphrase: &str) -> Self {
         Self {
-            _pub: Public::new(),
+            _pub: Public::new(uri),
             key: key.to_string(),
             secret: secret.to_string(),
             passphrase: passphrase.to_string(),
         }
     }
 
+    /// Get a list of trading accounts
+    ///
+    /// 
     pub fn get_accounts(&self) -> A::Result
         where A: Adapter<Vec<Account>> + 'static
     {
@@ -288,7 +294,9 @@ impl<A> Private<A> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::super::*;
+    use super::super::structs::public::*;
+    use super::super::structs::reqs;
 
     static KEY: &str = "1d0dc0f7b4e808d430b95d8fed7df3ea";
     static SECRET: &str =
@@ -297,7 +305,7 @@ mod tests {
 
     #[test]
     fn test_get_accounts() {
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let accounts = client.get_accounts().unwrap();
         assert!(
             format!("{:?}", accounts).contains(
@@ -314,7 +322,7 @@ mod tests {
     #[test]
     fn test_get_account() {
         //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let coin_acc = client
             .get_accounts()
             .unwrap()
@@ -334,7 +342,7 @@ mod tests {
     #[test]
     fn test_get_account_hist() {
         //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let coin_acc = client
             .get_accounts()
             .unwrap()
@@ -351,7 +359,7 @@ mod tests {
     #[ignore]
     fn test_get_account_holds() {
         //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let coin_acc = client
             .get_accounts()
             .unwrap()
@@ -377,7 +385,7 @@ mod tests {
 
     #[test]
     fn test_set_order_limit() {
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
         let str = format!("{:?}", order);
         assert!(str.contains("side: Buy"));
@@ -392,7 +400,7 @@ mod tests {
 
     #[test]
     fn test_set_order_limit_gtc() {
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let order = client
             .buy_limit(
                 "BTC-USD",
@@ -410,7 +418,7 @@ mod tests {
 
     #[test]
     fn test_set_order_market() {
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let order = client.buy_market("BTC-USD", 0.001).unwrap();
         let str = format!("{:?}", order);
         assert!(str.contains("side: Buy"));
@@ -423,7 +431,7 @@ mod tests {
 
     #[test]
     fn test_cancel_order() {
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
         let res = client.cancel_order(order.id).unwrap();
         assert_eq!(order.id, res);
@@ -431,7 +439,7 @@ mod tests {
 
     #[test]
     fn test_cancel_all() {
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let order1 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
         let order2 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
         let res = client.cancel_all(Some("BTC-USD")).unwrap();
@@ -442,7 +450,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_get_orders() {
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let orders = client.get_orders(None, None).unwrap();
         let str = format!("{:?}", orders);
         println!("{}", str);
@@ -451,7 +459,7 @@ mod tests {
 
     #[test]
     fn test_get_order() {
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
         let order_res = client.get_order(order.id).unwrap();
         assert_eq!(order.id, order_res.id);
@@ -459,7 +467,7 @@ mod tests {
 
     #[test]
     fn test_get_fills() {
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let fills = client.get_fills(None, Some("BTC-USD")).unwrap();
         let str = format!("{:?}", fills);
         assert!(str.contains("Fill { trade_id: "));
@@ -467,7 +475,7 @@ mod tests {
 
     #[test]
     fn test_get_trailing_volume() {
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let vols = client.get_trailing_volume().unwrap();
         let str = format!("{:?}", vols);
         assert!(str == "[]"); // nothing now
@@ -475,7 +483,7 @@ mod tests {
 
     #[test]
     fn test_get_pub() {
-        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let time = client.public().get_time().unwrap();
         let time_str = format!("{:?}", time);
         assert!(time_str.starts_with("Time {"));

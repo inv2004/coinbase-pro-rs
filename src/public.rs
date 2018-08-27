@@ -17,13 +17,13 @@ use structs::public::*;
 use structs::DateTime;
 
 pub struct Public<Adapter> {
-    pub uri: String,
+    pub(crate) uri: String,
     client: Client<HttpsConnector<HttpConnector>>,
     adapter: PhantomData<Adapter>
 }
 
 impl<A> Public<A> {
-    pub const USER_AGENT: &'static str = "coinbase-pro-rs/0.1.0";
+    pub(crate) const USER_AGENT: &'static str = "coinbase-pro-rs/0.1.0";
 
     fn request(&self, uri: &str) -> Request<Body> {
         let uri: Uri = (self.uri.to_string() + uri).parse().unwrap();
@@ -33,7 +33,16 @@ impl<A> Public<A> {
         req.body(Body::empty()).unwrap()
     }
 
-    pub fn call_feature<U>(&self, request: Request<Body>) -> impl Future<Item = U, Error = CBError>
+    fn get_pub<U>(&self, uri: &str) -> A::Result
+        where
+            A: Adapter<U> + 'static,
+            U: Send + 'static,
+            for <'de> U: serde::Deserialize<'de>
+    {
+        self.call(self.request(uri))
+    }
+
+    pub(crate) fn call_feature<U>(&self, request: Request<Body>) -> impl Future<Item = U, Error = CBError>
         where for<'de> U: serde::Deserialize<'de>,
     {
         debug!("{:?}", request);
@@ -55,28 +64,19 @@ impl<A> Public<A> {
             })
     }
 
-    pub fn call<U>(&self, request: Request<Body>) -> A::Result
+    pub(crate) fn call<U>(&self, request: Request<Body>) -> A::Result
         where
             A: Adapter<U> + 'static,
-            U: 'static,
+            U: Send + 'static,
             for<'de> U: serde::Deserialize<'de>,
     {
         A::process(self.call_feature(request))
     }
 
-    pub fn call_get<U>(&self, uri: &str) -> A::Result
-        where
-            A: Adapter<U> + 'static,
-            U: 'static,
-            for <'de> U: serde::Deserialize<'de>
-    {
-        self.call(self.request(uri))
-    }
-
-    pub fn new() -> Self {
+    pub fn new(uri: &str) -> Self {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder().build::<_, Body>(https);
-        let uri = "https://api-public.sandbox.pro.coinbase.com".to_string();
+        let uri = uri.to_string();
 
         Self { uri, client, adapter: PhantomData }
     }
@@ -84,13 +84,13 @@ impl<A> Public<A> {
     pub fn get_time(&self) -> A::Result
         where A: Adapter<Time> + 'static
     {
-        self.call_get("/time")
+        self.get_pub("/time")
     }
 
     pub fn get_products(&self) -> A::Result
         where A: Adapter<Vec<Product>> + 'static
     {
-        self.call_get("/products")
+        self.get_pub("/products")
     }
 
     pub fn get_book<T>(&self, product_id: &str) -> A::Result
@@ -99,7 +99,7 @@ impl<A> Public<A> {
               T: super::std::marker::Send,
               T: for<'de> Deserialize<'de>
     {
-        self.call_get(&format!(
+        self.get_pub(&format!(
             "/products/{}/book?level={}",
             product_id,
             T::level()
@@ -109,13 +109,13 @@ impl<A> Public<A> {
     pub fn get_ticker(&self, product_id: &str) -> A::Result
         where A: Adapter<Ticker> + 'static
     {
-        self.call_get(&format!("/products/{}/ticker", product_id))
+        self.get_pub(&format!("/products/{}/ticker", product_id))
     }
 
     pub fn get_trades(&self, product_id: &str) -> A::Result
         where A: Adapter<Vec<Trade>> + 'static
     {
-        self.call_get(&format!("/products/{}/trades", product_id))
+        self.get_pub(&format!("/products/{}/trades", product_id))
     }
 
     pub fn get_candles(
@@ -138,32 +138,33 @@ impl<A> Public<A> {
             "/products/{}/candles?granularity={}{}{}",
             product_id, granularity as usize, param_start, param_end
         );
-        self.call_get(&req)
+        self.get_pub(&req)
     }
 
     pub fn get_stats24h(&self, product_id: &str) -> A::Result
         where A: Adapter<Stats24H> + 'static
     {
 
-        self.call_get(&format!("/products/{}/stats", product_id))
+        self.get_pub(&format!("/products/{}/stats", product_id))
     }
 
     pub fn get_currencies(&self) -> A::Result
         where A: Adapter<Vec<Currency>> + 'static
     {
-        self.call_get("/currencies")
+        self.get_pub("/currencies")
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::super::*;
+    use super::super::structs::public::*;
     use chrono::prelude::*;
     use time::Duration;
 
     #[test]
     fn test_get_time() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let time = client.get_time().unwrap();
         let time_str = format!("{:?}", time);
         assert!(time_str.starts_with("Time {"));
@@ -174,7 +175,7 @@ mod tests {
 
     #[test]
     fn test_get_products() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let products = client.get_products().unwrap();
         let str = format!("{:?}", products);
         assert!(str.contains("{ id: \"BTC-USD\""));
@@ -182,7 +183,7 @@ mod tests {
 
     #[test]
     fn test_get_book() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let book_l1 = client.get_book::<BookRecordL1>("BTC-USD").unwrap();
         let str1 = format!("{:?}", book_l1);
         assert_eq!(1, book_l1.bids.len());
@@ -199,7 +200,7 @@ mod tests {
 
     #[test]
     fn test_get_ticker() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let ticker = client.get_ticker("BTC-USD").unwrap();
         let str = format!("{:?}", ticker);
         assert!(str.starts_with("Ticker { trade_id:"));
@@ -208,7 +209,7 @@ mod tests {
 
     #[test]
     fn test_get_trades() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let trades = client.get_trades("BTC-USD").unwrap();
         assert!(trades.len() > 1);
         let str = format!("{:?}", trades);
@@ -217,7 +218,7 @@ mod tests {
 
     #[test]
     fn test_get_candles() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let end = Utc::now();
         //        let start = end - Duration::minutes(10);
         let candles = client
@@ -230,7 +231,7 @@ mod tests {
 
     #[test]
     fn test_get_stats24h() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let stats24h = client.get_stats24h("BTC-USD").unwrap();
         let str = format!("{:?}", stats24h);
         assert!(str.contains("open:"));
@@ -241,7 +242,7 @@ mod tests {
 
     #[test]
     fn test_get_currencies() {
-        let client: Public<Sync> = Public::new();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
         let currencies = client.get_currencies().unwrap();
         let currency = currencies.iter().find(|x| x.id == "BTC").unwrap();
         assert_eq!(
@@ -273,3 +274,4 @@ mod tests {
     //        rt::run(ft);
     //    }
 }
+
