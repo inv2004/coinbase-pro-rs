@@ -37,18 +37,25 @@ impl<A> Private<A> {
         base64::encode(&mac.result().code())
     }
 
-    pub fn get_get<U>(&self, uri: &str) -> impl Future<Item = U, Error = CBError>
+    pub fn call_feature<U>(&self, method: Method, uri: &str, body_str: &str) -> impl Future<Item = U, Error = CBError>
         where for<'de> U: serde::Deserialize<'de>
     {
-        self._pub.get(self.request(Method::GET, uri, "".to_string()))
+        self._pub.get_feature(self.request(method, uri, body_str.to_string()))
     }
 
-    pub fn get<U>(&self, method: Method, uri: &str, body_str: &str) -> impl Future<Item = U, Error = CBError>
-        where for<'de> U: serde::Deserialize<'de>
+    pub fn call<U>(&self, method: Method, uri: &str, body_str: &str) -> A::Result
+        where A: Adapter<U>,
+              for<'de> U: serde::Deserialize<'de>
     {
-        self._pub.get(self.request(method, uri, body_str.to_string()))
+        self._pub.call(self.request(method, uri, body_str.to_string()))
     }
 
+    pub fn call_get<U>(&self, uri: &str) -> A::Result
+        where A: Adapter<U>,
+              for<'de> U: serde::Deserialize<'de>
+    {
+        self.call(Method::GET, uri, "")
+    }
 
     //   from python
     //POST /orders HTTP/1.1
@@ -108,32 +115,34 @@ impl<A> Private<A> {
     pub fn get_accounts(&self) -> A::Result
         where A: Adapter<Vec<Account>>
     {
-        A::process(self.get_get("/accounts"))
+        self.call_get("/accounts")
     }
 
     pub fn get_account(&self, id: Uuid) -> A::Result
         where A: Adapter<Account>
     {
-        A::process(self.get_get(&format!("/accounts/{}", id)))
+        self.call_get(&format!("/accounts/{}", id))
     }
 
     pub fn get_account_hist(&self, id: Uuid) -> A::Result
         where A: Adapter<Vec<AccountHistory>>
     {
-        A::process(self.get_get(&format!("/accounts/{}/ledger", id))
+        let f = self.call_feature(Method::GET, &format!("/accounts/{}/ledger", id), "")
             .map(|xs: Vec<AccountHistory>| {
                 xs.into_iter()
                     .map(|x| AccountHistory {
                         _type: (&x.details).into(),
                         ..x
                     }).collect()
-            }))
+            });
+
+        A::process(f)
     }
 
     pub fn get_account_holds(&self, id: Uuid) -> A::Result
         where A: Adapter<Vec<AccountHolds>>
     {
-        A::process(self.get_get(&format!("/accounts/{}/holds", id)))
+        self.call_get(&format!("/accounts/{}/holds", id))
     }
 
     pub fn set_order(&self, order: reqs::Order) -> A::Result
@@ -142,7 +151,7 @@ impl<A> Private<A> {
         let body_str = serde_json::to_string(&order)
             .expect("cannot to_string post body");
 
-        A::process(self.get(Method::POST, &format!("/orders"), &body_str))
+        self.call(Method::POST, &format!("/orders"), &body_str)
     }
 
     pub fn buy_limit(
@@ -202,10 +211,10 @@ impl<A> Private<A> {
     pub fn cancel_order(&self, id: Uuid) -> A::Result
         where A: Adapter<Uuid>
     {
-        A::process(
-            self.get(Method::DELETE, &format!("/orders/{}", id), "")
-               .map(|r: Vec<Uuid>| r.first().unwrap().clone())
-        )
+        let f = self.call_feature(Method::DELETE, &format!("/orders/{}", id), "")
+           .map(|r: Vec<Uuid>| r.first().unwrap().clone());
+
+        A::process(f)
     }
 
     pub fn cancel_all(&self, product_id: Option<&str>) -> A::Result
@@ -214,7 +223,8 @@ impl<A> Private<A> {
         let param = product_id
             .map(|x| format!("?product_id={}", x))
             .unwrap_or_default();
-        A::process(self.get(Method::DELETE, &format!("/orders{}", param), ""))
+
+        self.call(Method::DELETE, &format!("/orders{}", param), "")
     }
 
     pub fn get_orders(
@@ -235,13 +245,14 @@ impl<A> Private<A> {
         if param.len() > 0 {
             param[0] = b'?';
         }
-        A::process(self.get_get(&format!("/orders{}", String::from_utf8(param).unwrap())))
+
+        self.call_get(&format!("/orders{}", String::from_utf8(param).unwrap()))
     }
 
     pub fn get_order(&self, id: Uuid) -> A::Result
         where A: Adapter<Order>
     {
-        A::process(self.get_get(&format!("/orders/{}", id)))
+        self.call_get(&format!("/orders/{}", id))
     }
 
     // DEPRECATION NOTICE - Requests without either order_id or product_id will be rejected after 8/23/18.
@@ -258,13 +269,13 @@ impl<A> Private<A> {
         if param.len() > 0 {
             param[0] = b'?';
         }
-        A::process(self.get_get(&format!("/fills{}", String::from_utf8(param).unwrap())))
+        self.call_get(&format!("/fills{}", String::from_utf8(param).unwrap()))
     }
 
     pub fn get_trailing_volume(&self) -> A::Result
         where A: Adapter<Vec<TrailingVolume>>
     {
-        A::process(self.get_get("/users/self/trailing-volume"))
+        self.call_get("/users/self/trailing-volume")
     }
 }
 

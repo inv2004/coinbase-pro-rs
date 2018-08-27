@@ -33,15 +33,16 @@ impl<A> Public<A> {
         req.body(Body::empty()).unwrap()
     }
 
-    pub fn get_pub<U>(&self, uri: &str) -> impl Future<Item = U, Error = CBError>
-        where for <'de> U: serde::Deserialize<'de>
+    pub fn get_pub<U>(&self, uri: &str) -> A::Result
+        where
+            A: Adapter<U>,
+            for <'de> U: serde::Deserialize<'de>
     {
-        self.get(self.request(uri))
+        self.call(self.request(uri))
     }
 
-    pub fn get<U>(&self, request: Request<Body>) -> impl Future<Item = U, Error = CBError>
-    where
-        for<'de> U: serde::Deserialize<'de>,
+    pub fn get_feature<U>(&self, request: Request<Body>) -> impl Future<Item = U, Error = CBError>
+        where for<'de> U: serde::Deserialize<'de>,
     {
         debug!("{:?}", request);
 
@@ -62,6 +63,14 @@ impl<A> Public<A> {
             })
     }
 
+    pub fn call<U>(&self, request: Request<Body>) -> A::Result
+        where
+            A: Adapter<U>,
+            for<'de> U: serde::Deserialize<'de>,
+    {
+        A::process(self.get_feature(request))
+    }
+
     pub fn new() -> Self {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder().build::<_, Body>(https);
@@ -73,13 +82,13 @@ impl<A> Public<A> {
     pub fn get_time(&self) -> A::Result
         where A: Adapter<Time>
     {
-        A::process(self.get_pub("/time"))
+        self.get_pub("/time")
     }
 
     pub fn get_products(&self) -> A::Result
         where A: Adapter<Vec<Product>>
     {
-        A::process(self.get_pub("/products"))
+        self.get_pub("/products")
     }
 
     pub fn get_book<T>(&self, product_id: &str) -> A::Result
@@ -88,23 +97,23 @@ impl<A> Public<A> {
               T: super::std::marker::Send,
               T: for<'de> Deserialize<'de>
     {
-        A::process(self.get_pub(&format!(
+        self.get_pub(&format!(
             "/products/{}/book?level={}",
             product_id,
             T::level()
-        )))
+        ))
     }
 
     pub fn get_ticker(&self, product_id: &str) -> A::Result
         where A: Adapter<Ticker>
     {
-        A::process(self.get_pub(&format!("/products/{}/ticker", product_id)))
+        self.get_pub(&format!("/products/{}/ticker", product_id))
     }
 
     pub fn get_trades(&self, product_id: &str) -> A::Result
         where A: Adapter<Vec<Trade>>
     {
-        A::process(self.get_pub(&format!("/products/{}/trades", product_id)))
+        self.get_pub(&format!("/products/{}/trades", product_id))
     }
 
     pub fn get_candles(
@@ -127,20 +136,20 @@ impl<A> Public<A> {
             "/products/{}/candles?granularity={}{}{}",
             product_id, granularity as usize, param_start, param_end
         );
-        A::process(self.get_pub(&req))
+        self.get_pub(&req)
     }
 
     pub fn get_stats24h(&self, product_id: &str) -> A::Result
         where A: Adapter<Stats24H>
     {
 
-        A::process(self.get_pub(&format!("/products/{}/stats", product_id)))
+        self.get_pub(&format!("/products/{}/stats", product_id))
     }
 
     pub fn get_currencies(&self) -> A::Result
         where A: Adapter<Vec<Currency>>
     {
-        A::process(self.get_pub("/currencies"))
+        self.get_pub("/currencies")
     }
 }
 
@@ -250,7 +259,7 @@ mod tests {
     //        let client = Client::builder()
     //            .build::<_, hyper::Body>(https);
     //        let ft = client
-    //            .get("https://hyper.rs".parse().unwrap())
+    //            .call("https://hyper.rs".parse().unwrap())
     //            .map_err(|_| ())
     //            .and_then(|res| {
     //                res.into_body().concat2().map_err(|_| ())
