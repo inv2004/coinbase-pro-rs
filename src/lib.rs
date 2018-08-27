@@ -20,8 +20,10 @@ pub mod error;
 pub mod private;
 pub mod public;
 pub mod structs;
+pub mod adapters;
 mod utils;
 
 use error::*;
+pub use adapters::*;
 
 pub type Result<T> = std::result::Result<T, CBError>;

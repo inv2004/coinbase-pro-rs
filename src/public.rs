@@ -8,18 +8,22 @@ use hyper::{Body, Client, HeaderMap, Request, Uri};
 use hyper_tls::HttpsConnector;
 use serde::Deserialize;
 use std::fmt::Debug;
+use std::marker::PhantomData;
 
 use super::Result;
 use error::*;
+use super::adapters::*;
 use structs::public::*;
 use structs::DateTime;
+use super::adapters;
 
-pub struct Public {
+pub struct Public<Adapter> {
     pub uri: String,
     client: Client<HttpsConnector<HttpConnector>>,
+    adapter: PhantomData<Adapter>
 }
 
-impl Public {
+impl<A> Public<A> {
     pub const USER_AGENT: &'static str = "coinbase-pro-rs/0.1.0";
 
     fn request(&self, uri: &str) -> Request<Body> {
@@ -28,6 +32,10 @@ impl Public {
         let mut req = Request::get(uri);
         req.header("User-Agent", Self::USER_AGENT);
         req.body(Body::empty()).unwrap()
+    }
+
+    pub fn get_pub(&self, uri: &str) {
+        self.get(self.request(uri))
     }
 
     pub fn get<U>(&self, request: Request<Body>) -> impl Future<Item = U, Error = CBError>
@@ -53,58 +61,49 @@ impl Public {
             })
     }
 
-    pub fn get_sync_with_req<U>(&self, request: Request<Body>) -> Result<U>
-    where
-        U: Debug + Send + 'static,
-        U: for<'de> serde::Deserialize<'de>,
-    {
-        let mut rt = tokio::runtime::current_thread::Runtime::new().unwrap();
-        rt.block_on(self.get(request))
-    }
-
-    pub fn get_sync<U>(&self, uri: &str) -> Result<U>
-    where
-        U: Debug + Send + 'static,
-        U: for<'de> serde::Deserialize<'de>,
-    {
-        self.get_sync_with_req(self.request(uri))
-    }
-
     pub fn new() -> Self {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder().build::<_, Body>(https);
         let uri = "https://api-public.sandbox.pro.coinbase.com".to_string();
 
-        Self { uri, client }
+        Self { uri, client, PhantomData }
     }
 
-    pub fn get_time(&self) -> Result<Time> {
-        self.get_sync("/time")
-    }
-
-    pub fn get_products(&self) -> Result<Vec<Product>> {
-        self.get_sync("/products")
-    }
-
-    pub fn get_book<T>(&self, product_id: &str) -> Result<Book<T>>
-    where
-        T: BookLevel + Debug + 'static,
-        T: super::std::marker::Send,
-        T: for<'de> Deserialize<'de>,
+    pub fn get_time(&self) -> A::Result
+        where A: Adapter<String>
     {
-        self.get_sync(&format!(
+        A::process(self.get("/time"))
+    }
+
+    pub fn get_products(&self) -> A::Result
+        where A: Adapter<Vec<Product>>
+    {
+        A::process(self.get("/products"))
+    }
+
+    pub fn get_book<T>(&self, product_id: &str) -> A::Result
+        where A: Adapter<Book<T>>,
+              T: BookLevel + Debug + 'static,
+              T: super::std::marker::Send,
+              T: for<'de> Deserialize<'de>
+    {
+        A::process(self.get_pub(&format!(
             "/products/{}/book?level={}",
             product_id,
             T::level()
-        ))
+        )))
     }
 
-    pub fn get_ticker(&self, product_id: &str) -> Result<Ticker> {
-        self.get_sync(&format!("/products/{}/ticker", product_id))
+    pub fn get_ticker(&self, product_id: &str) -> A::Result
+        where A: Adapter<Ticker>
+    {
+        A::process(self.get_pub(&format!("/products/{}/ticker", product_id)))
     }
 
-    pub fn get_trades(&self, product_id: &str) -> Result<Vec<Trade>> {
-        self.get_sync(&format!("/products/{}/trades", product_id))
+    pub fn get_trades(&self, product_id: &str) -> A::Result
+        where A: Adapter<Vec<Trade>>
+    {
+        A::process(self.get_pub(&format!("/products/{}/trades", product_id)))
     }
 
     pub fn get_candles(
@@ -113,7 +112,9 @@ impl Public {
         start: Option<DateTime>,
         end: Option<DateTime>,
         granularity: Granularity,
-    ) -> Result<Vec<Candle>> {
+    ) -> A::Result
+        where A: Adapter<Vec<Candle>>
+    {
         let param_start = start
             .map(|x| format!("&start={}", x.to_rfc3339()))
             .unwrap_or_default();
@@ -125,15 +126,20 @@ impl Public {
             "/products/{}/candles?granularity={}{}{}",
             product_id, granularity as usize, param_start, param_end
         );
-        self.get_sync(&req)
+        A::process(self.get_pub(&req))
     }
 
-    pub fn get_stats24h(&self, product_id: &str) -> Result<Stats24H> {
-        self.get_sync(&format!("/products/{}/stats", product_id))
+    pub fn get_stats24h(&self, product_id: &str) -> A::Result
+        where A: Adapter<Stats24H>
+    {
+
+        A::process(self.get_pub(&format!("/products/{}/stats", product_id)))
     }
 
-    pub fn get_currencies(&self) -> Result<Vec<Currency>> {
-        self.get_sync("/currencies")
+    pub fn get_currencies(&self) -> A::Result
+        where A: Adapter<Vec<Currency>>
+    {
+        A::process(self.get_pub("/currencies"))
     }
 }
 
@@ -145,7 +151,7 @@ mod tests {
 
     #[test]
     fn test_get_time() {
-        let client = Public::new();
+        let client: Public<adapters::Sync> = Public::new();
         let time = client.get_time().unwrap();
         let time_str = format!("{:?}", time);
         assert!(time_str.starts_with("Time {"));

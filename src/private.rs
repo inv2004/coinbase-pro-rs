@@ -6,6 +6,7 @@ extern crate tokio;
 
 use hyper::header::HeaderValue;
 use hyper::{Body, HeaderMap, Method, Request, Uri};
+use hyper::rt::{Future, Stream};
 use private::hmac::{Hmac, Mac};
 use serde_json::{self, Value};
 use std::fmt::Debug;
@@ -15,51 +16,38 @@ use uuid::Uuid;
 use super::Result;
 use structs::private::*;
 use structs::reqs;
+use adapters::*;
+use error::*;
 
 use public::Public;
 
-pub struct Private {
-    _pub: Public,
+pub struct Private<Adapter> {
+    _pub: Public<Adapter>,
     key: String,
     secret: String,
     passphrase: String,
 }
 
-impl Private {
-    pub fn get_sync<U>(&self, uri: &str) -> Result<U>
-    where
-        U: Debug + Send + 'static,
-        U: for<'de> serde::Deserialize<'de>,
-    {
-        self._pub
-            .get_sync_with_req(self.request(Method::GET, uri, "".to_string())) // TODO: to &str
-    }
-
-    pub fn post_sync<U>(&self, uri: &str, order: reqs::Order) -> Result<U>
-    where
-        U: Debug + Send + 'static,
-        U: for<'de> serde::Deserialize<'de>,
-    {
-        let body_str = serde_json::to_string(&order).expect("cannot to_string post body");
-        self._pub
-            .get_sync_with_req(self.request(Method::POST, uri, body_str))
-    }
-
-    pub fn delete_sync<U>(&self, uri: &str) -> Result<U>
-    where
-        U: Debug + Send + 'static,
-        U: for<'de> serde::Deserialize<'de>,
-    {
-        self._pub
-            .get_sync_with_req(self.request(Method::DELETE, uri, "".to_string()))
-    }
-
+impl<A> Private<A> {
     fn sign(&self, timestamp: u64, method: Method, uri: &str, body_str: &str) -> String {
         let key = base64::decode(&self.secret).expect("base64::decode secret");
         let mut mac: Hmac<sha2::Sha256> = Hmac::new_varkey(&key).expect("Hmac::new(key)");
         mac.input((timestamp.to_string() + method.as_str() + uri + body_str).as_bytes());
         base64::encode(&mac.result().code())
     }
+
+    pub fn get_get<U>(&self, uri: &str) -> impl Future<Item = U, Error = CBError>
+        where for<'de> U: serde::Deserialize<'de>
+    {
+        self._pub.get(self.request(Method::GET, uri, "".to_string()))
+    }
+
+    pub fn get<U>(&self, method: Method, uri: &str, body_str: &str) -> impl Future<Item = U, Error = CBError>
+        where for<'de> U: serde::Deserialize<'de>
+    {
+        self._pub.get(self.request(method, uri, body_str.to_string()))
+    }
+
 
     //   from python
     //POST /orders HTTP/1.1
@@ -76,7 +64,6 @@ impl Private {
     //CB-ACCESS-PASSPHRASE: sandbox
     //
     //{"product_id": "BTC-USD", "side": "buy", "type": "limit", "price": "100.00", "size": "0.01"}
-
     fn request(&self, method: Method, _uri: &str, body_str: String) -> Request<Body> {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -91,7 +78,7 @@ impl Private {
 
         let sign = self.sign(timestamp, method, _uri, &body_str);
 
-        req.header("User-Agent", Public::USER_AGENT);
+        req.header("User-Agent", Public::<A>::USER_AGENT);
         req.header("Content-Type", "Application/JSON");
         //        req.header("Accept", "*/*");
         req.header("CB-ACCESS-KEY", HeaderValue::from_str(&self.key).unwrap());
@@ -117,12 +104,16 @@ impl Private {
         }
     }
 
-    pub fn get_accounts(&self) -> Result<Vec<Account>> {
-        self.get_sync("/accounts")
+    pub fn get_accounts(&self) -> A::Result
+        where A: Adapter<Vec<Account>>
+    {
+        A::process(self.get_get("/accounts"))
     }
 
-    pub fn get_account(&self, id: Uuid) -> Result<Account> {
-        self.get_sync(&format!("/accounts/{}", id))
+    pub fn get_account(&self, id: Uuid) -> A::Result
+        where A: Adapter<Account>
+    {
+        A::process(self.get_get(&format!("/accounts/{}", id)))
     }
 
     pub fn get_account_hist(&self, id: Uuid) -> Result<Vec<AccountHistory>> {
@@ -137,7 +128,7 @@ impl Private {
     }
 
     pub fn get_account_holds(&self, id: Uuid) -> Result<Vec<AccountHolds>> {
-        self.get_sync(&format!("/accounts/{}/holds", id))
+        A::process(self.get_get(&format!("/accounts/{}/holds", id)))
     }
 
     pub fn set_order(&self, order: reqs::Order) -> Result<Order> {
@@ -256,7 +247,7 @@ mod tests {
 
     #[test]
     fn test_get_accounts() {
-        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
         let accounts = client.get_accounts().unwrap();
         assert!(
             format!("{:?}", accounts).contains(
@@ -273,7 +264,7 @@ mod tests {
     #[test]
     fn test_get_account() {
         //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
-        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
         let coin_acc = client
             .get_accounts()
             .unwrap()
@@ -293,7 +284,7 @@ mod tests {
     #[test]
     fn test_get_account_hist() {
         //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
-        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
         let coin_acc = client
             .get_accounts()
             .unwrap()
@@ -310,7 +301,7 @@ mod tests {
     #[ignore]
     fn test_get_account_holds() {
         //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
-        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
         let coin_acc = client
             .get_accounts()
             .unwrap()
@@ -336,7 +327,7 @@ mod tests {
 
     #[test]
     fn test_set_order_limit() {
-        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
         let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
         let str = format!("{:?}", order);
         assert!(str.contains("side: Buy"));
@@ -351,7 +342,7 @@ mod tests {
 
     #[test]
     fn test_set_order_limit_gtc() {
-        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
         let order = client
             .buy_limit(
                 "BTC-USD",
@@ -369,7 +360,7 @@ mod tests {
 
     #[test]
     fn test_set_order_market() {
-        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
         let order = client.buy_market("BTC-USD", 0.001).unwrap();
         let str = format!("{:?}", order);
         assert!(str.contains("side: Buy"));
@@ -382,7 +373,7 @@ mod tests {
 
     #[test]
     fn test_cancel_order() {
-        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
         let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
         let res = client.cancel_order(order.id).unwrap();
         assert_eq!(order.id, res);
@@ -390,7 +381,7 @@ mod tests {
 
     #[test]
     fn test_cancel_all() {
-        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
         let order1 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
         let order2 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
         let res = client.cancel_all(Some("BTC-USD")).unwrap();
@@ -401,7 +392,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_get_orders() {
-        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
         let orders = client.get_orders(None, None).unwrap();
         let str = format!("{:?}", orders);
         println!("{}", str);
@@ -410,7 +401,7 @@ mod tests {
 
     #[test]
     fn test_get_order() {
-        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
         let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
         let order_res = client.get_order(order.id).unwrap();
         assert_eq!(order.id, order_res.id);
@@ -418,7 +409,7 @@ mod tests {
 
     #[test]
     fn test_get_fills() {
-        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
         let fills = client.get_fills(None, Some("BTC-USD")).unwrap();
         let str = format!("{:?}", fills);
         assert!(str.contains("Fill { trade_id: "));
@@ -426,7 +417,7 @@ mod tests {
 
     #[test]
     fn test_get_trailing_volume() {
-        let client = Private::new(KEY, SECRET, PASSPHRASE);
+        let client: Private<Sync> = Private::new(KEY, SECRET, PASSPHRASE);
         let vols = client.get_trailing_volume().unwrap();
         let str = format!("{:?}", vols);
         assert!(str == "[]"); // nothing now
