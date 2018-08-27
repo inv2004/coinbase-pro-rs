@@ -291,9 +291,9 @@ mod tests {
     use super::*;
 
     static KEY: &str = "1d0dc0f7b4e808d430b95d8fed7df3ea";
-    static PASSPHRASE: &str = "sandbox";
     static SECRET: &str =
         "dTUic8DZPqkS77vxhJFEX5IBr13FcFHTzWYOARgT9kDWGdN03uvxBbH/hVy8f4O5RDmuf+9wNpEfhYhw2FCWyA==";
+    static PASSPHRASE: &str = "sandbox";
 
     #[test]
     fn test_get_accounts() {

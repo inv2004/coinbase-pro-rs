@@ -23,7 +23,9 @@ pub mod structs;
 pub mod adapters;
 mod utils;
 
-use error::*;
-pub use adapters::*;
+pub use private::Private;
+pub use public::Public;
+pub use error::CBError;
+pub use adapters::{Sync, ASync};
 
 pub type Result<T> = std::result::Result<T, CBError>;
