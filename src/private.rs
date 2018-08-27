@@ -40,7 +40,7 @@ impl<A> Private<A> {
     pub fn call_feature<U>(&self, method: Method, uri: &str, body_str: &str) -> impl Future<Item = U, Error = CBError>
         where for<'de> U: serde::Deserialize<'de>
     {
-        self._pub.get_feature(self.request(method, uri, body_str.to_string()))
+        self._pub.call_feature(self.request(method, uri, body_str.to_string()))
     }
 
     pub fn call<U>(&self, method: Method, uri: &str, body_str: &str) -> A::Result

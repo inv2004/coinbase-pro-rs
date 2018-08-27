@@ -33,16 +33,7 @@ impl<A> Public<A> {
         req.body(Body::empty()).unwrap()
     }
 
-    pub fn get_pub<U>(&self, uri: &str) -> A::Result
-        where
-            A: Adapter<U> + 'static,
-            U: 'static,
-            for <'de> U: serde::Deserialize<'de>
-    {
-        self.call(self.request(uri))
-    }
-
-    pub fn get_feature<U>(&self, request: Request<Body>) -> impl Future<Item = U, Error = CBError>
+    pub fn call_feature<U>(&self, request: Request<Body>) -> impl Future<Item = U, Error = CBError>
         where for<'de> U: serde::Deserialize<'de>,
     {
         debug!("{:?}", request);
@@ -70,7 +61,16 @@ impl<A> Public<A> {
             U: 'static,
             for<'de> U: serde::Deserialize<'de>,
     {
-        A::process(self.get_feature(request))
+        A::process(self.call_feature(request))
+    }
+
+    pub fn call_get<U>(&self, uri: &str) -> A::Result
+        where
+            A: Adapter<U> + 'static,
+            U: 'static,
+            for <'de> U: serde::Deserialize<'de>
+    {
+        self.call(self.request(uri))
     }
 
     pub fn new() -> Self {
@@ -84,13 +84,13 @@ impl<A> Public<A> {
     pub fn get_time(&self) -> A::Result
         where A: Adapter<Time> + 'static
     {
-        self.get_pub("/time")
+        self.call_get("/time")
     }
 
     pub fn get_products(&self) -> A::Result
         where A: Adapter<Vec<Product>> + 'static
     {
-        self.get_pub("/products")
+        self.call_get("/products")
     }
 
     pub fn get_book<T>(&self, product_id: &str) -> A::Result
@@ -99,7 +99,7 @@ impl<A> Public<A> {
               T: super::std::marker::Send,
               T: for<'de> Deserialize<'de>
     {
-        self.get_pub(&format!(
+        self.call_get(&format!(
             "/products/{}/book?level={}",
             product_id,
             T::level()
@@ -109,13 +109,13 @@ impl<A> Public<A> {
     pub fn get_ticker(&self, product_id: &str) -> A::Result
         where A: Adapter<Ticker> + 'static
     {
-        self.get_pub(&format!("/products/{}/ticker", product_id))
+        self.call_get(&format!("/products/{}/ticker", product_id))
     }
 
     pub fn get_trades(&self, product_id: &str) -> A::Result
         where A: Adapter<Vec<Trade>> + 'static
     {
-        self.get_pub(&format!("/products/{}/trades", product_id))
+        self.call_get(&format!("/products/{}/trades", product_id))
     }
 
     pub fn get_candles(
@@ -138,20 +138,20 @@ impl<A> Public<A> {
             "/products/{}/candles?granularity={}{}{}",
             product_id, granularity as usize, param_start, param_end
         );
-        self.get_pub(&req)
+        self.call_get(&req)
     }
 
     pub fn get_stats24h(&self, product_id: &str) -> A::Result
         where A: Adapter<Stats24H> + 'static
     {
 
-        self.get_pub(&format!("/products/{}/stats", product_id))
+        self.call_get(&format!("/products/{}/stats", product_id))
     }
 
     pub fn get_currencies(&self) -> A::Result
         where A: Adapter<Vec<Currency>> + 'static
     {
-        self.get_pub("/currencies")
+        self.call_get("/currencies")
     }
 }
 
