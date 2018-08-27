@@ -3,12 +3,12 @@ Supports SYNC and ASYNC operations.
 
 ## Example
 Cargo.toml:
-```
+```toml
 [dependencies]
 coinbase-pro-rs = "0.1.5"
 
 ```
-```
+```rust
 extern crate coinbase_pro_rs;
 
 use coinbase_pro_rs::{Public, Sync, SANDBOX_URL};
