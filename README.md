@@ -6,6 +6,11 @@
 Supports SYNC and ASYNC operations.
 
 ## Example
+Cargo.toml:
+```toml
+[dependencies]
+coinbase-pro-rs = "0.1.7"
+```
 
 ### Async
 ```rust
