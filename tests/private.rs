@@ -1,0 +1,199 @@
+extern crate serde_json;
+extern crate coinbase_pro_rs;
+
+use coinbase_pro_rs::*;
+use coinbase_pro_rs::structs::reqs;
+
+static KEY: &str = "1d0dc0f7b4e808d430b95d8fed7df3ea";
+static SECRET: &str =
+    "dTUic8DZPqkS77vxhJFEX5IBr13FcFHTzWYOARgT9kDWGdN03uvxBbH/hVy8f4O5RDmuf+9wNpEfhYhw2FCWyA==";
+static PASSPHRASE: &str = "sandbox";
+
+#[test]
+fn test_get_accounts() {
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let accounts = client.get_accounts().unwrap();
+    assert!(
+        format!("{:?}", accounts).contains(
+            r#"currency: "BCH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#
+        )
+    );
+    assert!(
+        format!("{:?}", accounts).contains(
+            r#"currency: "ETH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#
+        )
+    );
+}
+
+#[test]
+fn test_get_account() {
+    //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let coin_acc = client
+        .get_accounts()
+        .unwrap()
+        .into_iter()
+        .find(|x| x.currency == "BTC")
+        .unwrap();
+    let account = client.get_account(coin_acc.id);
+    let account_str = format!("{:?}", account);
+    assert!(account_str.contains("id:"));
+    assert!(account_str.contains("currency: \"BTC\""));
+    assert!(account_str.contains("balance:"));
+    assert!(account_str.contains("available:"));
+    assert!(account_str.contains("hold:"));
+    assert!(account_str.contains("profile_id:"));
+}
+
+#[test]
+fn test_get_account_hist() {
+    //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let coin_acc = client
+        .get_accounts()
+        .unwrap()
+        .into_iter()
+        .find(|x| x.currency == "USD")
+        .unwrap();
+    let account = client.get_account_hist(coin_acc.id);
+    let account_str = format!("{:?}", account);
+    //        println!("{}", account_str);
+    assert!(account_str.contains("type: Match, details: Match"));
+}
+
+#[test]
+#[ignore]
+fn test_get_account_holds() {
+    //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let coin_acc = client
+        .get_accounts()
+        .unwrap()
+        .into_iter()
+        .find(|x| x.currency == "USD")
+        .unwrap();
+    let acc_holds = client.get_account_holds(coin_acc.id);
+    let _str = format!("{:?}", acc_holds);
+    //        assert!(account_str.contains("transfer_type: Deposit"));
+    //println!("{:?}", str);
+    assert!(false); // TODO: holds are empty now
+}
+
+#[test]
+fn test_new_order_ser() {
+    let order = reqs::Order::market("BTC-UST", reqs::OrderSide::Buy, 1.1);
+    let str = serde_json::to_string(&order).unwrap();
+    assert_eq!(
+        vec![0],
+        str.match_indices("{").map(|(x, _)| x).collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn test_set_order_limit() {
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
+    let str = format!("{:?}", order);
+    assert!(str.contains("side: Buy"));
+    assert!(str.contains("_type: Limit {"));
+    let order = client
+        .sell_limit("BTC-USD", 0.001, 100000.0, true, None)
+        .unwrap();
+    let str = format!("{:?}", order);
+    assert!(str.contains("side: Sell"));
+    assert!(str.contains("_type: Limit {"));
+}
+
+#[test]
+fn test_set_order_limit_gtc() {
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let order = client
+        .buy_limit(
+            "BTC-USD",
+            1.0,
+            1.12,
+            true,
+            Some(reqs::OrderTimeInForce::GTT {
+                cancel_after: reqs::OrderTimeInForceCancelAfter::Min,
+            }),
+        ).unwrap();
+    //        let order = client.buy("BTC-USD", 1.0).limit(1.0, 1.12).post_only().gtt(min).send()
+    let str = format!("{:?}", order);
+    assert!(str.contains("time_in_force: GTT { expire_time: 2"));
+}
+
+#[test]
+fn test_set_order_market() {
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let order = client.buy_market("BTC-USD", 0.001).unwrap();
+    let str = format!("{:?}", order);
+    assert!(str.contains("side: Buy"));
+    assert!(str.contains("_type: Market {"));
+    let order = client.sell_market("BTC-USD", 0.001).unwrap();
+    let str = format!("{:?}", order);
+    assert!(str.contains("side: Sell"));
+    assert!(str.contains("_type: Market {"));
+}
+
+#[test]
+fn test_cancel_order() {
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
+    let res = client.cancel_order(order.id).unwrap();
+    assert_eq!(order.id, res);
+}
+
+#[test]
+fn test_cancel_all() {
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let order1 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
+    let order2 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
+    let res = client.cancel_all(Some("BTC-USD")).unwrap();
+    assert!(res.iter().find(|x| **x == order1.id).is_some());
+    assert!(res.iter().find(|x| **x == order2.id).is_some());
+}
+
+#[test]
+#[ignore]
+fn test_get_orders() {
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let orders = client.get_orders(None, None).unwrap();
+    let str = format!("{:?}", orders);
+    println!("{}", str);
+    assert!(false);
+}
+
+#[test]
+fn test_get_order() {
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
+    let order_res = client.get_order(order.id).unwrap();
+    assert_eq!(order.id, order_res.id);
+}
+
+#[test]
+fn test_get_fills() {
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let fills = client.get_fills(None, Some("BTC-USD")).unwrap();
+    let str = format!("{:?}", fills);
+    assert!(str.contains("Fill { trade_id: "));
+}
+
+#[test]
+fn test_get_trailing_volume() {
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let vols = client.get_trailing_volume().unwrap();
+    let str = format!("{:?}", vols);
+    assert!(str == "[]"); // nothing now
+}
+
+#[test]
+fn test_get_pub() {
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+    let time = client.public().get_time().unwrap();
+    let time_str = format!("{:?}", time);
+    assert!(time_str.starts_with("Time {"));
+    assert!(time_str.contains("iso:"));
+    assert!(time_str.contains("epoch:"));
+    assert!(time_str.ends_with("}"));
+}
