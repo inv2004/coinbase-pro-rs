@@ -6,21 +6,38 @@
 Supports SYNC and ASYNC operations.
 
 ## Example
-Cargo.toml:
-```toml
-[dependencies]
-coinbase-pro-rs = "0.1.6"
 
+### Async
+```rust
+extern crate hyper;
+extern crate tokio;
+extern crate coinbase_pro_rs;
+
+use hyper::rt::Future;
+use coinbase_pro_rs::{Public, ASync, SANDBOX_URL};
+
+fn main() {
+    let client: Public<ASync> = Public::new(SANDBOX_URL);
+    let f = client.get_time()
+        .map_err(|_| ())
+        .and_then(|time| {
+            println!("Coinbase.time: {}", time.iso);
+            Ok(())
+        });
+
+    tokio::run(f); // waiting for tokio
+}
 ```
+### Sync
 ```rust
 extern crate coinbase_pro_rs;
 
 use coinbase_pro_rs::{Public, Sync, SANDBOX_URL};
 
 fn main() {
-    let client: Public<Sync> = Public::new(SANDBOX_URL);
-    let time = client.get_time().unwrap();
-    println!("Coinbase.time: {}", time.iso);
+   let client: Public<Sync> = Public::new(SANDBOX_URL);
+   let time = client.get_time().unwrap();
+   println!("Coinbase.time: {}", time.iso);
 }
 ```
 

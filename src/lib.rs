@@ -28,7 +28,7 @@
 //!             Ok(())
 //!         });
 //!
-//!     // tokio::run(f); // it does no returns from tokio
+//!     // tokio::run(f); // waiting for tokio. Commented to travis tests
 //! }
 //! ```
 //! ### Sync
