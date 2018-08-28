@@ -1,20 +1,16 @@
 extern crate chrono;
 extern crate coinbase_pro_rs;
 
+mod common;
+
 use coinbase_pro_rs::*;
 use coinbase_pro_rs::structs::public::*;
 use chrono::prelude::*;
-use std::{thread, time};
-
-static DELAY_TIMEOUT: u64 = 200;
-
-fn delay_ms(ms: u64) {
-    thread::sleep(time::Duration::from_millis(ms));
-}
+use common::delay;
 
 #[test]
 fn test_get_time() {
-    delay_ms(DELAY_TIMEOUT);
+    delay();
     let client: Public<Sync> = Public::new(SANDBOX_URL);
     let time = client.get_time().unwrap();
     let time_str = format!("{:?}", time);
@@ -26,7 +22,7 @@ fn test_get_time() {
 
 #[test]
 fn test_get_products() {
-    delay_ms(DELAY_TIMEOUT);
+    delay();
     let client: Public<Sync> = Public::new(SANDBOX_URL);
     let products = client.get_products().unwrap();
     let str = format!("{:?}", products);
@@ -35,7 +31,7 @@ fn test_get_products() {
 
 #[test]
 fn test_get_book() {
-    delay_ms(DELAY_TIMEOUT);
+    delay();
     let client: Public<Sync> = Public::new(SANDBOX_URL);
     let book_l1 = client.get_book::<BookRecordL1>("BTC-USD").unwrap();
     let str1 = format!("{:?}", book_l1);
@@ -53,7 +49,7 @@ fn test_get_book() {
 
 #[test]
 fn test_get_ticker() {
-    delay_ms(DELAY_TIMEOUT);
+    delay();
     let client: Public<Sync> = Public::new(SANDBOX_URL);
     let ticker = client.get_ticker("BTC-USD").unwrap();
     let str = format!("{:?}", ticker);
@@ -63,7 +59,7 @@ fn test_get_ticker() {
 
 #[test]
 fn test_get_trades() {
-    delay_ms(DELAY_TIMEOUT);
+    delay();
     let client: Public<Sync> = Public::new(SANDBOX_URL);
     let trades = client.get_trades("BTC-USD").unwrap();
     assert!(trades.len() > 1);
@@ -73,7 +69,7 @@ fn test_get_trades() {
 
 #[test]
 fn test_get_candles() {
-    delay_ms(DELAY_TIMEOUT);
+    delay();
     let client: Public<Sync> = Public::new(SANDBOX_URL);
     let end = Utc::now();
     //        let start = end - Duration::minutes(10);
@@ -87,7 +83,7 @@ fn test_get_candles() {
 
 #[test]
 fn test_get_stats24h() {
-    delay_ms(DELAY_TIMEOUT);
+    delay();
     let client: Public<Sync> = Public::new(SANDBOX_URL);
     let stats24h = client.get_stats24h("BTC-USD").unwrap();
     let str = format!("{:?}", stats24h);
@@ -99,7 +95,7 @@ fn test_get_stats24h() {
 
 #[test]
 fn test_get_currencies() {
-    delay_ms(DELAY_TIMEOUT);
+    delay();
     let client: Public<Sync> = Public::new(SANDBOX_URL);
     let currencies = client.get_currencies().unwrap();
     let currency = currencies.iter().find(|x| x.id == "BTC").unwrap();
