@@ -21,7 +21,7 @@
 //!
 //! fn main() {
 //!     let client: Public<ASync> = Public::Public::new_with_keep_alive(SANDBOX_URL, false);
-//!     // if keep_alive is not disables - tokio::run will hold the connection without exiting test
+//!     // if keep_alive is not disables - tokio::run will hold the connection without exiting
 //!     let f = client.get_time()
 //!         .map_err(|_| ())
 //!         .and_then(|time| {
@@ -29,7 +29,7 @@
 //!             Ok(())
 //!         });
 //!
-//!     // tokio::run(f); // waiting for tokio. Commented to travis tests
+//!     tokio::run(f);
 //! }
 //! ```
 //! ### Sync
