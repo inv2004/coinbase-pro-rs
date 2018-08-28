@@ -74,12 +74,20 @@ impl<A> Public<A> {
         A::process(self.call_feature(request))
     }
 
-    pub fn new(uri: &str) -> Self {
+    // This function is contructor which can control keep_alive flag of the connection.
+    // Created for tests to exit tokio::run
+    pub fn new_with_keep_alive(uri: &str, keep_alive: bool) -> Self {
         let https = HttpsConnector::new(4).unwrap();
-        let client = Client::builder().build::<_, Body>(https);
+        let client = Client::builder()
+            .keep_alive(keep_alive)
+            .build::<_, Body>(https);
         let uri = uri.to_string();
 
         Self { uri, client, adapter: PhantomData }
+    }
+
+    pub fn new(uri: &str) -> Self {
+        Self::new_with_keep_alive(uri, true)
     }
 
     pub fn get_time(&self) -> A::Result
