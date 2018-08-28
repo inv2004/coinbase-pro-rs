@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/inv2004/coinbase-pro-rs.svg?branch=master)](https://travis-ci.org/inv2004/coinbase-pro-rs)
-[![Crates.io](https://img.shields.io/crates/v/rustc-serialize.svg)](https://github.com/inv2004/coinbase-pro-rs)
+[![Crates.io](https://img.shields.io/crates/v/rustc-serialize.svg)](https://crates.io/crates/coinbase-pro-rs)
 [![Docs.rs](https://docs.rs/crate-name/badge.svg)](https://docs.rs/coinbase-pro-rs/)
 
 # Coinbase pro client for Rust
