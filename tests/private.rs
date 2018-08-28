@@ -3,14 +3,21 @@ extern crate coinbase_pro_rs;
 
 use coinbase_pro_rs::*;
 use coinbase_pro_rs::structs::reqs;
+use std::{thread, time};
 
+static DELAY_TIMEOUT: u64 = 200;
 static KEY: &str = "1d0dc0f7b4e808d430b95d8fed7df3ea";
 static SECRET: &str =
     "dTUic8DZPqkS77vxhJFEX5IBr13FcFHTzWYOARgT9kDWGdN03uvxBbH/hVy8f4O5RDmuf+9wNpEfhYhw2FCWyA==";
 static PASSPHRASE: &str = "sandbox";
 
+fn delay_ms(ms: u64) {
+    thread::sleep(time::Duration::from_millis(ms));
+}
+
 #[test]
 fn test_get_accounts() {
+    delay_ms(DELAY_TIMEOUT);
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let accounts = client.get_accounts().unwrap();
     assert!(
@@ -27,6 +34,7 @@ fn test_get_accounts() {
 
 #[test]
 fn test_get_account() {
+    delay_ms(DELAY_TIMEOUT);
     //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let coin_acc = client
@@ -47,6 +55,7 @@ fn test_get_account() {
 
 #[test]
 fn test_get_account_hist() {
+    delay_ms(DELAY_TIMEOUT);
     //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let coin_acc = client
@@ -64,6 +73,7 @@ fn test_get_account_hist() {
 #[test]
 #[ignore]
 fn test_get_account_holds() {
+    delay_ms(DELAY_TIMEOUT);
     //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let coin_acc = client
@@ -81,6 +91,7 @@ fn test_get_account_holds() {
 
 #[test]
 fn test_new_order_ser() {
+    delay_ms(DELAY_TIMEOUT);
     let order = reqs::Order::market("BTC-UST", reqs::OrderSide::Buy, 1.1);
     let str = serde_json::to_string(&order).unwrap();
     assert_eq!(
@@ -91,6 +102,7 @@ fn test_new_order_ser() {
 
 #[test]
 fn test_set_order_limit() {
+    delay_ms(DELAY_TIMEOUT);
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
     let str = format!("{:?}", order);
@@ -106,6 +118,7 @@ fn test_set_order_limit() {
 
 #[test]
 fn test_set_order_limit_gtc() {
+    delay_ms(DELAY_TIMEOUT);
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let order = client
         .buy_limit(
@@ -124,6 +137,7 @@ fn test_set_order_limit_gtc() {
 
 #[test]
 fn test_set_order_market() {
+    delay_ms(DELAY_TIMEOUT);
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let order = client.buy_market("BTC-USD", 0.001).unwrap();
     let str = format!("{:?}", order);
@@ -137,6 +151,7 @@ fn test_set_order_market() {
 
 #[test]
 fn test_cancel_order() {
+    delay_ms(DELAY_TIMEOUT);
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
     let res = client.cancel_order(order.id).unwrap();
@@ -145,6 +160,7 @@ fn test_cancel_order() {
 
 #[test]
 fn test_cancel_all() {
+    delay_ms(DELAY_TIMEOUT);
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let order1 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
     let order2 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
@@ -156,6 +172,7 @@ fn test_cancel_all() {
 #[test]
 #[ignore]
 fn test_get_orders() {
+    delay_ms(DELAY_TIMEOUT);
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let orders = client.get_orders(None, None).unwrap();
     let str = format!("{:?}", orders);
@@ -165,6 +182,7 @@ fn test_get_orders() {
 
 #[test]
 fn test_get_order() {
+    delay_ms(DELAY_TIMEOUT);
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
     let order_res = client.get_order(order.id).unwrap();
@@ -173,6 +191,7 @@ fn test_get_order() {
 
 #[test]
 fn test_get_fills() {
+    delay_ms(DELAY_TIMEOUT);
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let fills = client.get_fills(None, Some("BTC-USD")).unwrap();
     let str = format!("{:?}", fills);
@@ -181,6 +200,7 @@ fn test_get_fills() {
 
 #[test]
 fn test_get_trailing_volume() {
+    delay_ms(DELAY_TIMEOUT);
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let vols = client.get_trailing_volume().unwrap();
     let str = format!("{:?}", vols);
@@ -189,6 +209,7 @@ fn test_get_trailing_volume() {
 
 #[test]
 fn test_get_pub() {
+    delay_ms(DELAY_TIMEOUT);
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let time = client.public().get_time().unwrap();
     let time_str = format!("{:?}", time);
