@@ -23,7 +23,7 @@ pub struct Public<Adapter> {
 }
 
 impl<A> Public<A> {
-    pub(crate) const USER_AGENT: &'static str = "coinbase-pro-rs/0.1.0";
+    pub(crate) const USER_AGENT: &'static str = concat!("coinbase-pro-rs/", env!("CARGO_PKG_VERSION"));
 
     fn request(&self, uri: &str) -> Request<Body> {
         let uri: Uri = (self.uri.to_string() + uri).parse().unwrap();

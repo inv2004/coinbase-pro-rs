@@ -117,21 +117,57 @@ impl<A> Private<A> {
         }
     }
 
+    /// **Get an Account**
+    ///
     /// Get a list of trading accounts
     ///
-    /// 
+    /// # API Key Permissions
+    /// This endpoint requires either the “view” or “trade” permission.
     pub fn get_accounts(&self) -> A::Result
         where A: Adapter<Vec<Account>> + 'static
     {
         self.call_get("/accounts")
     }
 
-    pub fn get_account(&self, id: Uuid) -> A::Result
+    /// **Get Account History**
+    ///
+    /// Information for a single account. Use this endpoint when you know the account_id.
+    ///
+    /// # API Key Permissions
+    /// This endpoint requires either the “view” or “trade” permission.
+    ///
+    /// # Account Fields
+    /// | Field | Description |
+    /// | ----- | ----------- |
+    /// | id |	Account ID |
+    /// | balance |	total funds in the account |
+    /// | holds |	funds on hold (not available for use) |
+    /// | available |	funds available to withdraw or trade |
+    pub fn get_account(&self, account_id: Uuid) -> A::Result
         where A: Adapter<Account> + 'static
     {
-        self.call_get(&format!("/accounts/{}", id))
+        self.call_get(&format!("/accounts/{}", account_id))
     }
 
+    /// **Get Account History**
+    /// List account activity. Account activity either increases or decreases your account balance.
+    /// Items are paginated and sorted latest first. See the Pagination section for retrieving
+    /// additional entries after the first page.
+    /// # API Key Permissions
+    /// This endpoint requires either the “view” or “trade” permission.
+    ///
+    /// # Entry Types
+    /// | Field | Description |
+    /// | ----- | ----------- |
+    /// | type |	Entry type indicates the reason for the account change. |
+    /// | transfer |	Funds moved to/from Coinbase to Coinbase Pro |
+    /// | match |	Funds moved as a result of a trade |
+    /// | fee |	Fee as a result of a trade |
+    /// | rebate |	Fee rebate as per our fee schedule |
+    ///
+    /// # Details
+    ///
+    /// If an entry is the result of a trade (match, fee), the details field will contain additional information about the trade.
     pub fn get_account_hist(&self, id: Uuid) -> A::Result
         where A: Adapter<Vec<AccountHistory>> + 'static
     {
@@ -147,6 +183,23 @@ impl<A> Private<A> {
         A::process(f)
     }
 
+    /// **Get Holds**
+    /// Holds are placed on an account for any active orders or pending withdraw requests.
+    /// As an order is filled, the hold amount is updated. If an order is canceled, any remaining
+    /// hold is removed. For a withdraw, once it is completed, the hold is removed.
+    ///
+    /// # API Key Permissions
+    /// This endpoint requires either the “view” or “trade” permission.
+    ///
+    /// # Type
+    ///
+    /// The type of the hold will indicate why the hold exists. The hold type is order for holds
+    /// related to open orders and transfer for holds related to a withdraw.
+    ///
+    /// # Ref
+    ///
+    /// The ref field contains the id of the order or transfer which created the hold.
+    ///
     pub fn get_account_holds(&self, id: Uuid) -> A::Result
         where A: Adapter<Vec<AccountHolds>> + 'static
     {
@@ -216,6 +269,14 @@ impl<A> Private<A> {
 
     //    pub fn buy<'a>(&self) -> OrderBuilder<'a> {}    // TODO: OrderBuilder
 
+    /// **Cancel an Order**
+    ///
+    /// Cancel a previously placed order.
+    ///
+    /// If the order had no matches during its lifetime its record may be purged. This means the order details will not be available with GET /orders/<order-id>.
+    /// # API Key Permissions
+    ///
+    /// This endpoint requires the “trade” permission.
     pub fn cancel_order(&self, id: Uuid) -> A::Result
         where A: Adapter<Uuid> + 'static
     {
@@ -225,6 +286,18 @@ impl<A> Private<A> {
         A::process(f)
     }
 
+    /// **Cancel all**
+    ///
+    /// With best effort, cancel all open orders. The response is a list of ids of the canceled orders.
+    ///
+    /// # API Key Permissions
+    /// This endpoint requires the “trade” permission.
+    ///
+    /// # Query Parameters
+    /// | Param |	Default |	Description |
+    /// | ----- | --------- | ------------- |
+    /// | Param |	Default |	Description |
+    /// | product_id |	*optional* |	Only cancel orders open for a specific product |
     pub fn cancel_all(&self, product_id: Option<&str>) -> A::Result
         where A: Adapter<Vec<Uuid>> + 'static
     {
@@ -289,7 +362,6 @@ impl<A> Private<A> {
     pub fn public(&self) -> &Public<A> {
         &self._pub
     }
-
 }
 
 #[cfg(test)]
