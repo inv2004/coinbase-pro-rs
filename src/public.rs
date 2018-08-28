@@ -1,16 +1,17 @@
+//! Contains structure which provides access to Public section of Coinbase api
+
 extern crate serde;
 extern crate serde_json;
 extern crate tokio;
 
 use hyper::client::HttpConnector;
 use hyper::rt::{Future, Stream};
-use hyper::{Body, Client, HeaderMap, Request, Uri};
+use hyper::{Body, Client, Request, Uri};
 use hyper_tls::HttpsConnector;
 use serde::Deserialize;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
-use super::Result;
 use error::*;
 use super::adapters::*;
 use structs::public::*;
@@ -160,7 +161,6 @@ mod tests {
     use super::super::*;
     use super::super::structs::public::*;
     use chrono::prelude::*;
-    use time::Duration;
 
     #[test]
     fn test_get_time() {
@@ -195,7 +195,7 @@ mod tests {
         let book_l3 = client.get_book::<BookRecordL3>("BTC-USD").unwrap();
         let str3 = format!("{:?}", book_l3);
         assert!(book_l2.bids.len() > 1);
-        assert!(str2.contains("[BookRecordL2("));
+        assert!(str3.contains("[BookRecordL3("));
     }
 
     #[test]
@@ -224,8 +224,8 @@ mod tests {
         let candles = client
             .get_candles("BTC-USD", None, Some(end), Granularity::M1)
             .unwrap();
-        let str = format!("{:?}", candles);
-        //        println!("{}", str);
+        // let str = format!("{:?}", candles);
+        // println!("{}", str);
         assert!(candles[0].0 > candles[1].0);
     }
 

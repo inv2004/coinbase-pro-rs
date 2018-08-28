@@ -1,4 +1,3 @@
-use serde_json::Value;
 use std::fmt;
 use utils::f64_from_string;
 use uuid::Uuid;
@@ -181,6 +180,18 @@ pub enum OrderStatus {
     Done,
     Pending,
     Active,
+}
+
+impl fmt::Display for OrderStatus {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let res = match self {
+            OrderStatus::Open => "open",
+            OrderStatus::Done => "done",
+            OrderStatus::Pending => "pending",
+            OrderStatus::Active => "active"
+        };
+        write!(f, "{}", res)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -9,7 +9,7 @@ Supports SYNC and ASYNC operations.
 Cargo.toml:
 ```toml
 [dependencies]
-coinbase-pro-rs = "0.1.5"
+coinbase-pro-rs = "0.1.6"
 
 ```
 ```rust

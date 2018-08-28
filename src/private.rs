@@ -1,4 +1,4 @@
-//! Structure to provide access to Private section of Coinbase api
+//! Contains structure which provides access to Private section of Coinbase api
 
 extern crate base64;
 extern crate hmac;
@@ -7,18 +7,15 @@ extern crate sha2;
 extern crate tokio;
 
 use hyper::header::HeaderValue;
-use hyper::{Body, HeaderMap, Method, Request, Uri};
-use hyper::rt::{Future, Stream};
+use hyper::{Body, Method, Request, Uri};
+use hyper::rt::Future;
 use private::hmac::{Hmac, Mac};
-use serde_json::{self, Value};
-use std::fmt::Debug;
+use serde_json;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
-use super::Result;
 use structs::private::*;
 use structs::reqs;
-use adapters::*;
 use adapters::Adapter;
 use error::*;
 
@@ -192,12 +189,10 @@ impl<A> Private<A> {
     /// This endpoint requires either the “view” or “trade” permission.
     ///
     /// # Type
-    ///
     /// The type of the hold will indicate why the hold exists. The hold type is order for holds
     /// related to open orders and transfer for holds related to a withdraw.
     ///
     /// # Ref
-    ///
     /// The ref field contains the id of the order or transfer which created the hold.
     ///
     pub fn get_account_holds(&self, id: Uuid) -> A::Result
@@ -206,6 +201,8 @@ impl<A> Private<A> {
         self.call_get(&format!("/accounts/{}/holds", id))
     }
 
+    /// **Make Order**
+    /// General function. Can be used to use own generated `Order` structure for order
     pub fn set_order(&self, order: reqs::Order) -> A::Result
         where A: Adapter<Order> + 'static
     {
@@ -215,6 +212,8 @@ impl<A> Private<A> {
         self.call(Method::POST, "/orders", &body_str)
     }
 
+    /// **Buy limit**
+    /// Makes Buy limit order
     pub fn buy_limit(
         &self,
         product_id: &str,
@@ -235,6 +234,8 @@ impl<A> Private<A> {
         ))
     }
 
+    /// **Sell limit**
+    /// Makes Sell limit order
     pub fn sell_limit(
         &self,
         product_id: &str,
@@ -255,12 +256,16 @@ impl<A> Private<A> {
         ))
     }
 
+    /// **Buy market**
+    /// Makes Buy marker order
     pub fn buy_market(&self, product_id: &str, size: f64) -> A::Result
         where A: Adapter<Order> + 'static
     {
         self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Buy, size))
     }
 
+    /// **Sell market**
+    /// Makes Sell marker order
     pub fn sell_market(&self, product_id: &str, size: f64) -> A::Result
         where A: Adapter<Order> + 'static
     {
@@ -275,7 +280,6 @@ impl<A> Private<A> {
     ///
     /// If the order had no matches during its lifetime its record may be purged. This means the order details will not be available with GET /orders/<order-id>.
     /// # API Key Permissions
-    ///
     /// This endpoint requires the “trade” permission.
     pub fn cancel_order(&self, id: Uuid) -> A::Result
         where A: Adapter<Uuid> + 'static
@@ -296,7 +300,6 @@ impl<A> Private<A> {
     /// # Query Parameters
     /// | Param |	Default |	Description |
     /// | ----- | --------- | ------------- |
-    /// | Param |	Default |	Description |
     /// | product_id |	*optional* |	Only cancel orders open for a specific product |
     pub fn cancel_all(&self, product_id: Option<&str>) -> A::Result
         where A: Adapter<Vec<Uuid>> + 'static
@@ -308,6 +311,19 @@ impl<A> Private<A> {
         self.call(Method::DELETE, &format!("/orders{}", param), "")
     }
 
+    /// **List Orders**
+    ///
+    /// List your current open orders. Only open or un-settled orders are returned.
+    /// As soon as an order is no longer open and settled, it will no longer appear in the default request.
+    ///
+    /// # API Key Permissions
+    /// This endpoint requires either the “view” or “trade” permission.
+    ///
+    /// # Query Parameters
+    /// | Param 	Default 	Description |
+    /// | ------ | -------- | ------------ |
+    /// | status |	*open*, *pending*, *active* | 	Limit list of orders to these statuses. Passing all returns orders of all statuses. |
+    /// | product_id |	*optional* |	Only list orders for a specific product |
     pub fn get_orders(
         &self,
         status: Option<OrderStatus>,
@@ -316,8 +332,8 @@ impl<A> Private<A> {
         where A: Adapter<Vec<Order>> + 'static
     {
         // TODO rewrite
-        let param_status = product_id
-            .map(|x| format!("&product_id={}", x))
+        let param_status = status
+            .map(|x| format!("&status={}", x))
             .unwrap_or_default();
         let param_product = product_id
             .map(|x| format!("&product_id={}", x))
@@ -330,13 +346,27 @@ impl<A> Private<A> {
         self.call_get(&format!("/orders{}", String::from_utf8(param).unwrap()))
     }
 
+    /// **Get an Order**
+    ///
+    /// Get a single order by order id.
+    ///
+    /// # API Key Permissions
+    /// This endpoint requires either the “view” or “trade” permission.
+    ///
+    /// If the order is canceled the response may have status code 404 if the order had no matches.
     pub fn get_order(&self, id: Uuid) -> A::Result
         where A: Adapter<Order> + 'static
     {
         self.call_get(&format!("/orders/{}", id))
     }
 
-    // DEPRECATION NOTICE - Requests without either order_id or product_id will be rejected after 8/23/18.
+    /// **List Fills**
+    ///
+    /// Get a list of recent fills.
+    ///
+    /// # API Key Permissions
+    /// This endpoint requires either the “view” or “trade” permission.
+    /// **DEPRECATION NOTICE** - Requests without either order_id or product_id will be rejected after 8/23/18.
     pub fn get_fills(&self, order_id: Option<Uuid>, product_id: Option<&str>) -> A::Result
         where A: Adapter<Vec<Fill>> + 'static
     {
@@ -353,6 +383,13 @@ impl<A> Private<A> {
         self.call_get(&format!("/fills{}", String::from_utf8(param).unwrap()))
     }
 
+    /// **Trailing Volume**
+    ///
+    /// This request will return your 30-day trailing volume for all products. This is a cached
+    /// value that’s calculated every day at midnight UTC.
+    ///
+    /// #API Key Permissions
+    /// This endpoint requires either the “view” or “trade” permission.
     pub fn get_trailing_volume(&self) -> A::Result
         where A: Adapter<Vec<TrailingVolume>> + 'static
     {
@@ -367,8 +404,8 @@ impl<A> Private<A> {
 #[cfg(test)]
 mod tests {
     use super::super::*;
-    use super::super::structs::public::*;
-    use super::super::structs::reqs;
+//    use structs::public::*;
+    use structs::reqs;
 
     static KEY: &str = "1d0dc0f7b4e808d430b95d8fed7df3ea";
     static SECRET: &str =
@@ -439,7 +476,7 @@ mod tests {
             .find(|x| x.currency == "USD")
             .unwrap();
         let acc_holds = client.get_account_holds(coin_acc.id);
-        let str = format!("{:?}", acc_holds);
+        let _str = format!("{:?}", acc_holds);
         //        assert!(account_str.contains("transfer_type: Deposit"));
         //println!("{:?}", str);
         assert!(false); // TODO: holds are empty now

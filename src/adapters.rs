@@ -1,6 +1,6 @@
 extern crate tokio;
 
-use hyper::rt::{Future, Stream};
+use hyper::rt::Future;
 use super::error::CBError;
 
 pub trait Adapter<T>{
@@ -61,7 +61,7 @@ mod tests {
                 Ok(())
             });
         let mut rt = tokio::runtime::current_thread::Runtime::new().unwrap();
-        rt.block_on(time);
+        rt.block_on(time).ok();
     }
 }
 
