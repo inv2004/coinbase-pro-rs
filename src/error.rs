@@ -19,5 +19,9 @@ pub enum CBError {
 #[derive(Debug, Fail)]
 pub enum WSError {
     #[fail(display = "connect")]
-    Connect(#[cause] super::tokio_tungstenite::tungstenite::Error)
+    Connect(#[cause] super::tokio_tungstenite::tungstenite::Error),
+    #[fail(display = "send")]
+    Send(#[cause] super::tokio_tungstenite::tungstenite::Error),
+    #[fail(display = "read")]
+    Read(#[cause] super::tokio_tungstenite::tungstenite::Error)
 }
