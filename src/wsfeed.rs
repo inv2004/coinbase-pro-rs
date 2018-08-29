@@ -41,6 +41,7 @@ impl WSFeed {
                     .map_err(WSError::Send)
                     .and_then(|_| {
                         stream
+                            .take(10)
                             .map_err(WSError::Read)
                             .for_each(move |msg| {
                                 println!("{:?}", msg);
@@ -75,7 +76,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_ws() {
         let f = WSFeed::new(WS_SANDBOX_URL,
             &["BTC-USD"], &[ChannelType::Heartbeat]);
