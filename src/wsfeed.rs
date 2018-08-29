@@ -75,6 +75,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_ws() {
         let f = WSFeed::new(WS_SANDBOX_URL,
             &["BTC-USD"], &[ChannelType::Heartbeat]);
