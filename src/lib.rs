@@ -61,6 +61,7 @@ extern crate serde;
 extern crate time;
 extern crate tokio;
 extern crate uuid;
+extern crate tokio_tungstenite;
 
 pub mod error;
 pub mod private;
@@ -68,6 +69,8 @@ pub mod public;
 pub mod structs;
 pub mod adapters;
 mod utils;
+
+pub mod wsfeed;
 
 pub use private::Private;
 pub use public::Public;

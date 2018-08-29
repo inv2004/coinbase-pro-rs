@@ -15,3 +15,9 @@ pub enum CBError {
     #[fail(display = "null")]
     Null,
 }
+
+#[derive(Debug, Fail)]
+pub enum WSError {
+    #[fail(display = "connect")]
+    Connect(#[cause] super::tokio_tungstenite::tungstenite::Error)
+}
