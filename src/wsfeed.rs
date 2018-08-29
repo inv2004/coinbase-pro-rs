@@ -4,6 +4,8 @@ pub const WS_SANDBOX_URL: &str = "wss://ws-feed-public.sandbox.pro.coinbase.com"
 
 use futures::{Future, Stream};
 use error::WSError;
+
+use super::structs::ws;
 use super::tokio_tungstenite::connect_async;
 //use super::tokio_tungstenite::tungstenite::Message;
 use self::url::Url;
