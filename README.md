@@ -50,6 +50,8 @@ fn main() {
 ## Api supported:
 - [x] SYNC
 - [x] ASYNC
+- [/] WSFeed
+  - [ ] with Auth
 
 ## API
 - [x] Requests
@@ -70,9 +72,9 @@ fn main() {
   - [x] Products
   - [x] Currencies
   - [x] Time
-- [ ] Websocket Feed
-  - [ ] heartbeat
-  - [ ] ticker
+- [x] Websocket Feed
+  - [x] heartbeat
+  - [x] ticker
   - [ ] level2
   - [ ] user
   - [ ] matches

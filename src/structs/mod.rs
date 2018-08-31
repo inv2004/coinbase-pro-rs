@@ -5,5 +5,5 @@ pub mod other;
 pub mod private;
 pub mod public;
 pub mod reqs;
-pub mod ws;
+pub mod wsfeed;
 

@@ -23,5 +23,24 @@ pub enum WSError {
     #[fail(display = "send")]
     Send(#[cause] super::tokio_tungstenite::tungstenite::Error),
     #[fail(display = "read")]
-    Read(#[cause] super::tokio_tungstenite::tungstenite::Error)
+    Read(#[cause] super::tokio_tungstenite::tungstenite::Error),
+    #[fail(display = "serde")]
+    Serde {
+        #[cause]
+        error: super::serde_json::Error,
+        data: String
+    }
 }
+
+use super::serde::{Deserialize, Deserializer};
+
+impl<'de> Deserialize<'de> for WSError {
+    fn deserialize<D>(_deserializer: D) -> Result<WSError, D::Error>
+        where
+            D: Deserializer<'de>,
+    {
+        unimplemented!()
+    }
+}
+
+

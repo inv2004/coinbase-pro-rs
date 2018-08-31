@@ -74,7 +74,9 @@ pub mod wsfeed;
 
 pub use private::Private;
 pub use public::Public;
+pub use wsfeed::WSFeed;
 pub use error::CBError;
+pub use error::WSError;
 pub use adapters::{Sync, ASync};
 
 pub type Result<T> = std::result::Result<T, CBError>;
