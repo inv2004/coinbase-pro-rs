@@ -86,6 +86,6 @@ by request
 ## OrderBook
 after Websocket
 
-### test results
+### Tests
 cargo test -- --test-threads=1
 // to avoid "Rate limit exceeded" error
