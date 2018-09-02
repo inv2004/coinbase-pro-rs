@@ -180,6 +180,7 @@ pub enum OrderStatus {
     Done,
     Pending,
     Active,
+    Rejected
 }
 
 impl fmt::Display for OrderStatus {
@@ -188,7 +189,8 @@ impl fmt::Display for OrderStatus {
             OrderStatus::Open => "open",
             OrderStatus::Done => "done",
             OrderStatus::Pending => "pending",
-            OrderStatus::Active => "active"
+            OrderStatus::Active => "active",
+            OrderStatus::Rejected => "rejected"
         };
         write!(f, "{}", res)
     }

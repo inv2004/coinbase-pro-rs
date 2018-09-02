@@ -1,6 +1,6 @@
-extern crate url;
+//! Contains structure which provides futures::Stream to websocket-feed of Coinbase api
 
-pub const WS_SANDBOX_URL: &str = "wss://ws-feed-public.sandbox.pro.coinbase.com";
+extern crate url;
 
 use futures::{Future, Stream, Sink};
 use tokio_tungstenite::connect_async;
@@ -17,6 +17,7 @@ fn convert_msg(msg: TMessage) -> Message {
     match msg {
         TMessage::Text(str) => {
             serde_json::from_str(&str)
+                .map(|msg: InputMessage| msg.into())
                 .unwrap_or_else(|e| Message::InternalError(WSError::Serde {
                     error: e,
                     data: str
@@ -27,6 +28,7 @@ fn convert_msg(msg: TMessage) -> Message {
 }
 
 impl WSFeed {
+    // Constructor for simple subcription with product_ids and channels
     pub fn new(uri: &str, product_ids: &[&str], channels: &[ChannelType])
         -> impl Stream<Item = Message, Error = WSError>
     {
@@ -39,6 +41,7 @@ impl WSFeed {
         Self::new_with_sub(uri, subscribe)
     }
 
+    // Constructor for extended subcription via Subscribe structure
     pub fn new_with_sub(uri: &str, subsribe: Subscribe) -> impl Stream<Item = Message, Error = WSError>
     {
         let url = Url::parse(uri).unwrap();

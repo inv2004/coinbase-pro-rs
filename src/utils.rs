@@ -19,11 +19,11 @@ where
     from_string(d)
 }
 
-//pub fn f64_opt_from_string<'de, D>(d: D) -> Result<Option<f64>, D::Error>
-//    where D: Deserializer<'de>
-//{
-//    from_string(d).map(Some).or(Ok(None))
-//}
+pub fn f64_opt_from_string<'de, D>(d: D) -> Result<Option<f64>, D::Error>
+    where D: Deserializer<'de>
+{
+    from_string(d).map(Some).or(Ok(None))
+}
 
 pub fn f64_nan_from_string<'de, D>(d: D) -> Result<f64, D::Error>
     where D: Deserializer<'de>

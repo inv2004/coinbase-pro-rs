@@ -3,7 +3,7 @@ extern crate serde_json;
 extern crate coinbase_pro_rs;
 
 use tokio::prelude::{Future, Stream};
-use coinbase_pro_rs::{WSFeed, wsfeed::WS_SANDBOX_URL};
+use coinbase_pro_rs::{WSFeed, WS_SANDBOX_URL, WS_URL};
 use coinbase_pro_rs::structs::wsfeed::*;
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 
@@ -61,17 +61,15 @@ fn test_heartbeat() {
 }
 
 #[test]
-#[ignore] // hard to check in sandbox because flow is very low
 fn test_ticker() {
     let found = Arc::new(AtomicBool::new(false));
     let found2 = found.clone();
 
-    let pairs = vec!["BTC-USD", "BTC-EUR", "BTC-GBP", "ETH-USD", "ETH-EUR", "LTC-USD", "LTC-EUR"];
-
-    let stream = WSFeed::new(WS_SANDBOX_URL,
-                             &pairs, &[ChannelType::Ticker]);
+    // hard to check in sandbox because low flow
+    let stream = WSFeed::new(WS_URL,
+                             &["BTC-USD"], &[ChannelType::Ticker]);
     let f = stream
-        .take(10    )
+        .take(3)
         .for_each(move |msg| {
             let str = format!("{:?}", msg);
             if str.contains("Ticker(Full { trade_id: ") {
@@ -85,25 +83,120 @@ fn test_ticker() {
     assert!(found.load(Ordering::Relaxed));
 }
 
-//#[test]
-//fn test_level2() {
-//    let found = Arc::new(AtomicBool::new(false));
-//    let found2 = found.clone();
-//
-//    let pairs = vec!["BTC-USD", "BTC-EUR", "BTC-GBP", "ETH-USD", "ETH-EUR", "LTC-USD", "LTC-EUR"];
-//
-//    let stream = WSFeed::new(WS_SANDBOX_URL,
-//                             &pairs, &[ChannelType::Level2]);
-//    let f = stream
-//        .take(3    )
-//        .for_each(move |msg| {
-//            let str = format!("{:?}", msg);
+#[test]
+fn test_level2() {
+    let found_snapshot = Arc::new(AtomicBool::new(false));
+    let found_snapshot_2 = found_snapshot.clone();
+    let found_l2update = Arc::new(AtomicBool::new(false));
+    let found_l2update_2 = found_l2update.clone();
+
+    // hard to check in sandbox because low flow
+    let stream = WSFeed::new(WS_URL,
+                             &["BTC-USD"], &[ChannelType::Level2]);
+    let f = stream
+        .take(3   )
+        .for_each(move |msg| {
+            let str = format!("{:?}", msg);
+            if str.starts_with("Level2(Snapshot { product_id: \"BTC-USD\", bids: [Level2SnapshotRecord") &&
+                ! found_l2update_2.load(Ordering::Relaxed) {
+                found_snapshot_2.swap(true, Ordering::Relaxed);
+            } else if str.starts_with("Level2(L2update { product_id: \"BTC-USD\", changes: [Level2UpdateRecord") {
+                found_l2update_2.swap(true, Ordering::Relaxed);
+            }
+            Ok(())
+        });
+
+    tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
+
+    assert!(found_snapshot.load(Ordering::Relaxed));
+    assert!(found_l2update.load(Ordering::Relaxed));
+}
+
+#[test]
+fn test_match() {
+    let found_match = Arc::new(AtomicBool::new(false));
+    let found_match_2 = found_match.clone();
+    let found_full = Arc::new(AtomicBool::new(false));
+    let found_full_2 = found_full.clone();
+
+    // hard to check in sandbox because low flow
+    let stream = WSFeed::new(WS_URL,
+                             &["BTC-USD"], &[ChannelType::Matches]);
+    let f = stream
+        .take(3)
+        .for_each(move |msg| {
+            let str = format!("{:?}", msg);
 //            println!("{}", str);
-//            Ok(())
-//        });
-//
-//    tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
-//
-//    assert!(found.load(Ordering::Relaxed));
-//}
+            match msg {
+                Message::Match(m) => {
+                    assert!(m.sequence > 0);
+                    found_match_2.swap(true, Ordering::Relaxed);
+                },
+                Message::Full(Full::Match(m)) => {
+                    assert!(m.trade_id > 0);
+                    found_full_2.swap(true, Ordering::Relaxed);
+                },
+                Message::Subscriptions {..} => (),
+                _ => assert!(false)
+            };
+            Ok(())
+        });
+
+    tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
+
+    assert!(found_match.load(Ordering::Relaxed));
+    assert!(found_full.load(Ordering::Relaxed));
+}
+
+#[test]
+fn test_full() {
+    let found_received_limit = Arc::new(AtomicBool::new(false));
+    let found_received_limit_2 = found_received_limit.clone();
+    let found_received_market = Arc::new(AtomicBool::new(false));
+    let found_received_market_2 = found_received_limit.clone();
+    let found_open = Arc::new(AtomicBool::new(false));
+    let found_open_2 = found_open.clone();
+    let found_done_limit = Arc::new(AtomicBool::new(false));
+    let found_done_limit_2 = found_done_limit.clone();
+    let found_done_market = Arc::new(AtomicBool::new(false));
+    let found_done_market_2 = found_done_market.clone();
+    let found_match = Arc::new(AtomicBool::new(false));
+    let found_match_2 = found_match.clone();
+
+    // hard to check in sandbox because low flow
+    let stream = WSFeed::new(WS_URL,
+                             &["BTC-USD"], &[ChannelType::Full]);
+    let f = stream
+        .take(3000)
+        .for_each(move |msg| {
+            let str = format!("{:?}", msg);
+            if str.starts_with("Subscriptions { channels: [WithProduct { name: Full, product_ids") {
+                ()
+            } else if str.starts_with("Full(Match(Match { trade_id: ") {
+                found_match_2.swap(true, Ordering::Relaxed);
+            } else if str.starts_with("Full(Done(Limit { time: ") {
+                found_done_limit_2.swap(true, Ordering::Relaxed);
+            } else if str.starts_with("Full(Done(Market { time: ") {
+                found_done_market_2.swap(true, Ordering::Relaxed);
+            } else if str.starts_with("Full(Received(Limit") {
+                found_received_limit_2.swap(true, Ordering::Relaxed);
+            } else if str.starts_with("Full(Received(Market") {
+                found_received_market_2.swap(true, Ordering::Relaxed);
+            } else if str.starts_with("Full(Open(Open { time: ") {
+                found_open_2.swap(true, Ordering::Relaxed);
+            } else {
+                println!("{}", str);
+            }
+            Ok(())
+        });
+
+    tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
+
+    assert!(found_received_limit.load(Ordering::Relaxed));
+//    assert!(found_received_market.load(Ordering::Relaxed));
+    assert!(found_match.load(Ordering::Relaxed));
+    assert!(found_done_limit.load(Ordering::Relaxed));
+    assert!(found_done_market.load(Ordering::Relaxed));
+    assert!(found_open.load(Ordering::Relaxed));
+}
 

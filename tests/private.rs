@@ -98,6 +98,7 @@ fn test_new_order_ser() {
 }
 
 #[test]
+#[ignore] // sandbox price is too high
 fn test_set_order_limit() {
     delay();
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
@@ -133,6 +134,7 @@ fn test_set_order_limit_gtc() {
 }
 
 #[test]
+#[ignore] // sandbox price is too high
 fn test_set_order_market() {
     delay();
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);

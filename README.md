@@ -3,13 +3,13 @@
 [![Docs.rs](https://docs.rs/coinbase-pro-rs/badge.svg)](https://docs.rs/coinbase-pro-rs)
 
 # Coinbase pro client for Rust
-Supports SYNC and ASYNC operation + WS-Feed data
+Supports SYNC/ASYNC/Websocket-feed data support
 
 ## Example
 Cargo.toml:
 ```toml
 [dependencies]
-coinbase-pro-rs = "0.1.7"
+coinbase-pro-rs = "0.2.0"
 ```
 
 ### Async
@@ -50,8 +50,7 @@ fn main() {
 ## Api supported:
 - [x] SYNC
 - [x] ASYNC
-- [/] WSFeed
-  - [ ] with Auth
+- [x] Websocket-Feed
 
 ## API
 - [x] Requests
@@ -75,10 +74,10 @@ fn main() {
 - [x] Websocket Feed
   - [x] heartbeat
   - [x] ticker
-  - [ ] level2
+  - [x] level2
   - [ ] user
-  - [ ] matches
-  - [ ] full
+  - [x] matches
+  - [x] full
 
 ## FIX API
 by request
