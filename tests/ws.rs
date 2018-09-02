@@ -2,6 +2,8 @@ extern crate tokio;
 extern crate serde_json;
 extern crate coinbase_pro_rs;
 
+mod common;
+
 use tokio::prelude::{Future, Stream};
 use coinbase_pro_rs::{WSFeed, WS_SANDBOX_URL, WS_URL};
 use coinbase_pro_rs::structs::wsfeed::*;
