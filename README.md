@@ -5,7 +5,7 @@
 # Coinbase pro client for Rust
 Supports SYNC/ASYNC/Websocket-feed data support
 
-## Example
+## Examples
 Cargo.toml:
 ```toml
 [dependencies]

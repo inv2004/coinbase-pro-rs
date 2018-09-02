@@ -10,7 +10,7 @@
 //!
 //! [`WSFeed`] provides futures::Stream of websocket message for different channels.
 //!
-//! ## Example
+//! ## Examples
 //!
 //! ### Async
 //! ```
