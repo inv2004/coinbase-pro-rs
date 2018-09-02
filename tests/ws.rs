@@ -6,9 +6,11 @@ use tokio::prelude::{Future, Stream};
 use coinbase_pro_rs::{WSFeed, WS_SANDBOX_URL, WS_URL};
 use coinbase_pro_rs::structs::wsfeed::*;
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use common::delay;
 
 #[test]
 fn test_subscribe() {
+    delay();
     let s = Subscribe {
         _type: SubscribeCmd::Subscribe,
         product_ids: vec!["BTC-USD".to_string()],
@@ -26,6 +28,7 @@ fn test_subscribe() {
 
 #[test]
 fn test_subscription() {
+    delay();
     let stream = WSFeed::new(WS_SANDBOX_URL,
                              &["BTC-USD"], &[ChannelType::Heartbeat]);
     let f = stream
@@ -41,6 +44,7 @@ fn test_subscription() {
 
 #[test]
 fn test_heartbeat() {
+    delay();
     let found = Arc::new(AtomicBool::new(false));
     let found2 = found.clone();
     let stream = WSFeed::new(WS_SANDBOX_URL,
@@ -62,6 +66,7 @@ fn test_heartbeat() {
 
 #[test]
 fn test_ticker() {
+    delay();
     let found = Arc::new(AtomicBool::new(false));
     let found2 = found.clone();
 
@@ -85,6 +90,7 @@ fn test_ticker() {
 
 #[test]
 fn test_level2() {
+    delay();
     let found_snapshot = Arc::new(AtomicBool::new(false));
     let found_snapshot_2 = found_snapshot.clone();
     let found_l2update = Arc::new(AtomicBool::new(false));
@@ -114,6 +120,7 @@ fn test_level2() {
 
 #[test]
 fn test_match() {
+    delay();
     let found_match = Arc::new(AtomicBool::new(false));
     let found_match_2 = found_match.clone();
     let found_full = Arc::new(AtomicBool::new(false));
@@ -125,7 +132,7 @@ fn test_match() {
     let f = stream
         .take(3)
         .for_each(move |msg| {
-            let str = format!("{:?}", msg);
+//            let str = format!("{:?}", msg);
 //            println!("{}", str);
             match msg {
                 Message::Match(m) => {
@@ -150,9 +157,10 @@ fn test_match() {
 
 #[test]
 fn test_full() {
+    delay();
     let found_received_limit = Arc::new(AtomicBool::new(false));
     let found_received_limit_2 = found_received_limit.clone();
-    let found_received_market = Arc::new(AtomicBool::new(false));
+    let _found_received_market = Arc::new(AtomicBool::new(false));
     let found_received_market_2 = found_received_limit.clone();
     let found_open = Arc::new(AtomicBool::new(false));
     let found_open_2 = found_open.clone();
@@ -193,7 +201,7 @@ fn test_full() {
     tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
 
     assert!(found_received_limit.load(Ordering::Relaxed));
-//    assert!(found_received_market.load(Ordering::Relaxed));
+//    assert!(_found_received_market.load(Ordering::Relaxed));
     assert!(found_match.load(Ordering::Relaxed));
     assert!(found_done_limit.load(Ordering::Relaxed));
     assert!(found_done_market.load(Ordering::Relaxed));
