@@ -55,11 +55,11 @@ extern crate coinbase_pro_rs;
 use futures::{Future, Stream};
 use coinbase_pro_rs::{WSFeed, WS_SANDBOX_URL};
 use coinbase_pro_rs::structs::wsfeed::*;
-//!
+
 fn main() {
     let stream = WSFeed::new(WS_SANDBOX_URL,
         &["BTC-USD"], &[ChannelType::Heartbeat]);
-//!
+
     let f = stream
         .take(10)
         .for_each(|msg| {
@@ -72,7 +72,7 @@ fn main() {
         }
         Ok(())
     });
-//!
+
     tokio::run(f.map_err(|_| panic!("stream fail")));
 }
 ```
