@@ -36,15 +36,15 @@ fn test_get_book() {
     let book_l1 = client.get_book::<BookRecordL1>("BTC-USD").unwrap();
     let str1 = format!("{:?}", book_l1);
     assert_eq!(1, book_l1.bids.len());
-    assert!(str1.contains("bids: [BookRecordL1"));
+    assert!(str1.contains("bids: [BookRecordL1 {"));
     let book_l2 = client.get_book::<BookRecordL2>("BTC-USD").unwrap();
     let str2 = format!("{:?}", book_l2);
     assert!(book_l2.bids.len() > 1);
-    assert!(str2.contains("[BookRecordL2("));
+    assert!(str2.contains("[BookRecordL2 {"));
     let book_l3 = client.get_book::<BookRecordL3>("BTC-USD").unwrap();
     let str3 = format!("{:?}", book_l3);
     assert!(book_l2.bids.len() > 1);
-    assert!(str3.contains("[BookRecordL3("));
+    assert!(str3.contains("[BookRecordL3 {"));
 }
 
 #[test]

@@ -17,7 +17,6 @@ fn convert_msg(msg: TMessage) -> Message {
     match msg {
         TMessage::Text(str) => {
             serde_json::from_str(&str)
-                .map(|msg: InputMessage| msg.into())
                 .unwrap_or_else(|e| Message::InternalError(WSError::Serde {
                     error: e,
                     data: str

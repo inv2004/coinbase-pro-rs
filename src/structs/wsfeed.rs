@@ -1,3 +1,6 @@
+extern crate serde;
+
+use serde::{Deserialize, Deserializer};
 use uuid::Uuid;
 use utils::f64_from_string;
 use utils::f64_opt_from_string;
@@ -110,21 +113,21 @@ pub enum Level2 {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct Level2SnapshotRecord(
+pub struct Level2SnapshotRecord {
     #[serde(deserialize_with = "f64_from_string")]
-    f64,
+    pub price: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    f64
-);
+    pub size: f64
+}
 
 #[derive(Deserialize, Debug)]
-pub struct Level2UpdateRecord(
-    super::reqs::OrderSide,
+pub struct Level2UpdateRecord {
+    pub side: super::reqs::OrderSide,
     #[serde(deserialize_with = "f64_from_string")]
-    f64,
+    pub price: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    f64
-);
+    pub size: f64
+}
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
@@ -294,7 +297,7 @@ pub enum StopType {
     Entry, Exit
 }
 
-impl From<InputMessage> for  Message {
+impl From<InputMessage> for Message {
     fn from(msg: InputMessage) -> Self {
         match msg {
             InputMessage::Subscriptions {channels} => Message::Subscriptions {channels},
@@ -315,4 +318,12 @@ impl From<InputMessage> for  Message {
     }
 }
 
+impl<'de> Deserialize<'de> for Message {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: Deserializer<'de>
+    {
+        Deserialize::deserialize(deserializer)
+            .map(|input_msg: InputMessage| input_msg.into())
+    }
+}
 

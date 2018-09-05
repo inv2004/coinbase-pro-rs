@@ -43,13 +43,13 @@ pub trait BookLevel {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct BookRecordL1(
+pub struct BookRecordL1 {
     #[serde(deserialize_with = "f64_from_string")]
-    pub f64,
+    pub price: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    pub f64,
-    pub usize,
-);
+    pub size: f64,
+    pub num_orders: usize
+}
 
 impl BookLevel for BookRecordL1 {
     fn level() -> u8 {
@@ -58,13 +58,13 @@ impl BookLevel for BookRecordL1 {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct BookRecordL2(
+pub struct BookRecordL2 {
     #[serde(deserialize_with = "f64_from_string")]
-    pub f64,
+    pub price: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    pub f64,
-    pub usize,
-);
+    pub size: f64,
+    pub num_orders: usize
+}
 
 impl BookLevel for BookRecordL2 {
     fn level() -> u8 {
@@ -73,13 +73,13 @@ impl BookLevel for BookRecordL2 {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct BookRecordL3(
+pub struct BookRecordL3 {
     #[serde(deserialize_with = "f64_from_string")]
-    pub f64,
+    pub price: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    pub f64,
-    pub Uuid,
-);
+    pub size: f64,
+    pub order_id: Uuid
+}
 
 impl BookLevel for BookRecordL3 {
     fn level() -> u8 {
