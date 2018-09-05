@@ -22,7 +22,7 @@ fn convert_msg(msg: TMessage) -> Message {
                     data: str
                 }))
         },
-        _ => panic!("other")
+        _ => unreachable!() // filtered in stream
     }
 }
 
@@ -58,6 +58,7 @@ impl WSFeed {
                     .and_then(|_| {
                         debug!("subsription sent");
                         let stream = stream
+                            .filter(|msg| msg.is_text())
                             .map_err(WSError::Read)
                             .map(convert_msg);
                         Ok(stream)
