@@ -7,21 +7,21 @@ extern crate sha2;
 extern crate tokio;
 
 use hyper::header::HeaderValue;
-use hyper::{Body, Method, Request, Uri};
 use hyper::rt::Future;
+use hyper::{Body, Method, Request, Uri};
 use private::hmac::{Hmac, Mac};
 use serde_json;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
-use structs::private::*;
-use structs::reqs;
 use adapters::Adapter;
 use error::*;
+use structs::private::*;
+use structs::reqs;
 
 use public::Public;
 
-pub struct Private<Adapter>{
+pub struct Private<Adapter> {
     _pub: Public<Adapter>,
     key: String,
     secret: String,
@@ -36,24 +36,34 @@ impl<A> Private<A> {
         base64::encode(&mac.result().code())
     }
 
-    fn call_feature<U>(&self, method: Method, uri: &str, body_str: &str) -> impl Future<Item = U, Error = CBError>
-        where for<'de> U: serde::Deserialize<'de>
+    fn call_feature<U>(
+        &self,
+        method: Method,
+        uri: &str,
+        body_str: &str,
+    ) -> impl Future<Item = U, Error = CBError>
+    where
+        for<'de> U: serde::Deserialize<'de>,
     {
-        self._pub.call_feature(self.request(method, uri, body_str.to_string()))
+        self._pub
+            .call_feature(self.request(method, uri, body_str.to_string()))
     }
 
     fn call<U>(&self, method: Method, uri: &str, body_str: &str) -> A::Result
-        where A: Adapter<U> + 'static,
-            U: Send + 'static,
-              for<'de> U: serde::Deserialize<'de>
+    where
+        A: Adapter<U> + 'static,
+        U: Send + 'static,
+        for<'de> U: serde::Deserialize<'de>,
     {
-        self._pub.call(self.request(method, uri, body_str.to_string()))
+        self._pub
+            .call(self.request(method, uri, body_str.to_string()))
     }
 
     fn call_get<U>(&self, uri: &str) -> A::Result
-        where A: Adapter<U> + 'static,
-            U: Send + 'static,
-              for<'de> U: serde::Deserialize<'de>
+    where
+        A: Adapter<U> + 'static,
+        U: Send + 'static,
+        for<'de> U: serde::Deserialize<'de>,
     {
         self.call(Method::GET, uri, "")
     }
@@ -121,7 +131,8 @@ impl<A> Private<A> {
     /// # API Key Permissions
     /// This endpoint requires either the “view” or “trade” permission.
     pub fn get_accounts(&self) -> A::Result
-        where A: Adapter<Vec<Account>> + 'static
+    where
+        A: Adapter<Vec<Account>> + 'static,
     {
         self.call_get("/accounts")
     }
@@ -141,7 +152,8 @@ impl<A> Private<A> {
     /// | holds |	funds on hold (not available for use) |
     /// | available |	funds available to withdraw or trade |
     pub fn get_account(&self, account_id: Uuid) -> A::Result
-        where A: Adapter<Account> + 'static
+    where
+        A: Adapter<Account> + 'static,
     {
         self.call_get(&format!("/accounts/{}", account_id))
     }
@@ -166,9 +178,11 @@ impl<A> Private<A> {
     ///
     /// If an entry is the result of a trade (match, fee), the details field will contain additional information about the trade.
     pub fn get_account_hist(&self, id: Uuid) -> A::Result
-        where A: Adapter<Vec<AccountHistory>> + 'static
+    where
+        A: Adapter<Vec<AccountHistory>> + 'static,
     {
-        let f = self.call_feature(Method::GET, &format!("/accounts/{}/ledger", id), "")
+        let f = self
+            .call_feature(Method::GET, &format!("/accounts/{}/ledger", id), "")
             .map(|xs: Vec<AccountHistory>| {
                 xs.into_iter()
                     .map(|x| AccountHistory {
@@ -196,7 +210,8 @@ impl<A> Private<A> {
     /// The ref field contains the id of the order or transfer which created the hold.
     ///
     pub fn get_account_holds(&self, id: Uuid) -> A::Result
-        where A: Adapter<Vec<AccountHolds>> + 'static
+    where
+        A: Adapter<Vec<AccountHolds>> + 'static,
     {
         self.call_get(&format!("/accounts/{}/holds", id))
     }
@@ -204,10 +219,10 @@ impl<A> Private<A> {
     /// **Make Order**
     /// General function. Can be used to use own generated `Order` structure for order
     pub fn set_order(&self, order: reqs::Order) -> A::Result
-        where A: Adapter<Order> + 'static
+    where
+        A: Adapter<Order> + 'static,
     {
-        let body_str = serde_json::to_string(&order)
-            .expect("cannot to_string post body");
+        let body_str = serde_json::to_string(&order).expect("cannot to_string post body");
 
         self.call(Method::POST, "/orders", &body_str)
     }
@@ -222,7 +237,8 @@ impl<A> Private<A> {
         post_only: bool,
         time_in_force: Option<reqs::OrderTimeInForce>,
     ) -> A::Result
-        where A: Adapter<Order> + 'static
+    where
+        A: Adapter<Order> + 'static,
     {
         self.set_order(reqs::Order::limit(
             product_id,
@@ -244,7 +260,8 @@ impl<A> Private<A> {
         post_only: bool,
         time_in_force: Option<reqs::OrderTimeInForce>,
     ) -> A::Result
-        where A: Adapter<Order> + 'static
+    where
+        A: Adapter<Order> + 'static,
     {
         self.set_order(reqs::Order::limit(
             product_id,
@@ -259,7 +276,8 @@ impl<A> Private<A> {
     /// **Buy market**
     /// Makes Buy marker order
     pub fn buy_market(&self, product_id: &str, size: f64) -> A::Result
-        where A: Adapter<Order> + 'static
+    where
+        A: Adapter<Order> + 'static,
     {
         self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Buy, size))
     }
@@ -267,7 +285,8 @@ impl<A> Private<A> {
     /// **Sell market**
     /// Makes Sell marker order
     pub fn sell_market(&self, product_id: &str, size: f64) -> A::Result
-        where A: Adapter<Order> + 'static
+    where
+        A: Adapter<Order> + 'static,
     {
         self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Sell, size))
     }
@@ -282,10 +301,12 @@ impl<A> Private<A> {
     /// # API Key Permissions
     /// This endpoint requires the “trade” permission.
     pub fn cancel_order(&self, id: Uuid) -> A::Result
-        where A: Adapter<Uuid> + 'static
+    where
+        A: Adapter<Uuid> + 'static,
     {
-        let f = self.call_feature(Method::DELETE, &format!("/orders/{}", id), "")
-           .map(|r: Vec<Uuid>| *r.first().unwrap());
+        let f = self
+            .call_feature(Method::DELETE, &format!("/orders/{}", id), "")
+            .map(|r: Vec<Uuid>| *r.first().unwrap());
 
         A::process(f)
     }
@@ -302,7 +323,8 @@ impl<A> Private<A> {
     /// | ----- | --------- | ------------- |
     /// | product_id |	*optional* |	Only cancel orders open for a specific product |
     pub fn cancel_all(&self, product_id: Option<&str>) -> A::Result
-        where A: Adapter<Vec<Uuid>> + 'static
+    where
+        A: Adapter<Vec<Uuid>> + 'static,
     {
         let param = product_id
             .map(|x| format!("?product_id={}", x))
@@ -324,17 +346,12 @@ impl<A> Private<A> {
     /// | ------ | -------- | ------------ |
     /// | status |	*open*, *pending*, *active* | 	Limit list of orders to these statuses. Passing all returns orders of all statuses. |
     /// | product_id |	*optional* |	Only list orders for a specific product |
-    pub fn get_orders(
-        &self,
-        status: Option<OrderStatus>,
-        product_id: Option<&str>,
-    ) -> A::Result
-        where A: Adapter<Vec<Order>> + 'static
+    pub fn get_orders(&self, status: Option<OrderStatus>, product_id: Option<&str>) -> A::Result
+    where
+        A: Adapter<Vec<Order>> + 'static,
     {
         // TODO rewrite
-        let param_status = status
-            .map(|x| format!("&status={}", x))
-            .unwrap_or_default();
+        let param_status = status.map(|x| format!("&status={}", x)).unwrap_or_default();
         let param_product = product_id
             .map(|x| format!("&product_id={}", x))
             .unwrap_or_default();
@@ -355,7 +372,8 @@ impl<A> Private<A> {
     ///
     /// If the order is canceled the response may have status code 404 if the order had no matches.
     pub fn get_order(&self, id: Uuid) -> A::Result
-        where A: Adapter<Order> + 'static
+    where
+        A: Adapter<Order> + 'static,
     {
         self.call_get(&format!("/orders/{}", id))
     }
@@ -368,7 +386,8 @@ impl<A> Private<A> {
     /// This endpoint requires either the “view” or “trade” permission.
     /// **DEPRECATION NOTICE** - Requests without either order_id or product_id will be rejected after 8/23/18.
     pub fn get_fills(&self, order_id: Option<Uuid>, product_id: Option<&str>) -> A::Result
-        where A: Adapter<Vec<Fill>> + 'static
+    where
+        A: Adapter<Vec<Fill>> + 'static,
     {
         let param_order = order_id
             .map(|x| format!("&order_id={}", x))
@@ -391,7 +410,8 @@ impl<A> Private<A> {
     /// #API Key Permissions
     /// This endpoint requires either the “view” or “trade” permission.
     pub fn get_trailing_volume(&self) -> A::Result
-        where A: Adapter<Vec<TrailingVolume>> + 'static
+    where
+        A: Adapter<Vec<TrailingVolume>> + 'static,
     {
         self.call_get("/users/self/trailing-volume")
     }

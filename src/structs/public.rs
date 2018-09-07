@@ -48,7 +48,7 @@ pub struct BookRecordL1 {
     pub price: f64,
     #[serde(deserialize_with = "f64_from_string")]
     pub size: f64,
-    pub num_orders: usize
+    pub num_orders: usize,
 }
 
 impl BookLevel for BookRecordL1 {
@@ -63,7 +63,7 @@ pub struct BookRecordL2 {
     pub price: f64,
     #[serde(deserialize_with = "f64_from_string")]
     pub size: f64,
-    pub num_orders: usize
+    pub num_orders: usize,
 }
 
 impl BookLevel for BookRecordL2 {
@@ -78,7 +78,7 @@ pub struct BookRecordL3 {
     pub price: f64,
     #[serde(deserialize_with = "f64_from_string")]
     pub size: f64,
-    pub order_id: Uuid
+    pub order_id: Uuid,
 }
 
 impl BookLevel for BookRecordL3 {

@@ -1,10 +1,10 @@
-extern crate serde_json;
 extern crate coinbase_pro_rs;
+extern crate serde_json;
 
 mod common;
 
-use coinbase_pro_rs::*;
 use coinbase_pro_rs::structs::reqs;
+use coinbase_pro_rs::*;
 use common::delay;
 
 static KEY: &str = "1d0dc0f7b4e808d430b95d8fed7df3ea";
@@ -18,14 +18,12 @@ fn test_get_accounts() {
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
     let accounts = client.get_accounts().unwrap();
     assert!(
-        format!("{:?}", accounts).contains(
-            r#"currency: "BCH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#
-        )
+        format!("{:?}", accounts)
+            .contains(r#"currency: "BCH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#)
     );
     assert!(
-        format!("{:?}", accounts).contains(
-            r#"currency: "ETH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#
-        )
+        format!("{:?}", accounts)
+            .contains(r#"currency: "ETH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#)
     );
 }
 

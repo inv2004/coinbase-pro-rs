@@ -3,9 +3,9 @@ extern crate coinbase_pro_rs;
 
 mod common;
 
-use coinbase_pro_rs::*;
-use coinbase_pro_rs::structs::public::*;
 use chrono::prelude::*;
+use coinbase_pro_rs::structs::public::*;
+use coinbase_pro_rs::*;
 use common::delay;
 
 #[test]
@@ -127,4 +127,3 @@ fn test_get_currencies() {
 //            });
 //        rt::run(ft);
 //    }
-

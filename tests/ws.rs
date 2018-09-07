@@ -1,14 +1,17 @@
-extern crate tokio;
-extern crate serde_json;
 extern crate coinbase_pro_rs;
+extern crate serde_json;
+extern crate tokio;
 
 mod common;
 
-use tokio::prelude::{Future, Stream};
-use coinbase_pro_rs::{WSFeed, WS_SANDBOX_URL, WS_URL};
 use coinbase_pro_rs::structs::wsfeed::*;
-use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use coinbase_pro_rs::{WSFeed, WS_SANDBOX_URL, WS_URL};
 use common::delay;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
+use tokio::prelude::{Future, Stream};
 
 #[test]
 fn test_subscribe() {
@@ -16,11 +19,13 @@ fn test_subscribe() {
     let s = Subscribe {
         _type: SubscribeCmd::Subscribe,
         product_ids: vec!["BTC-USD".to_string()],
-        channels: vec![Channel::Name(ChannelType::Heartbeat),
-                       Channel::WithProduct {
-                           name: ChannelType::Level2,
-                           product_ids: vec!["BTC-USD".to_string()]
-                       }]
+        channels: vec![
+            Channel::Name(ChannelType::Heartbeat),
+            Channel::WithProduct {
+                name: ChannelType::Level2,
+                product_ids: vec!["BTC-USD".to_string()],
+            },
+        ],
     };
 
     let str = serde_json::to_string(&s).unwrap();
@@ -31,8 +36,7 @@ fn test_subscribe() {
 #[test]
 fn test_subscription() {
     delay();
-    let stream = WSFeed::new(WS_SANDBOX_URL,
-                             &["BTC-USD"], &[ChannelType::Heartbeat]);
+    let stream = WSFeed::new(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Heartbeat]);
     let f = stream
         .take(1)
         .for_each(move |msg| {
@@ -49,17 +53,14 @@ fn test_heartbeat() {
     delay();
     let found = Arc::new(AtomicBool::new(false));
     let found2 = found.clone();
-    let stream = WSFeed::new(WS_SANDBOX_URL,
-                             &["BTC-USD"], &[ChannelType::Heartbeat]);
-    let f = stream
-        .take(3)
-        .for_each(move |msg| {
-            let str = format!("{:?}", msg);
-            if str.starts_with("Heartbeat { sequence: ") {
-                found2.swap(true, Ordering::Relaxed);
-            }
-            Ok(())
-        });
+    let stream = WSFeed::new(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Heartbeat]);
+    let f = stream.take(3).for_each(move |msg| {
+        let str = format!("{:?}", msg);
+        if str.starts_with("Heartbeat { sequence: ") {
+            found2.swap(true, Ordering::Relaxed);
+        }
+        Ok(())
+    });
 
     tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
 
@@ -73,17 +74,14 @@ fn test_ticker() {
     let found2 = found.clone();
 
     // hard to check in sandbox because low flow
-    let stream = WSFeed::new(WS_URL,
-                             &["BTC-USD"], &[ChannelType::Ticker]);
-    let f = stream
-        .take(3)
-        .for_each(move |msg| {
-            let str = format!("{:?}", msg);
-            if str.contains("Ticker(Full { trade_id: ") {
-                found2.swap(true, Ordering::Relaxed);
-            }
-            Ok(())
-        });
+    let stream = WSFeed::new(WS_URL, &["BTC-USD"], &[ChannelType::Ticker]);
+    let f = stream.take(3).for_each(move |msg| {
+        let str = format!("{:?}", msg);
+        if str.contains("Ticker(Full { trade_id: ") {
+            found2.swap(true, Ordering::Relaxed);
+        }
+        Ok(())
+    });
 
     tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
 
@@ -99,20 +97,20 @@ fn test_level2() {
     let found_l2update_2 = found_l2update.clone();
 
     // hard to check in sandbox because low flow
-    let stream = WSFeed::new(WS_URL,
-                             &["BTC-USD"], &[ChannelType::Level2]);
-    let f = stream
-        .take(3   )
-        .for_each(move |msg| {
-            let str = format!("{:?}", msg);
-            if str.starts_with("Level2(Snapshot { product_id: \"BTC-USD\", bids: [Level2SnapshotRecord") &&
-                ! found_l2update_2.load(Ordering::Relaxed) {
-                found_snapshot_2.swap(true, Ordering::Relaxed);
-            } else if str.starts_with("Level2(L2update { product_id: \"BTC-USD\", changes: [Level2UpdateRecord") {
-                found_l2update_2.swap(true, Ordering::Relaxed);
-            }
-            Ok(())
-        });
+    let stream = WSFeed::new(WS_URL, &["BTC-USD"], &[ChannelType::Level2]);
+    let f = stream.take(3).for_each(move |msg| {
+        let str = format!("{:?}", msg);
+        if str.starts_with("Level2(Snapshot { product_id: \"BTC-USD\", bids: [Level2SnapshotRecord")
+            && !found_l2update_2.load(Ordering::Relaxed)
+        {
+            found_snapshot_2.swap(true, Ordering::Relaxed);
+        } else if str
+            .starts_with("Level2(L2update { product_id: \"BTC-USD\", changes: [Level2UpdateRecord")
+        {
+            found_l2update_2.swap(true, Ordering::Relaxed);
+        }
+        Ok(())
+    });
 
     tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
 
@@ -129,27 +127,24 @@ fn test_match() {
     let found_full_2 = found_full.clone();
 
     // hard to check in sandbox because low flow
-    let stream = WSFeed::new(WS_URL,
-                             &["BTC-USD"], &[ChannelType::Matches]);
-    let f = stream
-        .take(3)
-        .for_each(move |msg| {
-//            let str = format!("{:?}", msg);
-//            println!("{}", str);
-            match msg {
-                Message::Match(m) => {
-                    assert!(m.sequence > 0);
-                    found_match_2.swap(true, Ordering::Relaxed);
-                },
-                Message::Full(Full::Match(m)) => {
-                    assert!(m.trade_id > 0);
-                    found_full_2.swap(true, Ordering::Relaxed);
-                },
-                Message::Subscriptions {..} => (),
-                _ => assert!(false)
-            };
-            Ok(())
-        });
+    let stream = WSFeed::new(WS_URL, &["BTC-USD"], &[ChannelType::Matches]);
+    let f = stream.take(3).for_each(move |msg| {
+        //            let str = format!("{:?}", msg);
+        //            println!("{}", str);
+        match msg {
+            Message::Match(m) => {
+                assert!(m.sequence > 0);
+                found_match_2.swap(true, Ordering::Relaxed);
+            }
+            Message::Full(Full::Match(m)) => {
+                assert!(m.trade_id > 0);
+                found_full_2.swap(true, Ordering::Relaxed);
+            }
+            Message::Subscriptions { .. } => (),
+            _ => assert!(false),
+        };
+        Ok(())
+    });
 
     tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
 
@@ -174,39 +169,35 @@ fn test_full() {
     let found_match_2 = found_match.clone();
 
     // hard to check in sandbox because low flow
-    let stream = WSFeed::new(WS_URL,
-                             &["BTC-USD"], &[ChannelType::Full]);
-    let f = stream
-        .take(3000)
-        .for_each(move |msg| {
-            let str = format!("{:?}", msg);
-            if str.starts_with("Subscriptions { channels: [WithProduct { name: Full, product_ids") {
-                ()
-            } else if str.starts_with("Full(Match(Match { trade_id: ") {
-                found_match_2.swap(true, Ordering::Relaxed);
-            } else if str.starts_with("Full(Done(Limit { time: ") {
-                found_done_limit_2.swap(true, Ordering::Relaxed);
-            } else if str.starts_with("Full(Done(Market { time: ") {
-                found_done_market_2.swap(true, Ordering::Relaxed);
-            } else if str.starts_with("Full(Received(Limit") {
-                found_received_limit_2.swap(true, Ordering::Relaxed);
-            } else if str.starts_with("Full(Received(Market") {
-                found_received_market_2.swap(true, Ordering::Relaxed);
-            } else if str.starts_with("Full(Open(Open { time: ") {
-                found_open_2.swap(true, Ordering::Relaxed);
-            } else {
-                println!("{}", str);
-            }
-            Ok(())
-        });
+    let stream = WSFeed::new(WS_URL, &["BTC-USD"], &[ChannelType::Full]);
+    let f = stream.take(3000).for_each(move |msg| {
+        let str = format!("{:?}", msg);
+        if str.starts_with("Subscriptions { channels: [WithProduct { name: Full, product_ids") {
+            ()
+        } else if str.starts_with("Full(Match(Match { trade_id: ") {
+            found_match_2.swap(true, Ordering::Relaxed);
+        } else if str.starts_with("Full(Done(Limit { time: ") {
+            found_done_limit_2.swap(true, Ordering::Relaxed);
+        } else if str.starts_with("Full(Done(Market { time: ") {
+            found_done_market_2.swap(true, Ordering::Relaxed);
+        } else if str.starts_with("Full(Received(Limit") {
+            found_received_limit_2.swap(true, Ordering::Relaxed);
+        } else if str.starts_with("Full(Received(Market") {
+            found_received_market_2.swap(true, Ordering::Relaxed);
+        } else if str.starts_with("Full(Open(Open { time: ") {
+            found_open_2.swap(true, Ordering::Relaxed);
+        } else {
+            println!("{}", str);
+        }
+        Ok(())
+    });
 
     tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
 
     assert!(found_received_limit.load(Ordering::Relaxed));
-//    assert!(_found_received_market.load(Ordering::Relaxed));
+    //    assert!(_found_received_market.load(Ordering::Relaxed));
     assert!(found_match.load(Ordering::Relaxed));
     assert!(found_done_limit.load(Ordering::Relaxed));
     assert!(found_done_market.load(Ordering::Relaxed));
     assert!(found_open.load(Ordering::Relaxed));
 }
-

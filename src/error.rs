@@ -28,19 +28,17 @@ pub enum WSError {
     Serde {
         #[cause]
         error: super::serde_json::Error,
-        data: String
-    }
+        data: String,
+    },
 }
 
 use super::serde::{Deserialize, Deserializer};
 
 impl<'de> Deserialize<'de> for WSError {
     fn deserialize<D>(_deserializer: D) -> Result<WSError, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         unimplemented!()
     }
 }
-
-

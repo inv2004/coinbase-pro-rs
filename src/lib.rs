@@ -83,33 +83,33 @@ extern crate serde_derive;
 extern crate failure;
 #[macro_use]
 extern crate log;
-extern crate serde_json;
 extern crate chrono;
 extern crate futures;
 extern crate hyper;
 extern crate hyper_tls;
 extern crate pretty_env_logger;
 extern crate serde;
+extern crate serde_json;
 extern crate time;
 extern crate tokio;
-extern crate uuid;
 extern crate tokio_tungstenite;
+extern crate uuid;
 
+pub mod adapters;
 pub mod error;
 pub mod private;
 pub mod public;
 pub mod structs;
-pub mod adapters;
 mod utils;
 
 pub mod wsfeed;
 
+pub use adapters::{ASync, Sync};
+pub use error::CBError;
+pub use error::WSError;
 pub use private::Private;
 pub use public::Public;
 pub use wsfeed::WSFeed;
-pub use error::CBError;
-pub use error::WSError;
-pub use adapters::{Sync, ASync};
 
 pub type Result<T> = std::result::Result<T, CBError>;
 
@@ -121,6 +121,3 @@ pub const SANDBOX_URL: &str = "https://api-public.sandbox.pro.coinbase.com";
 pub const WS_URL: &str = "wss://ws-feed.pro.coinbase.com";
 /// wss://ws-feed-public.sandbox.pro.coinbase.com
 pub const WS_SANDBOX_URL: &str = "wss://ws-feed-public.sandbox.pro.coinbase.com";
-
-
-

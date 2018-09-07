@@ -12,19 +12,20 @@ use serde::Deserialize;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
-use error::*;
 use super::adapters::*;
+use error::*;
 use structs::public::*;
 use structs::DateTime;
 
 pub struct Public<Adapter> {
     pub(crate) uri: String,
     client: Client<HttpsConnector<HttpConnector>>,
-    adapter: PhantomData<Adapter>
+    adapter: PhantomData<Adapter>,
 }
 
 impl<A> Public<A> {
-    pub(crate) const USER_AGENT: &'static str = concat!("coinbase-pro-rs/", env!("CARGO_PKG_VERSION"));
+    pub(crate) const USER_AGENT: &'static str =
+        concat!("coinbase-pro-rs/", env!("CARGO_PKG_VERSION"));
 
     fn request(&self, uri: &str) -> Request<Body> {
         let uri: Uri = (self.uri.to_string() + uri).parse().unwrap();
@@ -35,16 +36,20 @@ impl<A> Public<A> {
     }
 
     fn get_pub<U>(&self, uri: &str) -> A::Result
-        where
-            A: Adapter<U> + 'static,
-            U: Send + 'static,
-            for <'de> U: serde::Deserialize<'de>
+    where
+        A: Adapter<U> + 'static,
+        U: Send + 'static,
+        for<'de> U: serde::Deserialize<'de>,
     {
         self.call(self.request(uri))
     }
 
-    pub(crate) fn call_feature<U>(&self, request: Request<Body>) -> impl Future<Item = U, Error = CBError>
-        where for<'de> U: serde::Deserialize<'de>,
+    pub(crate) fn call_feature<U>(
+        &self,
+        request: Request<Body>,
+    ) -> impl Future<Item = U, Error = CBError>
+    where
+        for<'de> U: serde::Deserialize<'de>,
     {
         debug!("{:?}", request);
 
@@ -66,10 +71,10 @@ impl<A> Public<A> {
     }
 
     pub(crate) fn call<U>(&self, request: Request<Body>) -> A::Result
-        where
-            A: Adapter<U> + 'static,
-            U: Send + 'static,
-            for<'de> U: serde::Deserialize<'de>,
+    where
+        A: Adapter<U> + 'static,
+        U: Send + 'static,
+        for<'de> U: serde::Deserialize<'de>,
     {
         A::process(self.call_feature(request))
     }
@@ -83,7 +88,11 @@ impl<A> Public<A> {
             .build::<_, Body>(https);
         let uri = uri.to_string();
 
-        Self { uri, client, adapter: PhantomData }
+        Self {
+            uri,
+            client,
+            adapter: PhantomData,
+        }
     }
 
     pub fn new(uri: &str) -> Self {
@@ -91,22 +100,25 @@ impl<A> Public<A> {
     }
 
     pub fn get_time(&self) -> A::Result
-        where A: Adapter<Time> + 'static
+    where
+        A: Adapter<Time> + 'static,
     {
         self.get_pub("/time")
     }
 
     pub fn get_products(&self) -> A::Result
-        where A: Adapter<Vec<Product>> + 'static
+    where
+        A: Adapter<Vec<Product>> + 'static,
     {
         self.get_pub("/products")
     }
 
     pub fn get_book<T>(&self, product_id: &str) -> A::Result
-        where A: Adapter<Book<T>> + 'static,
-              T: BookLevel + Debug + 'static,
-              T: super::std::marker::Send,
-              T: for<'de> Deserialize<'de>
+    where
+        A: Adapter<Book<T>> + 'static,
+        T: BookLevel + Debug + 'static,
+        T: super::std::marker::Send,
+        T: for<'de> Deserialize<'de>,
     {
         self.get_pub(&format!(
             "/products/{}/book?level={}",
@@ -116,13 +128,15 @@ impl<A> Public<A> {
     }
 
     pub fn get_ticker(&self, product_id: &str) -> A::Result
-        where A: Adapter<Ticker> + 'static
+    where
+        A: Adapter<Ticker> + 'static,
     {
         self.get_pub(&format!("/products/{}/ticker", product_id))
     }
 
     pub fn get_trades(&self, product_id: &str) -> A::Result
-        where A: Adapter<Vec<Trade>> + 'static
+    where
+        A: Adapter<Vec<Trade>> + 'static,
     {
         self.get_pub(&format!("/products/{}/trades", product_id))
     }
@@ -134,7 +148,8 @@ impl<A> Public<A> {
         end: Option<DateTime>,
         granularity: Granularity,
     ) -> A::Result
-        where A: Adapter<Vec<Candle>> + 'static
+    where
+        A: Adapter<Vec<Candle>> + 'static,
     {
         let param_start = start
             .map(|x| format!("&start={}", x.to_rfc3339()))
@@ -151,14 +166,15 @@ impl<A> Public<A> {
     }
 
     pub fn get_stats24h(&self, product_id: &str) -> A::Result
-        where A: Adapter<Stats24H> + 'static
+    where
+        A: Adapter<Stats24H> + 'static,
     {
-
         self.get_pub(&format!("/products/{}/stats", product_id))
     }
 
     pub fn get_currencies(&self) -> A::Result
-        where A: Adapter<Vec<Currency>> + 'static
+    where
+        A: Adapter<Vec<Currency>> + 'static,
     {
         self.get_pub("/currencies")
     }
