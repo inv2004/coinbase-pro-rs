@@ -8,7 +8,7 @@ Supports SYNC/ASYNC/Websocket-feed data support
 ## Features
 - private and public API
 - sync and async support
-- Websocket-feed support
+- websocket-feed support
 
 ## Examples
 Cargo.toml:
