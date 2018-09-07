@@ -5,6 +5,11 @@
 # Coinbase pro client for Rust
 Supports SYNC/ASYNC/Websocket-feed data support
 
+## Features
+- private and public API
+- sync and async support
+- Websocket-feed support
+
 ## Examples
 Cargo.toml:
 ```toml
@@ -113,7 +118,7 @@ fn main() {
 by request
 
 ## OrderBook
-after Websocket
+<https://github.com/inv2004/orderbook-rs>
 
 ### Tests
 cargo test -- --test-threads=1
