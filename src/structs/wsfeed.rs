@@ -264,8 +264,10 @@ pub struct Change {
     pub new_size: f64,
     #[serde(deserialize_with = "f64_from_string")]
     pub old_size: f64,
+    #[serde(default)]
     #[serde(deserialize_with = "f64_opt_from_string")]
     pub new_funds: Option<f64>,
+    #[serde(default)]
     #[serde(deserialize_with = "f64_opt_from_string")]
     pub old_funds: Option<f64>,
     #[serde(deserialize_with = "f64_from_string")]
