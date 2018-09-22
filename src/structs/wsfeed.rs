@@ -166,6 +166,34 @@ pub enum Full {
     Activate(Activate),
 }
 
+impl Full {
+    pub fn price(&self) -> Option<&f64> {
+        match self {
+            Full::Received(Received::Limit{price, ..}) => Some(price),
+            Full::Received(Received::Market{..}) => None,
+            Full::Open(Open{price, ..}) => Some(price),
+            Full::Done(Done::Limit{price, ..}) => Some(price),
+            Full::Done(Done::Market{..}) => None,
+            Full::Match(Match{price, ..}) => Some(price),
+            Full::Change(Change{price, ..}) => Some(price),
+            Full::Activate(Activate{..}) => None,
+        }
+    }
+
+    pub fn time(&self) -> Option<&DateTime> {
+        match self {
+            Full::Received(Received::Limit{time, ..}) => Some(time),
+            Full::Received(Received::Market{time, ..}) => Some(time),
+            Full::Open(Open{time, ..}) => Some(time),
+            Full::Done(Done::Limit{time, ..}) => Some(time),
+            Full::Done(Done::Market{time, ..}) => Some(time),
+            Full::Match(Match{time, ..}) => Some(time),
+            Full::Change(Change{time, ..}) => Some(time),
+            Full::Activate(Activate{..}) => None,
+        }
+    }
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(tag = "order_type")]
 #[serde(rename_all = "camelCase")]

@@ -34,3 +34,4 @@ impl<T> Adapter<T> for ASync {
         Box::new(f)
     }
 }
+
