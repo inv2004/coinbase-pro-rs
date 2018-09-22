@@ -14,7 +14,7 @@ Supports SYNC/ASYNC/Websocket-feed data support
 Cargo.toml:
 ```toml
 [dependencies]
-coinbase-pro-rs = "0.2.4"
+coinbase-pro-rs = "0.2.5"
 ```
 
 ### Async
