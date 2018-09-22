@@ -192,6 +192,19 @@ impl Full {
             Full::Activate(Activate{..}) => None,
         }
     }
+    
+    pub fn sequence(&self) -> Option<&usize> {
+        match self {
+            Full::Received(Received::Limit{sequence, ..}) => Some(sequence),
+            Full::Received(Received::Market{sequence, ..}) => Some(sequence),
+            Full::Open(Open{sequence, ..}) => Some(sequence),
+            Full::Done(Done::Limit{sequence, ..}) => Some(sequence),
+            Full::Done(Done::Market{sequence, ..}) => Some(sequence),
+            Full::Match(Match{sequence, ..}) => Some(sequence),
+            Full::Change(Change{sequence, ..}) => Some(sequence),
+            Full::Activate(Activate{..}) => None,
+        }
+    }
 }
 
 #[derive(Deserialize, Debug)]
