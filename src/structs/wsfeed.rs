@@ -175,7 +175,7 @@ impl Full {
             Full::Done(Done::Limit{price, ..}) => Some(price),
             Full::Done(Done::Market{..}) => None,
             Full::Match(Match{price, ..}) => Some(price),
-            Full::Change(Change{price, ..}) => Some(price),
+            Full::Change(Change{price, ..}) => price.as_ref(),
             Full::Activate(Activate{..}) => None,
         }
     }
@@ -311,8 +311,9 @@ pub struct Change {
     #[serde(default)]
     #[serde(deserialize_with = "f64_opt_from_string")]
     pub old_funds: Option<f64>,
-    #[serde(deserialize_with = "f64_from_string")]
-    pub price: f64,
+    #[serde(default)]
+    #[serde(deserialize_with = "f64_opt_from_string")]
+    pub price: Option<f64>,
     pub side: super::reqs::OrderSide,
 }
 
@@ -439,6 +440,18 @@ mod tests {
         assert_eq!(Some(5.6), s.e);
         assert_eq!(None, s.f);
         assert_eq!(None, s.j);
+    }
+
+    #[test]
+    fn test_change_without_price() {
+        let json = r#"{ "type" : "change", "side" : "sell", "old_size" : "7.53424298",
+            "new_size" : "4.95057246", "order_id" : "0f352cbb-98a8-48ce-9dc6-3003870dcfd1",
+            "product_id" : "BTC-USD", "sequence" : 7053090065,
+            "time" : "2018-09-25T13:30:57.550000Z" }"#;
+
+        let m: Message = serde_json::from_str(json).unwrap();
+        let str = format!("{:?}", m);
+        assert!(str.contains("product_id: \"BTC-USD\""));
     }
 }
 
