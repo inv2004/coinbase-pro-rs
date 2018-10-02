@@ -156,6 +156,30 @@ pub enum Ticker {
     },
 }
 
+impl Ticker {
+    pub fn price(&self) -> &f64 {
+        match self {
+            Ticker::Full{price, ..} => price,
+            Ticker::Empty{price, ..} => price
+        }
+    }
+
+    pub fn time(&self) -> Option<&DateTime> {
+        match self {
+            Ticker::Full{time, ..} => Some(time),
+            Ticker::Empty{..} => None,
+        }
+    }
+
+    pub fn sequence(&self) -> &usize {
+        match self {
+            Ticker::Full{sequence, ..} => sequence,
+            Ticker::Empty{sequence, ..} => sequence
+        }
+    }
+}
+
+
 #[derive(Deserialize, Debug)]
 pub enum Full {
     Received(Received),
