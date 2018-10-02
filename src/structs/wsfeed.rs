@@ -177,6 +177,20 @@ impl Ticker {
             Ticker::Empty{sequence, ..} => sequence
         }
     }
+
+    pub fn bid(&self) -> Option<&f64> {
+        match self {
+            Ticker::Full{best_bid, ..} => Some(best_bid),
+            Ticker::Empty{..} => None,
+        }
+    }
+
+    pub fn ask(&self) -> Option<&f64> {
+        match self {
+            Ticker::Full{best_ask, ..} => Some(best_ask),
+            Ticker::Empty{..} => None,
+        }
+    }
 }
 
 
