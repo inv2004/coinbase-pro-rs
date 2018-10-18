@@ -129,7 +129,7 @@ pub struct Level2UpdateRecord {
     pub size: f64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[serde(untagged)]
 #[serde(rename_all = "camelCase")]
 pub enum Ticker {
