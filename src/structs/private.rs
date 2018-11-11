@@ -1,7 +1,7 @@
 use std::fmt;
 use utils::f64_from_string;
 use uuid::Uuid;
-use utils::f64_nan_from_string;
+//use utils::f64_nan_from_string;
 //use utils::f64_opt_from_string;
 use super::DateTime;
 use utils::datetime_from_string;
@@ -124,8 +124,9 @@ pub enum AccountHoldsType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Order {
     pub id: Uuid,
-    #[serde(deserialize_with = "f64_nan_from_string")]
-    pub size: f64,
+    #[serde(default)]
+    #[serde(deserialize_with = "f64_from_string")]
+    pub size: Option<f64>,
     pub product_id: String,
     pub side: super::reqs::OrderSide,
     pub stp: Option<String>, // Options because its not in get_orders, but in set_order
