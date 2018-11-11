@@ -124,9 +124,6 @@ pub enum AccountHoldsType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Order {
     pub id: Uuid,
-    #[serde(default)]
-    #[serde(deserialize_with = "f64_from_string")]
-    pub size: Option<f64>,
     pub product_id: String,
     pub side: super::reqs::OrderSide,
     pub stp: Option<String>, // Options because its not in get_orders, but in set_order
@@ -150,14 +147,19 @@ pub struct Order {
 pub enum OrderType {
     Limit {
         #[serde(deserialize_with = "f64_from_string")]
+        size: f64,
+        #[serde(deserialize_with = "f64_from_string")]
         price: f64,
         #[serde(flatten)]
         time_in_force: OrderTimeInForce,
     },
     Market {
         #[serde(default)]
+        #[serde(deserialize_with = "f64_from_string")]
+        size: f64,
         //        #[serde(deserialize_with = "f64_opt_from_string")]
         //        funds: Option<f64>
+        #[serde(default)]
         #[serde(deserialize_with = "f64_from_string")]
         funds: f64,
     },
