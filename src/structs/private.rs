@@ -123,7 +123,7 @@ pub enum AccountHoldsType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Order {
     pub id: Uuid,
-    #[serde(deserialize_with = "f64_from_string")]
+    #[serde(deserialize_with = "f64_nan_from_string")]
     pub size: f64,
     pub product_id: String,
     pub side: super::reqs::OrderSide,
