@@ -256,7 +256,7 @@ fn test_user() {
                 .and_then(|_| {
                     Ok(())
                 })
-                .map_err(|e| {
+                .map_err(|_| {
                     WSError::Read(tokio_tungstenite::tungstenite::Error::Utf8) // hm
                 });
             futures::future::Either::A(res)

@@ -14,7 +14,7 @@ Supports SYNC/ASYNC/Websocket-feed data support
 Cargo.toml:
 ```toml
 [dependencies]
-coinbase-pro-rs = "0.2.7"
+coinbase-pro-rs = "0.2.8"
 ```
 
 ### Async
@@ -110,7 +110,7 @@ fn main() {
   - [x] heartbeat
   - [x] ticker
   - [x] level2
-  - [ ] user
+  - [x] user
   - [x] matches
   - [x] full
 
