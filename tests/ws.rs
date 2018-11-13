@@ -13,6 +13,11 @@ use std::sync::{
 };
 use tokio::prelude::{Future, Stream};
 
+static KEY: &str = "9eaa4603717ffdc322771a933ae12501";
+static SECRET: &str =
+    "RrLem7Ihmnn57ryW4Cc3Rp31h+Bm2DEPmzNbRiPrQQRE1yH6WNybmhK8xSqHjUNaR/V8huS+JMhBlr8PKt2GhQ==";
+static PASSPHRASE: &str = "sandbox";
+
 #[test]
 fn test_subscribe() {
     delay();
@@ -26,11 +31,38 @@ fn test_subscribe() {
                 product_ids: vec!["BTC-USD".to_string()],
             },
         ],
+        auth: None
     };
 
     let str = serde_json::to_string(&s).unwrap();
     assert_eq!(str,
                r#"{"type":"subscribe","product_ids":["BTC-USD"],"channels":["heartbeat",{"name":"level2","product_ids":["BTC-USD"]}]}"#);
+}
+
+#[test]
+fn test_subscribe_auth() {
+    delay();
+    let s = Subscribe {
+        _type: SubscribeCmd::Subscribe,
+        product_ids: vec!["BTC-USD".to_string()],
+        channels: vec![
+            Channel::Name(ChannelType::Heartbeat),
+            Channel::WithProduct {
+                name: ChannelType::Level2,
+                product_ids: vec!["BTC-USD".to_string()],
+            },
+        ],
+        auth: Some(Auth {
+            signature: "111".to_string(),
+            timestamp: "123".to_string(),
+            passphrase: "333".to_string(),
+            key: "000".to_string()
+        })
+    };
+
+    let str = serde_json::to_string(&s).unwrap();
+    assert_eq!(str,
+               r#"{"type":"subscribe","product_ids":["BTC-USD"],"channels":["heartbeat",{"name":"level2","product_ids":["BTC-USD"]}],"signature":"111","key":"000","passphrase":"333","timestamp":"123"}"#);
 }
 
 #[test]
@@ -201,3 +233,46 @@ fn test_full() {
     assert!(found_done_market.load(Ordering::Relaxed));
     assert!(found_open.load(Ordering::Relaxed));
 }
+
+
+#[test]
+fn test_user() {
+    use coinbase_pro_rs::{Private, ASync, SANDBOX_URL, WSError};
+
+    delay();
+
+
+    let found_received = Arc::new(AtomicBool::new(false));
+    let found_received_2 = found_received.clone();
+
+    let stream = WSFeed::new_with_auth(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::User],
+        KEY, SECRET, PASSPHRASE);
+
+    let f = stream.take(2).for_each(move |msg| {
+        let str = format!("{:?}", msg);
+        if str.contains("Subscriptions") {
+            let client: Private<ASync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+            let res = client.buy_limit("BTC-USD", 0.001, 100.0, true, None)
+                .and_then(|_| {
+                    Ok(())
+                })
+                .map_err(|e| {
+                    WSError::Read(tokio_tungstenite::tungstenite::Error::Utf8) // hm
+                });
+            futures::future::Either::A(res)
+        } else {
+            if str.contains("Full(Received(Limit")
+                && str.contains("price: 100.0") {
+                found_received_2.swap(true, Ordering::Relaxed);
+
+            }
+            futures::future::Either::B(futures::done(Ok(())))
+        }
+    });
+
+    tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
+
+    assert!(found_received.load(Ordering::Relaxed))
+}
+
+

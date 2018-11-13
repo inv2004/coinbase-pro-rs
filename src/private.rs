@@ -29,8 +29,8 @@ pub struct Private<Adapter> {
 }
 
 impl<A> Private<A> {
-    fn sign(&self, timestamp: u64, method: Method, uri: &str, body_str: &str) -> String {
-        let key = base64::decode(&self.secret).expect("base64::decode secret");
+    pub fn sign(secret: &str, timestamp: u64, method: Method, uri: &str, body_str: &str) -> String {
+        let key = base64::decode(secret).expect("base64::decode secret");
         let mut mac: Hmac<sha2::Sha256> = Hmac::new_varkey(&key).expect("Hmac::new(key)");
         mac.input((timestamp.to_string() + method.as_str() + uri + body_str).as_bytes());
         base64::encode(&mac.result().code())
@@ -95,7 +95,7 @@ impl<A> Private<A> {
         req.method(&method);
         req.uri(uri);
 
-        let sign = self.sign(timestamp, method, _uri, &body_str);
+        let sign = Self::sign(&self.secret, timestamp, method, _uri, &body_str);
 
         req.header("User-Agent", Public::<A>::USER_AGENT);
         req.header("Content-Type", "Application/JSON");
