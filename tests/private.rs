@@ -132,7 +132,7 @@ fn test_set_order_limit_gtc() {
 }
 
 #[test]
-#[ignore] // sandbox price is too high
+//#[ignore] // sandbox price is too high
 fn test_set_order_market() {
     delay();
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
@@ -144,6 +144,7 @@ fn test_set_order_market() {
     let str = format!("{:?}", order);
     assert!(str.contains("side: Sell"));
     assert!(str.contains("_type: Market {"));
+    assert!(false);
 }
 
 #[test]
