@@ -19,8 +19,8 @@ use structs::DateTime;
 
 pub struct Public<Adapter> {
     pub(crate) uri: String,
+    pub(crate) adapter: Adapter,
     client: Client<HttpsConnector<HttpConnector>>,
-    adapter: PhantomData<Adapter>,
 }
 
 impl<A> Public<A> {
@@ -77,12 +77,15 @@ impl<A> Public<A> {
         U: Send + 'static,
         for<'de> U: serde::Deserialize<'de>,
     {
-        A::process(self.call_future(request))
+        self.adapter.process(self.call_future(request))
     }
 
     // This function is contructor which can control keep_alive flag of the connection.
     // Created for tests to exit tokio::run
-    pub fn new_with_keep_alive(uri: &str, keep_alive: bool) -> Self {
+    pub fn new_with_keep_alive(uri: &str, keep_alive: bool) -> Self
+    where
+        A: AdapterNew
+    {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder()
             .keep_alive(keep_alive)
@@ -92,11 +95,14 @@ impl<A> Public<A> {
         Self {
             uri,
             client,
-            adapter: PhantomData,
+            adapter: A::new().expect("Failed to initialize adapter"),
         }
     }
 
-    pub fn new(uri: &str) -> Self {
+    pub fn new(uri: &str) -> Self
+    where
+        A: AdapterNew
+    {
         Self::new_with_keep_alive(uri, true)
     }
 
