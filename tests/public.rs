@@ -119,9 +119,9 @@ fn test_check_latency() {
     delay();
     let client: Public<Sync> = Public::new(SANDBOX_URL);
     let _ = client.get_time().unwrap();
-    let time1 = Instant::now();
+    let time = Instant::now();
     let _ = client.get_time().unwrap();
-    let time = (Instant::now() - time1).as_millis();
+    let time = time.elapsed().subsec_millis();
     dbg!(time);
     if time > 100 {
         panic!("{} > 100", time);
@@ -134,9 +134,9 @@ fn test_check_latency_async_block_on() {
     let mut runtime = tokio::runtime::Runtime::new().unwrap();
     let client: Public<ASync> = Public::new(SANDBOX_URL);
     let _ = runtime.block_on(client.get_time()).unwrap();
-    let time1 = Instant::now();
+    let time = Instant::now();
     let _ = runtime.block_on(client.get_time()).unwrap();
-    let time = (Instant::now() - time1).as_millis();
+    let time = time.elapsed().subsec_millis();
     dbg!(time);
     if time > 100 {
         panic!("{} > 100", time);
@@ -151,9 +151,9 @@ fn test_check_latency_async() {
     let mut runtime = tokio::runtime::Runtime::new().unwrap();
     let client: Public<ASync> = Public::new(SANDBOX_URL);
     let f = client.get_time().then(move |_| {
-        let time1 = Instant::now();
+        let time = Instant::now();
         client.get_time().then(move |_| {
-            let time = (Instant::now() - time1).as_millis();
+            let time = time.elapsed().subsec_millis();
             dbg!(time);
             if time <= 100 {
                 Ok(time)
