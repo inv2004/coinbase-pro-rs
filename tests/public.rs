@@ -112,6 +112,17 @@ fn test_get_currencies() {
     );
 }
 
+#[test]
+fn test_check_latency() {
+    delay();
+    let client: Public<Sync> = Public::new(SANDBOX_URL);
+    let _ = client.get_time().unwrap();
+    let time1 = Utc::now();
+    let _ = client.get_time().unwrap();
+    let time = (Utc::now() - time1).num_milliseconds();
+    dbg!(time);
+    assert!(time <= 100);
+}
 //    #[test]
 //    fn test_tls() { // it hangs
 //        let https = HttpsConnector::new(4).unwrap();
