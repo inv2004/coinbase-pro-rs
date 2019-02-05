@@ -1,8 +1,10 @@
 extern crate chrono;
 extern crate coinbase_pro_rs;
+extern crate futures;
 
 mod common;
 
+use std::time::Instant;
 use chrono::prelude::*;
 use coinbase_pro_rs::structs::public::*;
 use coinbase_pro_rs::*;
@@ -117,12 +119,52 @@ fn test_check_latency() {
     delay();
     let client: Public<Sync> = Public::new(SANDBOX_URL);
     let _ = client.get_time().unwrap();
-    let time1 = Utc::now();
+    let time1 = Instant::now();
     let _ = client.get_time().unwrap();
-    let time = (Utc::now() - time1).num_milliseconds();
+    let time = (Instant::now() - time1).as_millis();
     dbg!(time);
-    assert!(time <= 100);
+    if time > 100 {
+        panic!("{} > 100", time);
+    }
 }
+
+#[test]
+fn test_check_latency_async_block_on() {
+    delay();
+    let mut runtime = tokio::runtime::Runtime::new().unwrap();
+    let client: Public<ASync> = Public::new(SANDBOX_URL);
+    let _ = runtime.block_on(client.get_time()).unwrap();
+    let time1 = Instant::now();
+    let _ = runtime.block_on(client.get_time()).unwrap();
+    let time = (Instant::now() - time1).as_millis();
+    dbg!(time);
+    if time > 100 {
+        panic!("{} > 100", time);
+    }
+}
+
+use futures::future::Future;
+
+#[test]
+fn test_check_latency_async() {
+    delay();
+    let mut runtime = tokio::runtime::Runtime::new().unwrap();
+    let client: Public<ASync> = Public::new(SANDBOX_URL);
+    let f = client.get_time().then(move |_| {
+        let time1 = Instant::now();
+        client.get_time().then(move |_| {
+            let time = (Instant::now() - time1).as_millis();
+            dbg!(time);
+            if time <= 100 {
+                Ok(time)
+            } else {
+                Err(format!("{} > 100", time))
+            }
+        })
+    });
+    runtime.block_on(f).unwrap();
+}
+
 //    #[test]
 //    fn test_tls() { // it hangs
 //        let https = HttpsConnector::new(4).unwrap();
