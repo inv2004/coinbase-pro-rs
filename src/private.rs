@@ -46,7 +46,7 @@ impl<A> Private<A> {
         for<'de> U: serde::Deserialize<'de>,
     {
         self._pub
-            .call_feature(self.request(method, uri, body_str.to_string()))
+            .call_future(self.request(method, uri, body_str.to_string()))
     }
 
     fn call<U>(&self, method: Method, uri: &str, body_str: &str) -> A::Result

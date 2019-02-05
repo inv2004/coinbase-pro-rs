@@ -44,7 +44,7 @@ impl<A> Public<A> {
         self.call(self.request(uri))
     }
 
-    pub(crate) fn call_feature<U>(
+    pub(crate) fn call_future<U>(
         &self,
         request: Request<Body>,
     ) -> impl Future<Item = U, Error = CBError>
@@ -77,7 +77,7 @@ impl<A> Public<A> {
         U: Send + 'static,
         for<'de> U: serde::Deserialize<'de>,
     {
-        A::process(self.call_feature(request))
+        A::process(self.call_future(request))
     }
 
     // This function is contructor which can control keep_alive flag of the connection.
