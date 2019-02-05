@@ -10,7 +10,6 @@ use hyper::{Body, Client, Request, Uri};
 use hyper_tls::HttpsConnector;
 use serde::Deserialize;
 use std::fmt::Debug;
-use std::marker::PhantomData;
 
 use super::adapters::*;
 use error::*;
