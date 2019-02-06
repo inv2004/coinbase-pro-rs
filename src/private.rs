@@ -14,7 +14,7 @@ use serde_json;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
-use adapters::Adapter;
+use adapters::{Adapter, AdapterNew};
 use error::*;
 use structs::private::*;
 use structs::reqs;
@@ -115,7 +115,10 @@ impl<A> Private<A> {
     }
 
     /// Creates a new Private struct
-    pub fn new(uri: &str, key: &str, secret: &str, passphrase: &str) -> Self {
+    pub fn new(uri: &str, key: &str, secret: &str, passphrase: &str) -> Self
+    where
+        A: AdapterNew
+    {
         Self {
             _pub: Public::new(uri),
             key: key.to_string(),
@@ -191,7 +194,7 @@ impl<A> Private<A> {
                     }).collect()
             });
 
-        A::process(f)
+        self._pub.adapter.process(f)
     }
 
     /// **Get Holds**
@@ -308,7 +311,7 @@ impl<A> Private<A> {
             .call_feature(Method::DELETE, &format!("/orders/{}", id), "")
             .map(|r: Vec<Uuid>| *r.first().unwrap());
 
-        A::process(f)
+        self._pub.adapter.process(f)
     }
 
     /// **Cancel all**
