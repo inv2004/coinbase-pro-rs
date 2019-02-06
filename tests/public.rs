@@ -123,7 +123,7 @@ fn test_check_latency() {
     let _ = client.get_time().unwrap();
     let time = time.elapsed().subsec_millis();
     dbg!(time);
-    if time > 100 {
+    if time > 150 {
         panic!("{} > 100", time);
     }
 }
@@ -138,7 +138,7 @@ fn test_check_latency_async_block_on() {
     let _ = runtime.block_on(client.get_time()).unwrap();
     let time = time.elapsed().subsec_millis();
     dbg!(time);
-    if time > 100 {
+    if time > 150 {
         panic!("{} > 100", time);
     }
 }
@@ -155,7 +155,7 @@ fn test_check_latency_async() {
         client.get_time().then(move |_| {
             let time = time.elapsed().subsec_millis();
             dbg!(time);
-            if time <= 100 {
+            if time <= 150 {
                 Ok(time)
             } else {
                 Err(format!("{} > 100", time))
