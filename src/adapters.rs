@@ -37,8 +37,7 @@ impl<T> Adapter<T> for Sync {
     where
         F: Future<Item = T, Error = CBError> + Send + 'static,
     {
-        let mut rt = tokio::runtime::current_thread::Runtime::new().unwrap();
-        rt.block_on(f)
+        self.0.borrow_mut().block_on(f)
     }
 }
 
