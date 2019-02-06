@@ -4,7 +4,7 @@ use super::error::CBError;
 use hyper::rt::Future;
 
 use std::cell::RefCell;
-use tokio::runtime::current_thread::Runtime;
+use tokio::runtime::Runtime;
 use std::io;
 use std::fmt::Debug;
 
@@ -31,7 +31,7 @@ impl AdapterNew for Sync {
     }
 }
 
-impl<T> Adapter<T> for Sync {
+impl<T> Adapter<T> for Sync where T: Send + 'static {
     type Result = Result<T, CBError>;
     fn process<F>(&self, f: F) -> Self::Result
     where
