@@ -6,7 +6,7 @@ repository = "https://github.com/inv2004/coinbase-pro-rs"
 description = "Coinbase pro client for Rust"
 license = "MIT/Apache-2.0"
 readme = "README.md"
-categories = [ "api-bindings" ]
+categories = [ "api-bindings", "cryptography::cryptocurrencies" ]
 keywords = [ "exchange", "coinbase", "bitcoin", "websocket" ]
 
 [dependencies]
