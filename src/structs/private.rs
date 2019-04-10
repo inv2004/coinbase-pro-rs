@@ -100,9 +100,10 @@ impl<'a> From<&'a AccountHistoryDetails> for AccountHistoryType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AccountHolds {
     pub id: Uuid,
-    pub account_id: Uuid,
+    // pub id: Uuid, 
     pub created_at: DateTime,
-    pub updated_at: DateTime,
+    // pub updated_at: DateTime, 
+    #[serde(deserialize_with = "f64_from_string")]
     pub amount: f64,
     #[serde(rename = "type")]
     pub _type: AccountHoldsType,
