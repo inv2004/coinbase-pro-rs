@@ -4,6 +4,7 @@ extern crate serde;
 extern crate serde_json;
 extern crate tokio;
 
+use chrono::SecondsFormat;
 use hyper::client::HttpConnector;
 use hyper::rt::{Future, Stream};
 use hyper::{Body, Client, Request, Uri};
@@ -83,7 +84,7 @@ impl<A> Public<A> {
     // Created for tests to exit tokio::run
     pub fn new_with_keep_alive(uri: &str, keep_alive: bool) -> Self
     where
-        A: AdapterNew
+        A: AdapterNew,
     {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder()
@@ -100,7 +101,7 @@ impl<A> Public<A> {
 
     pub fn new(uri: &str) -> Self
     where
-        A: AdapterNew
+        A: AdapterNew,
     {
         Self::new_with_keep_alive(uri, true)
     }
@@ -158,10 +159,10 @@ impl<A> Public<A> {
         A: Adapter<Vec<Candle>> + 'static,
     {
         let param_start = start
-            .map(|x| format!("&start={}", x.to_rfc3339()))
+            .map(|x| format!("&start={}", x.to_rfc3339_opts(SecondsFormat::Secs, true)))
             .unwrap_or_default();
         let param_end = end
-            .map(|x| format!("&end={}", x.to_rfc3339()))
+            .map(|x| format!("&end={}", x.to_rfc3339_opts(SecondsFormat::Secs, true)))
             .unwrap_or_default();
 
         let req = format!(
