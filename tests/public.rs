@@ -57,6 +57,7 @@ fn test_get_ticker() {
     let client: Public<Sync> = Public::new(SANDBOX_URL);
     let ticker = client.get_ticker("BTC-USD").unwrap();
     let str = format!("{:?}", ticker);
+    dbg!(&str);
     assert!(str.starts_with("Ticker { trade_id:"));
     assert!(str.contains("time:"));
 }
@@ -102,15 +103,16 @@ fn test_get_currencies() {
     delay();
     let client: Public<Sync> = Public::new(SANDBOX_URL);
     let currencies = client.get_currencies().unwrap();
+    println!("{:?}", &currencies);
     let currency = currencies.iter().find(|x| x.id == "BTC").unwrap();
     assert_eq!(
         format!("{:?}", currency),
         "Currency { id: \"BTC\", name: \"Bitcoin\", min_size: 0.00000001 }"
     );
-    let currency = currencies.iter().find(|x| x.id == "LTC").unwrap();
+    let currency = currencies.iter().find(|x| x.id == "USD").unwrap();
     assert_eq!(
         format!("{:?}", currency),
-        "Currency { id: \"LTC\", name: \"Litecoin\", min_size: 0.00000001 }"
+        "Currency { id: \"USD\", name: \"United States Dollar\", min_size: 0.01 }"
     );
 }
 

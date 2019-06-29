@@ -19,11 +19,11 @@ fn test_get_accounts() {
     let accounts = client.get_accounts().unwrap();
     assert!(
         format!("{:?}", accounts)
-            .contains(r#"currency: "BCH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#)
+            .contains(r#"currency: "BTC""#)
     );
     assert!(
         format!("{:?}", accounts)
-            .contains(r#"currency: "ETH", balance: 0.0, available: 0.0, hold: 0.0, profile_id: "#)
+            .contains(r#"currency: "ETH""#)
     );
 }
 
@@ -66,7 +66,7 @@ fn test_get_account_hist() {
 }
 
 #[test]
-#[ignore]
+ #[ignore]
 fn test_get_account_holds() {
     delay();
     //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");

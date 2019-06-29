@@ -51,7 +51,7 @@ impl AdapterNew for ASync {
 }
 
 impl<T> Adapter<T> for ASync {
-    type Result = Box<Future<Item = T, Error = CBError> + Send>;
+    type Result = Box<dyn Future<Item = T, Error = CBError> + Send>;
     fn process<F>(&self, f: F) -> Self::Result
     where
         F: Future<Item = T, Error = CBError> + Send + 'static,
