@@ -342,6 +342,12 @@ pub struct Match {
     #[serde(deserialize_with = "f64_from_string")]
     pub price: f64,
     pub side: super::reqs::OrderSide,
+    pub user_id: Option<String>,
+    pub profile_id: Option<Uuid>,
+    pub taker_user_id: Option<String>,
+    pub taker_profile_id: Option<Uuid>,
+    pub maker_user_id: Option<String>,
+    pub maker_profile_id: Option<Uuid>,
 }
 
 #[derive(Deserialize, Debug)]
