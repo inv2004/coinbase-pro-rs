@@ -252,7 +252,7 @@ fn test_user() {
         let str = format!("{:?}", msg);
         if str.contains("Subscriptions") {
             let client: Private<ASync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
-            let res = client.buy_limit("BTC-USD", 0.001, 100.0, true, None)
+            let res = client.buy_limit("BTC-USD", 0.001, 100.0, true, None, None)
                 .and_then(|_| {
                     Ok(())
                 })

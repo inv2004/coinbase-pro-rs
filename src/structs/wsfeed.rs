@@ -6,6 +6,7 @@ use utils::f64_from_string;
 use utils::f64_nan_from_string;
 use utils::f64_opt_from_string;
 use utils::usize_from_string;
+use utils::uuid_opt_from_string;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -265,6 +266,8 @@ pub enum Received {
         product_id: String,
         sequence: usize,
         order_id: Uuid,
+        #[serde(deserialize_with = "uuid_opt_from_string")]
+        client_oid: Option<Uuid>,
         #[serde(deserialize_with = "f64_from_string")]
         size: f64,
         #[serde(deserialize_with = "f64_from_string")]
@@ -276,6 +279,7 @@ pub enum Received {
         product_id: String,
         sequence: usize,
         order_id: Uuid,
+        client_oid: Option<Uuid>,
         #[serde(default)]
         #[serde(deserialize_with = "f64_opt_from_string")]
         funds: Option<f64>,
