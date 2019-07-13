@@ -87,7 +87,7 @@ fn test_get_account_holds() {
 #[test]
 fn test_new_order_ser() {
     delay();
-    let order = reqs::Order::market("BTC-UST", reqs::OrderSide::Buy, 1.1);
+    let order = reqs::Order::market("BTC-UST", reqs::OrderSide::Buy, 1.1, None);
     let str = serde_json::to_string(&order).unwrap();
     assert_eq!(
         vec![0],
@@ -100,12 +100,12 @@ fn test_new_order_ser() {
 fn test_set_order_limit() {
     delay();
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
-    let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
+    let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None, None).unwrap();
     let str = format!("{:?}", order);
     assert!(str.contains("side: Buy"));
     assert!(str.contains("_type: Limit {"));
     let order = client
-        .sell_limit("BTC-USD", 0.001, 100000.0, true, None)
+        .sell_limit("BTC-USD", 0.001, 100000.0, true, None, None)
         .unwrap();
     let str = format!("{:?}", order);
     assert!(str.contains("side: Sell"));
@@ -125,6 +125,7 @@ fn test_set_order_limit_gtc() {
             Some(reqs::OrderTimeInForce::GTT {
                 cancel_after: reqs::OrderTimeInForceCancelAfter::Min,
             }),
+            None
         ).unwrap();
     //        let order = client.buy("BTC-USD", 1.0).limit(1.0, 1.12).post_only().gtt(min).send()
     let str = format!("{:?}", order);
@@ -136,11 +137,11 @@ fn test_set_order_limit_gtc() {
 fn test_set_order_market() {
     delay();
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
-    let order = client.buy_market("BTC-USD", 0.001).unwrap();
+    let order = client.buy_market("BTC-USD", 0.001, None).unwrap();
     let str = format!("{:?}", order);
     assert!(str.contains("side: Buy"));
     assert!(str.contains("_type: Market {"));
-    let order = client.sell_market("BTC-USD", 0.001).unwrap();
+    let order = client.sell_market("BTC-USD", 0.001, None).unwrap();
     let str = format!("{:?}", order);
     assert!(str.contains("side: Sell"));
     assert!(str.contains("_type: Market {"));
@@ -151,7 +152,7 @@ fn test_set_order_market() {
 fn test_cancel_order() {
     delay();
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
-    let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
+    let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None, None).unwrap();
     let res = client.cancel_order(order.id).unwrap();
     assert_eq!(order.id, res);
 }
@@ -160,8 +161,8 @@ fn test_cancel_order() {
 fn test_cancel_all() {
     delay();
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
-    let order1 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
-    let order2 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
+    let order1 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None, None).unwrap();
+    let order2 = client.buy_limit("BTC-USD", 1.0, 1.12, true, None, None).unwrap();
     let res = client.cancel_all(Some("BTC-USD")).unwrap();
     assert!(res.iter().find(|x| **x == order1.id).is_some());
     assert!(res.iter().find(|x| **x == order2.id).is_some());
@@ -182,7 +183,7 @@ fn test_get_orders() {
 fn test_get_order() {
     delay();
     let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
-    let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None).unwrap();
+    let order = client.buy_limit("BTC-USD", 1.0, 1.12, true, None, None).unwrap();
     let order_res = client.get_order(order.id).unwrap();
     assert_eq!(order.id, order_res.id);
 }

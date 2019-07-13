@@ -239,6 +239,7 @@ impl<A> Private<A> {
         price: f64,
         post_only: bool,
         time_in_force: Option<reqs::OrderTimeInForce>,
+        client_oid: Option<Uuid>
     ) -> A::Result
     where
         A: Adapter<Order> + 'static,
@@ -250,6 +251,7 @@ impl<A> Private<A> {
             price,
             post_only,
             time_in_force,
+            client_oid,
         ))
     }
 
@@ -262,6 +264,7 @@ impl<A> Private<A> {
         price: f64,
         post_only: bool,
         time_in_force: Option<reqs::OrderTimeInForce>,
+        client_oid: Option<Uuid>
     ) -> A::Result
     where
         A: Adapter<Order> + 'static,
@@ -273,25 +276,26 @@ impl<A> Private<A> {
             price,
             post_only,
             time_in_force,
+            client_oid,
         ))
     }
 
     /// **Buy market**
     /// Makes Buy marker order
-    pub fn buy_market(&self, product_id: &str, size: f64) -> A::Result
+    pub fn buy_market(&self, product_id: &str, size: f64, client_oid: Option<Uuid>) -> A::Result
     where
         A: Adapter<Order> + 'static,
     {
-        self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Buy, size))
+        self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Buy, size, client_oid))
     }
 
     /// **Sell market**
     /// Makes Sell marker order
-    pub fn sell_market(&self, product_id: &str, size: f64) -> A::Result
+    pub fn sell_market(&self, product_id: &str, size: f64, client_oid: Option<Uuid>) -> A::Result
     where
         A: Adapter<Order> + 'static,
     {
-        self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Sell, size))
+        self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Sell, size, client_oid))
     }
 
     //    pub fn buy<'a>(&self) -> OrderBuilder<'a> {}    // TODO: OrderBuilder

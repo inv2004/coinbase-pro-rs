@@ -1,6 +1,9 @@
+use uuid::Uuid;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Order<'a> {
     side: OrderSide,
+    client_oid: Option<Uuid>,
     product_id: &'a str,
     #[serde(flatten)]
     _type: OrderType,
@@ -41,9 +44,15 @@ pub enum MarketType {
 }
 
 impl<'a> Order<'a> {
-    pub fn market(product_id: &'a str, side: OrderSide, size: f64) -> Self {
+    pub fn market(
+        product_id: &'a str,
+        side: OrderSide,
+        size: f64,
+        client_oid: Option<Uuid>
+    ) -> Self {
         Order {
             product_id,
+            client_oid,
             side,
             _type: OrderType::Market {
                 _type: MarketType::Size { size },
@@ -59,9 +68,11 @@ impl<'a> Order<'a> {
         price: f64,
         post_only: bool,
         time_in_force: Option<OrderTimeInForce>,
+        client_oid: Option<Uuid>,
     ) -> Self {
         Order {
             product_id,
+            client_oid,
             side,
             _type: OrderType::Limit {
                 price,

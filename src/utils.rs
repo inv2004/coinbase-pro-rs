@@ -1,5 +1,7 @@
 use serde::de::{self, Deserialize, Deserializer, Visitor};
 use std::fmt;
+use uuid::Uuid;
+use std::str::FromStr;
 
 struct F64InQuotes;
 
@@ -37,6 +39,18 @@ where
     D: Deserializer<'de>,
 {
     d.deserialize_any(F64InQuotes).map(Some).or(Ok(None))
+}
+
+pub fn uuid_opt_from_string<'de, D>(d: D) -> Result<Option<Uuid>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(d)?;
+    if s.len() == 0 {
+        Ok(None)
+    } else {
+        Uuid::from_str(&s).map_err(de::Error::custom).map(Some)
+    }
 }
 
 pub fn f64_nan_from_string<'de, D>(d: D) -> Result<f64, D::Error>
