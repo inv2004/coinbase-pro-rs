@@ -44,15 +44,14 @@ pub enum MarketType {
 }
 
 impl<'a> Order<'a> {
-    pub fn market(
+    pub(crate) fn market(
         product_id: &'a str,
         side: OrderSide,
         size: f64,
-        client_oid: Option<Uuid>
     ) -> Self {
         Order {
             product_id,
-            client_oid,
+            client_oid: None,
             side,
             _type: OrderType::Market {
                 _type: MarketType::Size { size },
@@ -61,28 +60,58 @@ impl<'a> Order<'a> {
         }
     }
 
-    pub fn limit(
+    pub fn buy_market(product_id: &'a str, size: f64) -> Self {
+        Self::market(product_id, OrderSide::Buy, size)
+    }
+
+    pub fn sell_market(product_id: &'a str, size: f64) -> Self {
+        Self::market(product_id, OrderSide::Sell, size)
+    }
+
+    pub(crate) fn limit(
         product_id: &'a str,
         side: OrderSide,
         size: f64,
         price: f64,
-        post_only: bool,
-        time_in_force: Option<OrderTimeInForce>,
-        client_oid: Option<Uuid>,
+        post_only: bool
     ) -> Self {
         Order {
             product_id,
-            client_oid,
+            client_oid: None,
             side,
             _type: OrderType::Limit {
                 price,
                 size,
                 post_only,
-                time_in_force,
+                time_in_force: None,
             },
             stop: None,
         }
     }
+
+    pub fn buy_limit(product_id: &'a str, size: f64, price: f64, post_only: bool) -> Self {
+        Self::limit(product_id, OrderSide::Buy, size, price, post_only)
+    }
+
+    pub fn sell_limit(product_id: &'a str, size: f64, price: f64, post_only: bool) -> Self {
+        Self::limit(product_id, OrderSide::Sell, size, price, post_only)
+    }
+
+    pub fn client_oid(self, client_oid: Uuid) -> Self {
+        let client_oid = Some(client_oid);
+        Order{client_oid, .. self }
+    }
+
+    pub fn time_in_force(self, time_in_force: OrderTimeInForce) -> Self {
+        match self._type {
+            OrderType::Limit {price, size, post_only, ..} => {
+                let _type = OrderType::Limit {price, size, post_only, time_in_force: Some(time_in_force)};
+                Order{_type, .. self}
+            },
+            _ => panic!("time_in_force is for limit orders only")
+        }
+    }
+
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -116,4 +145,30 @@ pub struct OrderStop {
 pub enum OrderStopType {
     Loss,
     Entry,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_order_builder() {
+        let o = Order::buy_limit("BTC-USD", 10.0, 100.0, true);
+        assert!(o.client_oid.is_none());
+
+        match &o._type {
+            OrderType::Limit {time_in_force: None, ..} => assert!(true),
+            _ => assert!(false)
+        }
+
+        let o = Order::buy_limit("BTC-USD", 10.0, 100.0, true)
+            .client_oid(Uuid::nil())
+            .time_in_force(OrderTimeInForce::GTC);
+        assert!(o.client_oid.is_some());
+
+        match &o._type {
+            OrderType::Limit {time_in_force: Some(OrderTimeInForce::GTC), ..} => assert!(true),
+            _ => assert!(false)
+        }
+    }
 }

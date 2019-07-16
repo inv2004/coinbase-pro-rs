@@ -237,9 +237,7 @@ impl<A> Private<A> {
         product_id: &str,
         size: f64,
         price: f64,
-        post_only: bool,
-        time_in_force: Option<reqs::OrderTimeInForce>,
-        client_oid: Option<Uuid>
+        post_only: bool
     ) -> A::Result
     where
         A: Adapter<Order> + 'static,
@@ -249,9 +247,7 @@ impl<A> Private<A> {
             reqs::OrderSide::Buy,
             size,
             price,
-            post_only,
-            time_in_force,
-            client_oid,
+            post_only
         ))
     }
 
@@ -262,9 +258,7 @@ impl<A> Private<A> {
         product_id: &str,
         size: f64,
         price: f64,
-        post_only: bool,
-        time_in_force: Option<reqs::OrderTimeInForce>,
-        client_oid: Option<Uuid>
+        post_only: bool
     ) -> A::Result
     where
         A: Adapter<Order> + 'static,
@@ -274,28 +268,26 @@ impl<A> Private<A> {
             reqs::OrderSide::Sell,
             size,
             price,
-            post_only,
-            time_in_force,
-            client_oid,
+            post_only
         ))
     }
 
     /// **Buy market**
     /// Makes Buy marker order
-    pub fn buy_market(&self, product_id: &str, size: f64, client_oid: Option<Uuid>) -> A::Result
+    pub fn buy_market(&self, product_id: &str, size: f64) -> A::Result
     where
         A: Adapter<Order> + 'static,
     {
-        self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Buy, size, client_oid))
+        self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Buy, size))
     }
 
     /// **Sell market**
     /// Makes Sell marker order
-    pub fn sell_market(&self, product_id: &str, size: f64, client_oid: Option<Uuid>) -> A::Result
+    pub fn sell_market(&self, product_id: &str, size: f64) -> A::Result
     where
         A: Adapter<Order> + 'static,
     {
-        self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Sell, size, client_oid))
+        self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Sell, size))
     }
 
     //    pub fn buy<'a>(&self) -> OrderBuilder<'a> {}    // TODO: OrderBuilder
