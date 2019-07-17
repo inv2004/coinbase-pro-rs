@@ -1,10 +1,10 @@
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Order<'a> {
+pub struct Order {
     side: OrderSide,
     client_oid: Option<Uuid>,
-    product_id: &'a str,
+    product_id: String,
     #[serde(flatten)]
     _type: OrderType,
     #[serde(flatten)]
@@ -43,14 +43,14 @@ pub enum MarketType {
     Funds { funds: f64 },
 }
 
-impl<'a> Order<'a> {
+impl Order {
     pub fn market(
-        product_id: &'a str,
+        product_id: &str,
         side: OrderSide,
         size: f64,
     ) -> Self {
         Order {
-            product_id,
+            product_id: product_id.to_owned(),
             client_oid: None,
             side,
             _type: OrderType::Market {
@@ -60,23 +60,23 @@ impl<'a> Order<'a> {
         }
     }
 
-    pub fn buy_market(product_id: &'a str, size: f64) -> Self {
-        Self::market(product_id, OrderSide::Buy, size)
+    pub fn buy_market(product_id: &str, size: f64) -> Self {
+        Self::market(&product_id.to_owned(), OrderSide::Buy, size)
     }
 
-    pub fn sell_market(product_id: &'a str, size: f64) -> Self {
-        Self::market(product_id, OrderSide::Sell, size)
+    pub fn sell_market(product_id: &str, size: f64) -> Self {
+        Self::market(&product_id.to_owned(), OrderSide::Sell, size)
     }
 
     pub fn limit(
-        product_id: &'a str,
+        product_id: &str,
         side: OrderSide,
         size: f64,
         price: f64,
         post_only: bool
     ) -> Self {
         Order {
-            product_id,
+            product_id: product_id.to_owned(),
             client_oid: None,
             side,
             _type: OrderType::Limit {
@@ -89,12 +89,12 @@ impl<'a> Order<'a> {
         }
     }
 
-    pub fn buy_limit(product_id: &'a str, size: f64, price: f64, post_only: bool) -> Self {
-        Self::limit(product_id, OrderSide::Buy, size, price, post_only)
+    pub fn buy_limit(product_id: &str, size: f64, price: f64, post_only: bool) -> Self {
+        Self::limit(&product_id.to_owned(), OrderSide::Buy, size, price, post_only)
     }
 
-    pub fn sell_limit(product_id: &'a str, size: f64, price: f64, post_only: bool) -> Self {
-        Self::limit(product_id, OrderSide::Sell, size, price, post_only)
+    pub fn sell_limit(product_id: &str, size: f64, price: f64, post_only: bool) -> Self {
+        Self::limit(&product_id.to_owned(), OrderSide::Sell, size, price, post_only)
     }
 
     pub fn client_oid(self, client_oid: Uuid) -> Self {
