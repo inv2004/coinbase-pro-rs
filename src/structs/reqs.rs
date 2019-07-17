@@ -44,7 +44,7 @@ pub enum MarketType {
 }
 
 impl<'a> Order<'a> {
-    pub(crate) fn market(
+    pub fn market(
         product_id: &'a str,
         side: OrderSide,
         size: f64,
@@ -68,7 +68,7 @@ impl<'a> Order<'a> {
         Self::market(product_id, OrderSide::Sell, size)
     }
 
-    pub(crate) fn limit(
+    pub fn limit(
         product_id: &'a str,
         side: OrderSide,
         size: f64,
