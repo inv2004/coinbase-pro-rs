@@ -279,6 +279,7 @@ pub enum Received {
         product_id: String,
         sequence: usize,
         order_id: Uuid,
+        #[serde(deserialize_with = "uuid_opt_from_string")]
         client_oid: Option<Uuid>,
         #[serde(default)]
         #[serde(deserialize_with = "f64_opt_from_string")]
@@ -460,6 +461,7 @@ impl<'de> Deserialize<'de> for Message {
 mod tests {
     use super::*;
     use super::super::super::serde_json;
+    use std::str::FromStr;
 
     #[test]
     fn test_parse_numbers() {
@@ -511,6 +513,30 @@ mod tests {
         let m: Message = serde_json::from_str(json).unwrap();
         let str = format!("{:?}", m);
         assert!(str.contains("product_id: \"BTC-USD\""));
+    }
+
+    #[test]
+    fn test_parse_uuid() {
+        #[derive(Deserialize, Debug)]
+        struct S {
+            #[serde(deserialize_with = "uuid_opt_from_string")]
+            uuid: Option<Uuid>
+        }
+
+        let json = r#"{
+            "uuid":"2fec40ac-525b-4192-871a-39d784945055"
+            }"#;
+        let s: S = serde_json::from_str(json).unwrap();
+
+        assert_eq!(s.uuid, Some(Uuid::from_str("2fec40ac-525b-4192-871a-39d784945055").unwrap()));
+
+        let json = r#"{
+            "uuid":""
+            }"#;
+        let s: S = serde_json::from_str(json).unwrap();
+
+        assert!(s.uuid.is_none());
+
     }
 }
 
