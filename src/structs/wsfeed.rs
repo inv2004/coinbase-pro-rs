@@ -248,7 +248,7 @@ impl Full {
             Full::Received(Received::Limit{sequence, ..}) => Some(sequence),
             Full::Received(Received::Market{sequence, ..}) => Some(sequence),
             Full::Open(Open{sequence, ..}) => Some(sequence),
-            Full::Done(Done::Limit{sequence, ..}) => Some(sequence),
+            Full::Done(Done::Limit{sequence, ..}) => sequence.as_ref(),
             Full::Done(Done::Market{sequence, ..}) => Some(sequence),
             Full::Match(Match{sequence, ..}) => Some(sequence),
             Full::Change(Change{sequence, ..}) => Some(sequence),
@@ -303,12 +303,12 @@ pub struct Open {
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "snake_case")]
 pub enum Done {
     Limit {
         time: DateTime,
         product_id: String,
-        sequence: usize,
+        sequence: Option<usize>,
         #[serde(deserialize_with = "f64_from_string")]
         price: f64,
         order_id: Uuid,
@@ -316,6 +316,9 @@ pub enum Done {
         side: super::reqs::OrderSide,
         #[serde(deserialize_with = "f64_from_string")]
         remaining_size: f64,
+        user_id: Option<String>,
+        #[serde(deserialize_with = "uuid_opt_from_string")]
+        profile_id: Option<Uuid>,
     },
     Market {
         time: DateTime,
@@ -513,6 +516,15 @@ mod tests {
         let m: Message = serde_json::from_str(json).unwrap();
         let str = format!("{:?}", m);
         assert!(str.contains("product_id: \"BTC-USD\""));
+    }
+
+    #[test]
+    fn test_canceled_order_done() {
+        let json = r#"{"type": "done", "side": "sell", "order_id": "d05c295b-af2e-4f5e-bfa0-55d93370c450",
+                       "reason":"canceled","product_id":"BTC-USD","price":"10009.17000000","remaining_size":"0.00973768",
+                       "user_id":"0fd194ab8a8bf175a75f8de5","profile_id":"fa94ac51-b20a-4b16-bc7a-af3c0abb7ec4",
+                       "time":"2019-08-21T22:10:15.190000Z"}"#;
+        let _: Message = serde_json::from_str(json).unwrap();
     }
 
     #[test]
