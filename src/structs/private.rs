@@ -6,6 +6,7 @@ use uuid::Uuid;
 use super::DateTime;
 use utils::datetime_from_string;
 use utils::usize_from_string;
+use super::reqs::OrderStop;
 
 // Private
 
@@ -139,6 +140,8 @@ pub struct Order {
     pub executed_value: f64,
     pub status: OrderStatus,
     pub settled: bool,
+    #[serde(flatten)]
+    pub stop: Option<OrderStop>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

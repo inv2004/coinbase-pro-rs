@@ -103,6 +103,19 @@ impl<'a> Order<'a> {
         Order{client_oid, .. self }
     }
 
+    pub fn stop(self, price: f64, stop_type: OrderStopType) -> Self {
+        let stop = Some(OrderStop { stop_price: price, _type: stop_type });
+        Order{stop, .. self}
+    }
+
+    pub fn stop_loss(self, price: f64) -> Self {
+        self.stop(price, OrderStopType::Loss)
+    }
+
+    pub fn stop_entry(self, price: f64) -> Self {
+        self.stop(price, OrderStopType::Entry)
+    }
+
     pub fn time_in_force(self, time_in_force: OrderTimeInForce) -> Self {
         match self._type {
             OrderType::Limit {price, size, post_only, ..} => {
@@ -135,9 +148,9 @@ pub enum OrderTimeInForceCancelAfter {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct OrderStop {
     stop_price: f64,
+    #[serde(rename = "stop")]
     _type: OrderStopType,
 }
 
@@ -164,8 +177,10 @@ mod tests {
 
         let o = Order::buy_limit("BTC-USD", 10.0, 100.0, true)
             .client_oid(Uuid::nil())
+            .stop_loss(99.0)
             .time_in_force(OrderTimeInForce::GTC);
         assert!(o.client_oid.is_some());
+        assert!(o.stop.is_some());
 
         match &o._type {
             OrderType::Limit {time_in_force: Some(OrderTimeInForce::GTC), ..} => assert!(true),
