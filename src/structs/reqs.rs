@@ -1,5 +1,5 @@
-use uuid::Uuid;
 use std::borrow::Cow;
+use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Order<'a> {
@@ -45,11 +45,7 @@ pub enum MarketType {
 }
 
 impl<'a> Order<'a> {
-    pub fn market<T: Into<Cow<'a, str>>>(
-        product_id: T,
-        side: OrderSide,
-        size: f64,
-    ) -> Self {
+    pub fn market<T: Into<Cow<'a, str>>>(product_id: T, side: OrderSide, size: f64) -> Self {
         Order {
             product_id: product_id.into(),
             client_oid: None,
@@ -61,12 +57,35 @@ impl<'a> Order<'a> {
         }
     }
 
+    pub fn market_with_funds<T: Into<Cow<'a, str>>>(
+        product_id: T,
+        side: OrderSide,
+        funds: f64,
+    ) -> Self {
+        Order {
+            product_id: product_id.into(),
+            client_oid: None,
+            side,
+            _type: OrderType::Market {
+                _type: MarketType::Funds { funds },
+            },
+            stop: None,
+        }
+    }
+
     pub fn buy_market<T: Into<Cow<'a, str>>>(product_id: T, size: f64) -> Self {
         Self::market(product_id, OrderSide::Buy, size)
+    }
+    pub fn buy_market_with_funds<T: Into<Cow<'a, str>>>(product_id: T, funds: f64) -> Self {
+        Self::market_with_funds(product_id, OrderSide::Buy, funds)
     }
 
     pub fn sell_market<T: Into<Cow<'a, str>>>(product_id: T, size: f64) -> Self {
         Self::market(product_id, OrderSide::Sell, size)
+    }
+
+    pub fn sell_market_with_funds<T: Into<Cow<'a, str>>>(product_id: T, funds: f64) -> Self {
+        Self::market(product_id, OrderSide::Sell, funds)
     }
 
     pub fn limit<T: Into<Cow<'a, str>>>(
@@ -74,7 +93,7 @@ impl<'a> Order<'a> {
         side: OrderSide,
         size: f64,
         price: f64,
-        post_only: bool
+        post_only: bool,
     ) -> Self {
         Order {
             product_id: product_id.into(),
@@ -90,29 +109,48 @@ impl<'a> Order<'a> {
         }
     }
 
-    pub fn buy_limit<T: Into<Cow<'a, str>>>(product_id: T, size: f64, price: f64, post_only: bool) -> Self {
+    pub fn buy_limit<T: Into<Cow<'a, str>>>(
+        product_id: T,
+        size: f64,
+        price: f64,
+        post_only: bool,
+    ) -> Self {
         Self::limit(product_id, OrderSide::Buy, size, price, post_only)
     }
 
-    pub fn sell_limit<T: Into<Cow<'a, str>>>(product_id: T, size: f64, price: f64, post_only: bool) -> Self {
+    pub fn sell_limit<T: Into<Cow<'a, str>>>(
+        product_id: T,
+        size: f64,
+        price: f64,
+        post_only: bool,
+    ) -> Self {
         Self::limit(product_id, OrderSide::Sell, size, price, post_only)
     }
 
     pub fn client_oid(self, client_oid: Uuid) -> Self {
         let client_oid = Some(client_oid);
-        Order{client_oid, .. self }
+        Order { client_oid, ..self }
     }
 
     pub fn time_in_force(self, time_in_force: OrderTimeInForce) -> Self {
         match self._type {
-            OrderType::Limit {price, size, post_only, ..} => {
-                let _type = OrderType::Limit {price, size, post_only, time_in_force: Some(time_in_force)};
-                Order{_type, .. self}
-            },
-            _ => panic!("time_in_force is for limit orders only")
+            OrderType::Limit {
+                price,
+                size,
+                post_only,
+                ..
+            } => {
+                let _type = OrderType::Limit {
+                    price,
+                    size,
+                    post_only,
+                    time_in_force: Some(time_in_force),
+                };
+                Order { _type, ..self }
+            }
+            _ => panic!("time_in_force is for limit orders only"),
         }
     }
-
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -158,8 +196,11 @@ mod tests {
         assert!(o.client_oid.is_none());
 
         match &o._type {
-            OrderType::Limit {time_in_force: None, ..} => assert!(true),
-            _ => assert!(false)
+            OrderType::Limit {
+                time_in_force: None,
+                ..
+            } => assert!(true),
+            _ => assert!(false),
         }
 
         let o = Order::buy_limit("BTC-USD", 10.0, 100.0, true)
@@ -168,15 +209,24 @@ mod tests {
         assert!(o.client_oid.is_some());
 
         match &o._type {
-            OrderType::Limit {time_in_force: Some(OrderTimeInForce::GTC), ..} => assert!(true),
-            _ => assert!(false)
+            OrderType::Limit {
+                time_in_force: Some(OrderTimeInForce::GTC),
+                ..
+            } => assert!(true),
+            _ => assert!(false),
         }
     }
 
     #[derive(Debug)]
-    enum Coin { AAA, BBB}
+    enum Coin {
+        AAA,
+        BBB,
+    }
     #[derive(Debug)]
-    struct Pair {a: Coin, b:Coin}
+    struct Pair {
+        a: Coin,
+        b: Coin,
+    }
 
     impl<'a> From<Pair> for Order<'a> {
         fn from(pair: Pair) -> Self {
@@ -186,7 +236,10 @@ mod tests {
 
     #[test]
     fn test_order_from() {
-        let p = Pair {a: Coin::AAA, b:Coin::BBB};
+        let p = Pair {
+            a: Coin::AAA,
+            b: Coin::BBB,
+        };
         let order_owned: Order = p.into();
         assert_eq!(order_owned.product_id, "AAA-BBB");
         let order_str: Order = Order::buy_market("AAA-BBB", 10.0);

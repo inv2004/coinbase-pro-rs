@@ -117,7 +117,7 @@ impl<A> Private<A> {
     /// Creates a new Private struct
     pub fn new(uri: &str, key: &str, secret: &str, passphrase: &str) -> Self
     where
-        A: AdapterNew
+        A: AdapterNew,
     {
         Self {
             _pub: Public::new(uri),
@@ -191,7 +191,8 @@ impl<A> Private<A> {
                     .map(|x| AccountHistory {
                         _type: (&x.details).into(),
                         ..x
-                    }).collect()
+                    })
+                    .collect()
             });
 
         self._pub.adapter.process(f)
@@ -232,13 +233,7 @@ impl<A> Private<A> {
 
     /// **Buy limit**
     /// Makes Buy limit order
-    pub fn buy_limit(
-        &self,
-        product_id: &str,
-        size: f64,
-        price: f64,
-        post_only: bool
-    ) -> A::Result
+    pub fn buy_limit(&self, product_id: &str, size: f64, price: f64, post_only: bool) -> A::Result
     where
         A: Adapter<Order> + 'static,
     {
@@ -247,19 +242,13 @@ impl<A> Private<A> {
             reqs::OrderSide::Buy,
             size,
             price,
-            post_only
+            post_only,
         ))
     }
 
     /// **Sell limit**
     /// Makes Sell limit order
-    pub fn sell_limit(
-        &self,
-        product_id: &str,
-        size: f64,
-        price: f64,
-        post_only: bool
-    ) -> A::Result
+    pub fn sell_limit(&self, product_id: &str, size: f64, price: f64, post_only: bool) -> A::Result
     where
         A: Adapter<Order> + 'static,
     {
@@ -268,7 +257,7 @@ impl<A> Private<A> {
             reqs::OrderSide::Sell,
             size,
             price,
-            post_only
+            post_only,
         ))
     }
 
@@ -281,6 +270,19 @@ impl<A> Private<A> {
         self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Buy, size))
     }
 
+    /// **Buy market**
+    /// Makes Buy marker order
+    pub fn buy_market_with_funds(&self, product_id: &str, funds: f64) -> A::Result
+    where
+        A: Adapter<Order> + 'static,
+    {
+        self.set_order(reqs::Order::market_with_funds(
+            product_id,
+            reqs::OrderSide::Buy,
+            funds,
+        ))
+    }
+
     /// **Sell market**
     /// Makes Sell marker order
     pub fn sell_market(&self, product_id: &str, size: f64) -> A::Result
@@ -288,6 +290,19 @@ impl<A> Private<A> {
         A: Adapter<Order> + 'static,
     {
         self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Sell, size))
+    }
+
+    /// **Sell market**
+    /// Makes Sell marker order
+    pub fn sell_market_with_funds(&self, product_id: &str, funds: f64) -> A::Result
+    where
+        A: Adapter<Order> + 'static,
+    {
+        self.set_order(reqs::Order::market_with_funds(
+            product_id,
+            reqs::OrderSide::Sell,
+            funds,
+        ))
     }
 
     //    pub fn buy<'a>(&self) -> OrderBuilder<'a> {}    // TODO: OrderBuilder
