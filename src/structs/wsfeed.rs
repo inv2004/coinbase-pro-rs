@@ -362,6 +362,7 @@ pub struct Match {
     pub maker_user_id: Option<String>,
     pub maker_profile_id: Option<Uuid>,
     pub user_id: Option<String>,
+    #[serde(default)]
     #[serde(deserialize_with = "uuid_opt_from_string")]
     pub profile_id: Option<Uuid>,
 }
