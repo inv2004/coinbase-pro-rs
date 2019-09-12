@@ -73,5 +73,5 @@ where
     D: Deserializer<'de>,
 {
     let s = String::deserialize(d)?;
-    (s + "Z").parse().map_err(de::Error::custom)
+    (s + "").parse().map_err(de::Error::custom)
 }
