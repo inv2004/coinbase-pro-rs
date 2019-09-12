@@ -273,6 +273,7 @@ pub enum Received {
         price: f64,
         side: super::reqs::OrderSide,
         user_id: Option<String>,
+        #[serde(default)]
         #[serde(deserialize_with = "uuid_opt_from_string")]
         profile_id: Option<Uuid>,
     },
@@ -302,6 +303,7 @@ pub struct Open {
     pub remaining_size: f64,
     pub side: super::reqs::OrderSide,
     pub user_id: Option<String>,
+    #[serde(default)]
     #[serde(deserialize_with = "uuid_opt_from_string")]
     pub profile_id: Option<Uuid>,
 }
@@ -321,6 +323,7 @@ pub enum Done {
         #[serde(deserialize_with = "f64_from_string")]
         remaining_size: f64,
         user_id: Option<String>,
+        #[serde(default)]
         #[serde(deserialize_with = "uuid_opt_from_string")]
         profile_id: Option<Uuid>,
     },
@@ -384,6 +387,7 @@ pub struct Change {
     pub price: Option<f64>,
     pub side: super::reqs::OrderSide,
     pub user_id: Option<String>,
+    #[serde(default)]
     #[serde(deserialize_with = "uuid_opt_from_string")]
     pub profile_id: Option<Uuid>,
 }
@@ -403,6 +407,7 @@ pub struct Activate {
     pub taker_fee_rate: f64,
     pub private: bool,
     pub user_id: Option<String>,
+    #[serde(default)]
     #[serde(deserialize_with = "uuid_opt_from_string")]
     pub profile_id: Option<Uuid>,
 }
@@ -537,6 +542,18 @@ mod tests {
         assert!(str.contains("product_id: \"BTC-USD\""));
         assert!(str.contains("user_id: Some"));
         assert!(str.contains("profile_id: Some"));
+    }
+
+    #[test]
+    fn test_canceled_order_without_auth() {
+        let json = r#"{"type": "done", "side": "sell", "order_id": "d05c295b-af2e-4f5e-bfa0-55d93370c450",
+                       "reason":"canceled","product_id":"BTC-USD","price":"10009.17000000","remaining_size":"0.00973768",
+                       "time":"2019-08-21T22:10:15.190000Z"}"#;
+        let m: Message = serde_json::from_str(json).unwrap();
+        let str = format!("{:?}", m);
+        assert!(str.contains("product_id: \"BTC-USD\""));
+        assert!(str.contains("user_id: None"));
+        assert!(str.contains("profile_id: None"));
     }
 
     #[test]
