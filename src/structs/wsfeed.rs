@@ -5,7 +5,6 @@ use serde::{Deserialize, Deserializer};
 use utils::f64_from_string;
 use utils::f64_nan_from_string;
 use utils::f64_opt_from_string;
-use utils::usize_from_string;
 use utils::uuid_opt_from_string;
 use uuid::Uuid;
 
@@ -248,7 +247,7 @@ impl Full {
             Full::Received(Received::Limit{sequence, ..}) => Some(sequence),
             Full::Received(Received::Market{sequence, ..}) => Some(sequence),
             Full::Open(Open{sequence, ..}) => Some(sequence),
-            Full::Done(Done::Limit{sequence, ..}) => Some(sequence),
+            Full::Done(Done::Limit{sequence, ..}) => sequence.as_ref(),
             Full::Done(Done::Market{sequence, ..}) => Some(sequence),
             Full::Match(Match{sequence, ..}) => Some(sequence),
             Full::Change(Change{sequence, ..}) => Some(sequence),
@@ -273,6 +272,10 @@ pub enum Received {
         #[serde(deserialize_with = "f64_from_string")]
         price: f64,
         side: super::reqs::OrderSide,
+        user_id: Option<String>,
+        #[serde(default)]
+        #[serde(deserialize_with = "uuid_opt_from_string")]
+        profile_id: Option<Uuid>,
     },
     Market {
         time: DateTime,
@@ -299,16 +302,19 @@ pub struct Open {
     #[serde(deserialize_with = "f64_from_string")]
     pub remaining_size: f64,
     pub side: super::reqs::OrderSide,
+    pub user_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "uuid_opt_from_string")]
+    pub profile_id: Option<Uuid>,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
-#[serde(rename_all = "camelCase")]
 pub enum Done {
     Limit {
         time: DateTime,
         product_id: String,
-        sequence: usize,
+        sequence: Option<usize>,
         #[serde(deserialize_with = "f64_from_string")]
         price: f64,
         order_id: Uuid,
@@ -316,6 +322,10 @@ pub enum Done {
         side: super::reqs::OrderSide,
         #[serde(deserialize_with = "f64_from_string")]
         remaining_size: f64,
+        user_id: Option<String>,
+        #[serde(default)]
+        #[serde(deserialize_with = "uuid_opt_from_string")]
+        profile_id: Option<Uuid>,
     },
     Market {
         time: DateTime,
@@ -347,12 +357,14 @@ pub struct Match {
     #[serde(deserialize_with = "f64_from_string")]
     pub price: f64,
     pub side: super::reqs::OrderSide,
-    pub user_id: Option<String>,
-    pub profile_id: Option<Uuid>,
     pub taker_user_id: Option<String>,
     pub taker_profile_id: Option<Uuid>,
     pub maker_user_id: Option<String>,
     pub maker_profile_id: Option<Uuid>,
+    pub user_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "uuid_opt_from_string")]
+    pub profile_id: Option<Uuid>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -375,6 +387,10 @@ pub struct Change {
     #[serde(deserialize_with = "f64_opt_from_string")]
     pub price: Option<f64>,
     pub side: super::reqs::OrderSide,
+    pub user_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "uuid_opt_from_string")]
+    pub profile_id: Option<Uuid>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -382,9 +398,6 @@ pub struct Activate {
     pub product_id: String,
     #[serde(deserialize_with = "f64_from_string")]
     pub timestamp: f64,
-    #[serde(deserialize_with = "usize_from_string")]
-    pub user_id: usize,
-    pub profile_id: Uuid,
     pub order_id: Uuid,
     pub stop_type: StopType,
     #[serde(deserialize_with = "f64_from_string")]
@@ -394,6 +407,10 @@ pub struct Activate {
     #[serde(deserialize_with = "f64_from_string")]
     pub taker_fee_rate: f64,
     pub private: bool,
+    pub user_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "uuid_opt_from_string")]
+    pub profile_id: Option<Uuid>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -513,6 +530,31 @@ mod tests {
         let m: Message = serde_json::from_str(json).unwrap();
         let str = format!("{:?}", m);
         assert!(str.contains("product_id: \"BTC-USD\""));
+    }
+
+    #[test]
+    fn test_canceled_order_done() {
+        let json = r#"{"type": "done", "side": "sell", "order_id": "d05c295b-af2e-4f5e-bfa0-55d93370c450",
+                       "reason":"canceled","product_id":"BTC-USD","price":"10009.17000000","remaining_size":"0.00973768",
+                       "user_id":"0fd194ab8a8bf175a75f8de5","profile_id":"fa94ac51-b20a-4b16-bc7a-af3c0abb7ec4",
+                       "time":"2019-08-21T22:10:15.190000Z"}"#;
+        let m: Message = serde_json::from_str(json).unwrap();
+        let str = format!("{:?}", m);
+        assert!(str.contains("product_id: \"BTC-USD\""));
+        assert!(str.contains("user_id: Some"));
+        assert!(str.contains("profile_id: Some"));
+    }
+
+    #[test]
+    fn test_canceled_order_without_auth() {
+        let json = r#"{"type": "done", "side": "sell", "order_id": "d05c295b-af2e-4f5e-bfa0-55d93370c450",
+                       "reason":"canceled","product_id":"BTC-USD","price":"10009.17000000","remaining_size":"0.00973768",
+                       "time":"2019-08-21T22:10:15.190000Z"}"#;
+        let m: Message = serde_json::from_str(json).unwrap();
+        let str = format!("{:?}", m);
+        assert!(str.contains("product_id: \"BTC-USD\""));
+        assert!(str.contains("user_id: None"));
+        assert!(str.contains("profile_id: None"));
     }
 
     #[test]

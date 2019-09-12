@@ -128,6 +128,23 @@ fn test_set_order_limit_gtc() {
 }
 
 #[test]
+fn test_set_order_stop() {
+    delay();
+    let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+
+    let order = reqs::Order::buy_limit("BTC-USD", 1.0, 1.12, false)
+        .stop_entry(0.8)
+        .time_in_force(OrderTimeInForce::GTT {cancel_after: OrderTimeInForceCancelAfter::Min});
+
+    let str = serde_json::to_string(&order).unwrap();
+    print!("{:?}", str);
+
+    let order = client.set_order(order).unwrap();
+    //        let order = client.buy("BTC-USD", 1.0).limit(1.0, 1.12).post_only().gtt(min).send()
+    assert!(order.stop.is_some());
+}
+
+#[test]
 #[ignore] // sandbox price is too high
 fn test_set_order_market() {
     delay();
