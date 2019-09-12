@@ -5,7 +5,6 @@ use serde::{Deserialize, Deserializer};
 use utils::f64_from_string;
 use utils::f64_nan_from_string;
 use utils::f64_opt_from_string;
-use utils::usize_from_string;
 use utils::uuid_opt_from_string;
 use uuid::Uuid;
 
@@ -273,6 +272,9 @@ pub enum Received {
         #[serde(deserialize_with = "f64_from_string")]
         price: f64,
         side: super::reqs::OrderSide,
+        user_id: Option<String>,
+        #[serde(deserialize_with = "uuid_opt_from_string")]
+        profile_id: Option<Uuid>,
     },
     Market {
         time: DateTime,
@@ -299,11 +301,13 @@ pub struct Open {
     #[serde(deserialize_with = "f64_from_string")]
     pub remaining_size: f64,
     pub side: super::reqs::OrderSide,
+    pub user_id: Option<String>,
+    #[serde(deserialize_with = "uuid_opt_from_string")]
+    pub profile_id: Option<Uuid>,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
-#[serde(rename_all = "snake_case")]
 pub enum Done {
     Limit {
         time: DateTime,
@@ -350,12 +354,13 @@ pub struct Match {
     #[serde(deserialize_with = "f64_from_string")]
     pub price: f64,
     pub side: super::reqs::OrderSide,
-    pub user_id: Option<String>,
-    pub profile_id: Option<Uuid>,
     pub taker_user_id: Option<String>,
     pub taker_profile_id: Option<Uuid>,
     pub maker_user_id: Option<String>,
     pub maker_profile_id: Option<Uuid>,
+    pub user_id: Option<String>,
+    #[serde(deserialize_with = "uuid_opt_from_string")]
+    pub profile_id: Option<Uuid>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -378,6 +383,9 @@ pub struct Change {
     #[serde(deserialize_with = "f64_opt_from_string")]
     pub price: Option<f64>,
     pub side: super::reqs::OrderSide,
+    pub user_id: Option<String>,
+    #[serde(deserialize_with = "uuid_opt_from_string")]
+    pub profile_id: Option<Uuid>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -385,9 +393,6 @@ pub struct Activate {
     pub product_id: String,
     #[serde(deserialize_with = "f64_from_string")]
     pub timestamp: f64,
-    #[serde(deserialize_with = "usize_from_string")]
-    pub user_id: usize,
-    pub profile_id: Uuid,
     pub order_id: Uuid,
     pub stop_type: StopType,
     #[serde(deserialize_with = "f64_from_string")]
@@ -397,6 +402,9 @@ pub struct Activate {
     #[serde(deserialize_with = "f64_from_string")]
     pub taker_fee_rate: f64,
     pub private: bool,
+    pub user_id: Option<String>,
+    #[serde(deserialize_with = "uuid_opt_from_string")]
+    pub profile_id: Option<Uuid>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -524,7 +532,11 @@ mod tests {
                        "reason":"canceled","product_id":"BTC-USD","price":"10009.17000000","remaining_size":"0.00973768",
                        "user_id":"0fd194ab8a8bf175a75f8de5","profile_id":"fa94ac51-b20a-4b16-bc7a-af3c0abb7ec4",
                        "time":"2019-08-21T22:10:15.190000Z"}"#;
-        let _: Message = serde_json::from_str(json).unwrap();
+        let m: Message = serde_json::from_str(json).unwrap();
+        let str = format!("{:?}", m);
+        assert!(str.contains("product_id: \"BTC-USD\""));
+        assert!(str.contains("user_id: Some"));
+        assert!(str.contains("profile_id: Some"));
     }
 
     #[test]
