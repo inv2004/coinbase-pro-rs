@@ -25,6 +25,7 @@ pub struct Account {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AccountHistory {
+    #[serde(deserialize_with = "usize_from_string")]
     pub id: usize,
     pub created_at: DateTime,
     #[serde(deserialize_with = "f64_from_string")]

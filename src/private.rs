@@ -304,8 +304,7 @@ impl<A> Private<A> {
         A: Adapter<Uuid> + 'static,
     {
         let f = self
-            .call_feature(Method::DELETE, &format!("/orders/{}", id), "")
-            .map(|r: Vec<Uuid>| *r.first().unwrap());
+            .call_feature(Method::DELETE, dbg!(&format!("/orders/{}", id)), "");
 
         self._pub.adapter.process(f)
     }

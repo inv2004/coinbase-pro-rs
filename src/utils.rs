@@ -60,12 +60,35 @@ where
     d.deserialize_any(F64InQuotes).or(Ok(super::std::f64::NAN)) // not sure that 100% correct
 }
 
+struct UsizeInQuotes;
+
+impl<'de> Visitor<'de> for UsizeInQuotes {
+    type Value = usize;
+
+    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("usize as a number or string")
+    }
+
+    fn visit_u64<E>(self, id: u64) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+    {
+        Ok(id as usize)
+    }
+
+    fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+    {
+        s.parse().map_err(de::Error::custom)
+    }
+}
+
 pub fn usize_from_string<'de, D>(d: D) -> Result<usize, D::Error>
-where
-    D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
 {
-    let s = String::deserialize(d)?;
-    s.parse().map_err(de::Error::custom)
+    d.deserialize_any(UsizeInQuotes)
 }
 
 pub fn datetime_from_string<'de, D>(d: D) -> Result<super::structs::DateTime, D::Error>

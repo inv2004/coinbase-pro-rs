@@ -1,5 +1,6 @@
 extern crate coinbase_pro_rs;
 extern crate serde_json;
+extern crate uuid;
 
 mod common;
 
@@ -62,7 +63,7 @@ fn test_get_account_hist() {
         .unwrap();
     let account = client.get_account_hist(coin_acc.id);
     let account_str = format!("{:?}", account);
-    //        println!("{}", account_str);
+            println!("{}", account_str);
     assert!(account_str.contains("type: Match, details: Match"));
 }
 
