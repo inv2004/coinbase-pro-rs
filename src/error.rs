@@ -1,4 +1,4 @@
-use structs::other::Error;
+use crate::structs::other::Error;
 
 #[derive(Debug, Fail)]
 pub enum CBError {

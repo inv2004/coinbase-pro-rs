@@ -1,11 +1,10 @@
 extern crate serde;
 
 use super::DateTime;
+use crate::utils::{
+    f64_from_string, f64_nan_from_string, f64_opt_from_string, uuid_opt_from_string,
+};
 use serde::{Deserialize, Deserializer};
-use utils::f64_from_string;
-use utils::f64_nan_from_string;
-use utils::f64_opt_from_string;
-use utils::uuid_opt_from_string;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -13,7 +12,7 @@ pub struct Auth {
     pub signature: String,
     pub key: String,
     pub passphrase: String,
-    pub timestamp: String
+    pub timestamp: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -23,7 +22,7 @@ pub struct Subscribe {
     pub product_ids: Vec<String>,
     pub channels: Vec<Channel>,
     #[serde(flatten)]
-    pub auth: Option<Auth>
+    pub auth: Option<Auth>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -50,7 +49,7 @@ pub enum ChannelType {
     Level2,
     Matches,
     Full,
-    User
+    User,
 }
 
 #[derive(Deserialize, Debug)]
@@ -170,40 +169,39 @@ pub enum Ticker {
 impl Ticker {
     pub fn price(&self) -> &f64 {
         match self {
-            Ticker::Full{price, ..} => price,
-            Ticker::Empty{price, ..} => price
+            Ticker::Full { price, .. } => price,
+            Ticker::Empty { price, .. } => price,
         }
     }
 
     pub fn time(&self) -> Option<&DateTime> {
         match self {
-            Ticker::Full{time, ..} => Some(time),
-            Ticker::Empty{..} => None,
+            Ticker::Full { time, .. } => Some(time),
+            Ticker::Empty { .. } => None,
         }
     }
 
     pub fn sequence(&self) -> &usize {
         match self {
-            Ticker::Full{sequence, ..} => sequence,
-            Ticker::Empty{sequence, ..} => sequence
+            Ticker::Full { sequence, .. } => sequence,
+            Ticker::Empty { sequence, .. } => sequence,
         }
     }
 
     pub fn bid(&self) -> Option<&f64> {
         match self {
-            Ticker::Full{best_bid, ..} => Some(best_bid),
-            Ticker::Empty{..} => None,
+            Ticker::Full { best_bid, .. } => Some(best_bid),
+            Ticker::Empty { .. } => None,
         }
     }
 
     pub fn ask(&self) -> Option<&f64> {
         match self {
-            Ticker::Full{best_ask, ..} => Some(best_ask),
-            Ticker::Empty{..} => None,
+            Ticker::Full { best_ask, .. } => Some(best_ask),
+            Ticker::Empty { .. } => None,
         }
     }
 }
-
 
 #[derive(Deserialize, Debug)]
 pub enum Full {
@@ -218,40 +216,40 @@ pub enum Full {
 impl Full {
     pub fn price(&self) -> Option<&f64> {
         match self {
-            Full::Received(Received::Limit{price, ..}) => Some(price),
-            Full::Received(Received::Market{..}) => None,
-            Full::Open(Open{price, ..}) => Some(price),
-            Full::Done(Done::Limit{price, ..}) => Some(price),
-            Full::Done(Done::Market{..}) => None,
-            Full::Match(Match{price, ..}) => Some(price),
-            Full::Change(Change{price, ..}) => price.as_ref(),
-            Full::Activate(Activate{..}) => None,
+            Full::Received(Received::Limit { price, .. }) => Some(price),
+            Full::Received(Received::Market { .. }) => None,
+            Full::Open(Open { price, .. }) => Some(price),
+            Full::Done(Done::Limit { price, .. }) => Some(price),
+            Full::Done(Done::Market { .. }) => None,
+            Full::Match(Match { price, .. }) => Some(price),
+            Full::Change(Change { price, .. }) => price.as_ref(),
+            Full::Activate(Activate { .. }) => None,
         }
     }
 
     pub fn time(&self) -> Option<&DateTime> {
         match self {
-            Full::Received(Received::Limit{time, ..}) => Some(time),
-            Full::Received(Received::Market{time, ..}) => Some(time),
-            Full::Open(Open{time, ..}) => Some(time),
-            Full::Done(Done::Limit{time, ..}) => Some(time),
-            Full::Done(Done::Market{time, ..}) => Some(time),
-            Full::Match(Match{time, ..}) => Some(time),
-            Full::Change(Change{time, ..}) => Some(time),
-            Full::Activate(Activate{..}) => None,
+            Full::Received(Received::Limit { time, .. }) => Some(time),
+            Full::Received(Received::Market { time, .. }) => Some(time),
+            Full::Open(Open { time, .. }) => Some(time),
+            Full::Done(Done::Limit { time, .. }) => Some(time),
+            Full::Done(Done::Market { time, .. }) => Some(time),
+            Full::Match(Match { time, .. }) => Some(time),
+            Full::Change(Change { time, .. }) => Some(time),
+            Full::Activate(Activate { .. }) => None,
         }
     }
-    
+
     pub fn sequence(&self) -> Option<&usize> {
         match self {
-            Full::Received(Received::Limit{sequence, ..}) => Some(sequence),
-            Full::Received(Received::Market{sequence, ..}) => Some(sequence),
-            Full::Open(Open{sequence, ..}) => Some(sequence),
-            Full::Done(Done::Limit{sequence, ..}) => sequence.as_ref(),
-            Full::Done(Done::Market{sequence, ..}) => Some(sequence),
-            Full::Match(Match{sequence, ..}) => Some(sequence),
-            Full::Change(Change{sequence, ..}) => Some(sequence),
-            Full::Activate(Activate{..}) => None,
+            Full::Received(Received::Limit { sequence, .. }) => Some(sequence),
+            Full::Received(Received::Market { sequence, .. }) => Some(sequence),
+            Full::Open(Open { sequence, .. }) => Some(sequence),
+            Full::Done(Done::Limit { sequence, .. }) => sequence.as_ref(),
+            Full::Done(Done::Market { sequence, .. }) => Some(sequence),
+            Full::Match(Match { sequence, .. }) => Some(sequence),
+            Full::Change(Change { sequence, .. }) => Some(sequence),
+            Full::Activate(Activate { .. }) => None,
         }
     }
 }
@@ -476,8 +474,8 @@ impl<'de> Deserialize<'de> for Message {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::super::serde_json;
+    use super::*;
     use std::str::FromStr;
 
     #[test]
@@ -498,7 +496,7 @@ mod tests {
             f: Option<f64>,
             #[serde(default)]
             #[serde(deserialize_with = "f64_opt_from_string")]
-            j: Option<f64>
+            j: Option<f64>,
         }
 
         let json = r#"{
@@ -562,7 +560,7 @@ mod tests {
         #[derive(Deserialize, Debug)]
         struct S {
             #[serde(deserialize_with = "uuid_opt_from_string")]
-            uuid: Option<Uuid>
+            uuid: Option<Uuid>,
         }
 
         let json = r#"{
@@ -570,7 +568,10 @@ mod tests {
             }"#;
         let s: S = serde_json::from_str(json).unwrap();
 
-        assert_eq!(s.uuid, Some(Uuid::from_str("2fec40ac-525b-4192-871a-39d784945055").unwrap()));
+        assert_eq!(
+            s.uuid,
+            Some(Uuid::from_str("2fec40ac-525b-4192-871a-39d784945055").unwrap())
+        );
 
         let json = r#"{
             "uuid":""
@@ -578,7 +579,5 @@ mod tests {
         let s: S = serde_json::from_str(json).unwrap();
 
         assert!(s.uuid.is_none());
-
     }
 }
-

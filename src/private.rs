@@ -7,19 +7,19 @@ extern crate sha2;
 extern crate tokio;
 
 use hyper::header::HeaderValue;
-use hyper::rt::Future;
+use futures::Future;
 use hyper::{Body, Method, Request, Uri};
-use private::hmac::{Hmac, Mac};
 use serde_json;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
-use adapters::{Adapter, AdapterNew};
-use error::*;
-use structs::private::*;
-use structs::reqs;
+use crate::adapters::{Adapter, AdapterNew};
+use crate::error::*;
+use crate::structs::private::*;
+use crate::structs::reqs;
+use crate::private::hmac::{Hmac, Mac};
 
-use public::Public;
+use crate::public::Public;
 
 pub struct Private<Adapter> {
     _pub: Public<Adapter>,

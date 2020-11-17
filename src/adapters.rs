@@ -1,12 +1,12 @@
 extern crate tokio;
 
 use super::error::CBError;
-use hyper::rt::Future;
+use futures::Future;
 
 use std::cell::RefCell;
-use tokio::runtime::Runtime;
-use std::io;
 use std::fmt::Debug;
+use std::io;
+use tokio::runtime::Runtime;
 
 pub trait Adapter<T> {
     type Result;
@@ -25,13 +25,14 @@ pub struct Sync(RefCell<Runtime>);
 impl AdapterNew for Sync {
     type Error = io::Error;
     fn new() -> Result<Self, Self::Error> {
-        Ok(Sync(RefCell::new(
-            Runtime::new()?
-        )))
+        Ok(Sync(RefCell::new(Runtime::new()?)))
     }
 }
 
-impl<T> Adapter<T> for Sync where T: Send + 'static {
+impl<T> Adapter<T> for Sync
+where
+    T: Send + 'static,
+{
     type Result = Result<T, CBError>;
     fn process<F>(&self, f: F) -> Self::Result
     where
@@ -59,4 +60,3 @@ impl<T> Adapter<T> for ASync {
         Box::new(f)
     }
 }
-

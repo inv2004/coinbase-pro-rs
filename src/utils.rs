@@ -57,7 +57,7 @@ pub fn f64_nan_from_string<'de, D>(d: D) -> Result<f64, D::Error>
 where
     D: Deserializer<'de>,
 {
-    d.deserialize_any(F64InQuotes).or(Ok(super::std::f64::NAN)) // not sure that 100% correct
+    d.deserialize_any(F64InQuotes).or(Ok(std::f64::NAN)) // not sure that 100% correct
 }
 
 struct UsizeInQuotes;

@@ -6,16 +6,16 @@ extern crate tokio;
 
 use chrono::SecondsFormat;
 use hyper::client::HttpConnector;
-use hyper::rt::{Future, Stream};
+use futures::{Future, Stream};
 use hyper::{Body, Client, Request, Uri};
 use hyper_tls::HttpsConnector;
 use serde::Deserialize;
 use std::fmt::Debug;
 
 use super::adapters::*;
-use error::*;
-use structs::public::*;
-use structs::DateTime;
+use crate::error::*;
+use crate::structs::public::*;
+use crate::structs::DateTime;
 
 pub struct Public<Adapter> {
     pub(crate) uri: String,
@@ -47,7 +47,7 @@ impl<A> Public<A> {
     pub(crate) fn call_future<U>(
         &self,
         request: Request<Body>,
-    ) -> impl Future<Item = U, Error = CBError>
+    ) -> impl Future<Output = Result<U, CBError>>
     where
         for<'de> U: serde::Deserialize<'de>,
     {
@@ -124,7 +124,7 @@ impl<A> Public<A> {
     where
         A: Adapter<Book<T>> + 'static,
         T: BookLevel + Debug + 'static,
-        T: super::std::marker::Send,
+        T: std::marker::Send,
         T: for<'de> Deserialize<'de>,
     {
         self.get_pub(&format!(
