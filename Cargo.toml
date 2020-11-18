@@ -4,27 +4,31 @@ version = "0.5.1"
 authors = ["ae <inv2004@gmail.com>"]
 repository = "https://github.com/inv2004/coinbase-pro-rs"
 description = "Coinbase pro client for Rust"
+edition = "2018"
 license = "MIT/Apache-2.0"
 readme = "README.md"
 categories = [ "api-bindings", "cryptography::cryptocurrencies" ]
 keywords = [ "exchange", "coinbase", "bitcoin", "websocket" ]
 
 [dependencies]
-failure = "0.1.6"
-hyper = "0.12.35"
-hyper-tls = "0.3.2"
-serde = "1.0.101"
-serde_json = "1.0.41"
-serde_derive = "1.0.101"
-tokio = "0.1.21"
-futures = "0.1.29"
 base64 = "0.10.0"
+chrono = { version = "0.4.9", features = [ "serde" ] }
+failure = "0.1.6"
+futures = { version = "0.3.8" }
+futures-util = { version = "0.3.8", features = ["compat"] }
 hmac = "0.7.0"
-sha2 = "0.8.0"
-uuid = { version = "0.8.1", features = [ "serde", "v4" ] }
+hyper = { version = "0.13.9", features = ["stream"] }
+hyper-tls = "0.4.3"
 log = "0.4.4"
 pretty_env_logger = "0.3.0"
-chrono = { version = "0.4.9", features = [ "serde" ] }
+serde = "1.0.101"
+serde_derive = "1.0.101"
+serde_json = "1.0.41"
+sha2 = "0.8.0"
 time = "0.1.41"
-tokio-tungstenite = "0.9.0"
+tokio = { version = "0.3", features = ["full"] }
+tokio-compat-02 = "0.1"
+tokio-tungstenite = { version = "0.12.0", features = ["tls"] }
 url = "2.1.0"
+uuid = { version = "0.8.1", features = [ "serde", "v4" ] }
+bytes = "0.5.0"

@@ -1,17 +1,17 @@
-extern crate coinbase_pro_rs;
-extern crate serde_json;
-extern crate tokio;
-
 mod common;
 
+use self::common::delay;
 use coinbase_pro_rs::structs::wsfeed::*;
 use coinbase_pro_rs::{WSFeed, WS_SANDBOX_URL, WS_URL};
-use common::delay;
+use futures::{
+    future::{self, FutureExt, TryFutureExt},
+    stream::{StreamExt, TryStreamExt},
+    Future, Stream,
+};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
-use tokio::prelude::{Future, Stream};
 
 static KEY: &str = "9eaa4603717ffdc322771a933ae12501";
 static SECRET: &str =
@@ -31,12 +31,14 @@ fn test_subscribe() {
                 product_ids: vec!["BTC-USD".to_string()],
             },
         ],
-        auth: None
+        auth: None,
     };
 
     let str = serde_json::to_string(&s).unwrap();
-    assert_eq!(str,
-               r#"{"type":"subscribe","product_ids":["BTC-USD"],"channels":["heartbeat",{"name":"level2","product_ids":["BTC-USD"]}]}"#);
+    assert_eq!(
+        str,
+        r#"{"type":"subscribe","product_ids":["BTC-USD"],"channels":["heartbeat",{"name":"level2","product_ids":["BTC-USD"]}]}"#
+    );
 }
 
 #[test]
@@ -56,28 +58,31 @@ fn test_subscribe_auth() {
             signature: "111".to_string(),
             timestamp: "123".to_string(),
             passphrase: "333".to_string(),
-            key: "000".to_string()
-        })
+            key: "000".to_string(),
+        }),
     };
 
     let str = serde_json::to_string(&s).unwrap();
-    assert_eq!(str,
-               r#"{"type":"subscribe","product_ids":["BTC-USD"],"channels":["heartbeat",{"name":"level2","product_ids":["BTC-USD"]}],"signature":"111","key":"000","passphrase":"333","timestamp":"123"}"#);
+    assert_eq!(
+        str,
+        r#"{"type":"subscribe","product_ids":["BTC-USD"],"channels":["heartbeat",{"name":"level2","product_ids":["BTC-USD"]}],"signature":"111","key":"000","passphrase":"333","timestamp":"123"}"#
+    );
 }
 
 #[test]
 fn test_subscription() {
     delay();
     let stream = WSFeed::new(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Heartbeat]);
-    let f = stream
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+        stream
         .take(1)
-        .for_each(move |msg| {
+        .try_for_each(move |msg| {
             let str = format!("{:?}", msg);
             assert_eq!(str, r#"Subscriptions { channels: [WithProduct { name: Heartbeat, product_ids: ["BTC-USD"] }] }"#);
-            Ok(())
-        });
-
-    tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
+            future::ready(Ok(()))
+        }).await.map_err(|e| println!("{:?}", e))}
+    );
 }
 
 #[test]
@@ -86,15 +91,20 @@ fn test_heartbeat() {
     let found = Arc::new(AtomicBool::new(false));
     let found2 = found.clone();
     let stream = WSFeed::new(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Heartbeat]);
-    let f = stream.take(3).for_each(move |msg| {
-        let str = format!("{:?}", msg);
-        if str.starts_with("Heartbeat { sequence: ") {
-            found2.swap(true, Ordering::Relaxed);
-        }
-        Ok(())
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+        stream
+            .take(3)
+            .try_for_each(move |msg| {
+                let str = format!("{:?}", msg);
+                if str.starts_with("Heartbeat { sequence: ") {
+                    found2.swap(true, Ordering::Relaxed);
+                }
+                future::ready(Ok(()))
+            })
+            .await
+            .map_err(|e| println!("{:?}", e))
     });
-
-    tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
 
     assert!(found.load(Ordering::Relaxed));
 }
@@ -107,15 +117,20 @@ fn test_ticker() {
 
     // hard to check in sandbox because low flow
     let stream = WSFeed::new(WS_URL, &["BTC-USD"], &[ChannelType::Ticker]);
-    let f = stream.take(3).for_each(move |msg| {
-        let str = format!("{:?}", msg);
-        if str.contains("Ticker(Full { trade_id: ") {
-            found2.swap(true, Ordering::Relaxed);
-        }
-        Ok(())
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+        stream
+            .take(3)
+            .try_for_each(move |msg| {
+                let str = format!("{:?}", msg);
+                if str.contains("Ticker(Full { trade_id: ") {
+                    found2.swap(true, Ordering::Relaxed);
+                }
+                future::ready(Ok(()))
+            })
+            .await
+            .map_err(|e| println!("{:?}", e))
     });
-
-    tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
 
     assert!(found.load(Ordering::Relaxed));
 }
@@ -130,21 +145,27 @@ fn test_level2() {
 
     // hard to check in sandbox because low flow
     let stream = WSFeed::new(WS_URL, &["BTC-USD"], &[ChannelType::Level2]);
-    let f = stream.take(3).for_each(move |msg| {
-        let str = format!("{:?}", msg);
-        if str.starts_with("Level2(Snapshot { product_id: \"BTC-USD\", bids: [Level2SnapshotRecord")
-            && !found_l2update_2.load(Ordering::Relaxed)
-        {
-            found_snapshot_2.swap(true, Ordering::Relaxed);
-        } else if str
-            .starts_with("Level2(L2update { product_id: \"BTC-USD\", changes: [Level2UpdateRecord")
-        {
-            found_l2update_2.swap(true, Ordering::Relaxed);
-        }
-        Ok(())
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+        stream
+            .take(3)
+            .try_for_each(move |msg| {
+                let str = format!("{:?}", msg);
+                if str.starts_with(
+                    "Level2(Snapshot { product_id: \"BTC-USD\", bids: [Level2SnapshotRecord",
+                ) && !found_l2update_2.load(Ordering::Relaxed)
+                {
+                    found_snapshot_2.swap(true, Ordering::Relaxed);
+                } else if str.starts_with(
+                    "Level2(L2update { product_id: \"BTC-USD\", changes: [Level2UpdateRecord",
+                ) {
+                    found_l2update_2.swap(true, Ordering::Relaxed);
+                }
+                future::ready(Ok(()))
+            })
+            .await
+            .map_err(|e| println!("{:?}", e))
     });
-
-    tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
 
     assert!(found_snapshot.load(Ordering::Relaxed));
     assert!(found_l2update.load(Ordering::Relaxed));
@@ -160,7 +181,7 @@ fn test_match() {
 
     // hard to check in sandbox because low flow
     let stream = WSFeed::new(WS_URL, &["BTC-USD"], &[ChannelType::Matches]);
-    let f = stream.take(3).for_each(move |msg| {
+    let f = stream.take(3).try_for_each(move |msg| {
         //            let str = format!("{:?}", msg);
         //            println!("{}", str);
         match msg {
@@ -175,10 +196,11 @@ fn test_match() {
             Message::Subscriptions { .. } => (),
             _ => assert!(false),
         };
-        Ok(())
+        future::ready(Ok(()))
     });
 
-    tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(f).map_err(|e| println!("{:?}", e));
 
     assert!(found_match.load(Ordering::Relaxed));
     assert!(found_full.load(Ordering::Relaxed));
@@ -202,29 +224,36 @@ fn test_full() {
 
     // hard to check in sandbox because low flow
     let stream = WSFeed::new(WS_URL, &["BTC-USD"], &[ChannelType::Full]);
-    let f = stream.take(3000).for_each(move |msg| {
-        let str = format!("{:?}", msg);
-        if str.starts_with("Subscriptions { channels: [WithProduct { name: Full, product_ids") {
-            ()
-        } else if str.starts_with("Full(Match(Match { trade_id: ") {
-            found_match_2.swap(true, Ordering::Relaxed);
-        } else if str.starts_with("Full(Done(Limit { time: ") {
-            found_done_limit_2.swap(true, Ordering::Relaxed);
-        } else if str.starts_with("Full(Done(Market { time: ") {
-            found_done_market_2.swap(true, Ordering::Relaxed);
-        } else if str.starts_with("Full(Received(Limit") {
-            found_received_limit_2.swap(true, Ordering::Relaxed);
-        } else if str.starts_with("Full(Received(Market") {
-            found_received_market_2.swap(true, Ordering::Relaxed);
-        } else if str.starts_with("Full(Open(Open { time: ") {
-            found_open_2.swap(true, Ordering::Relaxed);
-        } else {
-            println!("{}", str);
-        }
-        Ok(())
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+        stream
+            .take(3000)
+            .try_for_each(move |msg| {
+                let str = format!("{:?}", msg);
+                if str
+                    .starts_with("Subscriptions { channels: [WithProduct { name: Full, product_ids")
+                {
+                    ()
+                } else if str.starts_with("Full(Match(Match { trade_id: ") {
+                    found_match_2.swap(true, Ordering::Relaxed);
+                } else if str.starts_with("Full(Done(Limit { time: ") {
+                    found_done_limit_2.swap(true, Ordering::Relaxed);
+                } else if str.starts_with("Full(Done(Market { time: ") {
+                    found_done_market_2.swap(true, Ordering::Relaxed);
+                } else if str.starts_with("Full(Received(Limit") {
+                    found_received_limit_2.swap(true, Ordering::Relaxed);
+                } else if str.starts_with("Full(Received(Market") {
+                    found_received_market_2.swap(true, Ordering::Relaxed);
+                } else if str.starts_with("Full(Open(Open { time: ") {
+                    found_open_2.swap(true, Ordering::Relaxed);
+                } else {
+                    println!("{}", str);
+                }
+                future::ready(Ok(()))
+            })
+            .await
+            .map_err(|e| println!("{:?}", e))
     });
-
-    tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
 
     assert!(found_received_limit.load(Ordering::Relaxed));
     //    assert!(_found_received_market.load(Ordering::Relaxed));
@@ -234,45 +263,51 @@ fn test_full() {
     assert!(found_open.load(Ordering::Relaxed));
 }
 
-
 #[test]
 fn test_user() {
-    use coinbase_pro_rs::{Private, ASync, SANDBOX_URL, WSError};
+    use coinbase_pro_rs::{ASync, Private, WSError, SANDBOX_URL};
 
     delay();
-
 
     let found_received = Arc::new(AtomicBool::new(false));
     let found_received_2 = found_received.clone();
 
-    let stream = WSFeed::new_with_auth(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::User],
-        KEY, SECRET, PASSPHRASE);
+    let stream = WSFeed::new_with_auth(
+        WS_SANDBOX_URL,
+        &["BTC-USD"],
+        &[ChannelType::User],
+        KEY,
+        SECRET,
+        PASSPHRASE,
+    );
 
-    let f = stream.take(2).for_each(move |msg| {
-        let str = format!("{:?}", msg);
-        if str.contains("Subscriptions") {
-            let client: Private<ASync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
-            let res = client.buy_limit("BTC-USD", 0.001, 100.0, true)
-                .and_then(|_| {
-                    Ok(())
-                })
-                .map_err(|_| {
-                    WSError::Read(tokio_tungstenite::tungstenite::Error::Utf8) // hm
-                });
-            futures::future::Either::A(res)
-        } else {
-            if str.contains("Full(Received(Limit")
-                && str.contains("price: 100.0") {
-                found_received_2.swap(true, Ordering::Relaxed);
-
-            }
-            futures::future::Either::B(futures::done(Ok(())))
-        }
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async move {
+        stream
+            .take(2)
+            .for_each(|msg| async {
+                let str = format!("{:?}", msg.unwrap());
+                if str.contains("Subscriptions") {
+                    let client: Private<ASync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+                    let res: Result<(), WSError> = client
+                        .buy_limit("BTC-USD", 0.001, 100.0, true)
+                        .await
+                        .and_then(|_| Ok(()))
+                        .map_err(|_| {
+                            WSError::Read(tokio_tungstenite::tungstenite::Error::Utf8)
+                            // hm
+                        });
+                // future::ready(res)
+                } else {
+                    if str.contains("Full(Received(Limit") && str.contains("price: 100.0") {
+                        found_received_2.swap(true, Ordering::Relaxed);
+                    }
+                    // future::ready(Ok(()))
+                }
+            })
+            .await
+        // .map_err(|e| println!("{:?}", e))
     });
-
-    tokio::runtime::run(f.map_err(|e| println!("{:?}", e)));
 
     assert!(found_received.load(Ordering::Relaxed))
 }
-
-

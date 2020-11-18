@@ -2,17 +2,22 @@
 
 extern crate url;
 
-use std::time::{SystemTime, UNIX_EPOCH};
 use self::url::Url;
-use futures::{Future, Sink, Stream};
-use serde_json;
-use tokio_tungstenite::connect_async;
+use futures::{future, Sink, Stream};
+use futures_util::{
+    future::{FutureExt, TryFutureExt},
+    sink::SinkExt,
+    stream::{StreamExt, TryStreamExt},
+};
 use hyper::Method;
+use serde_json;
+use std::time::{SystemTime, UNIX_EPOCH};
+use tokio_tungstenite::connect_async;
 
-use {private::Private, ASync};
 use super::tokio_tungstenite::tungstenite::Message as TMessage;
-use error::WSError;
-use structs::wsfeed::*;
+use crate::error::WSError;
+use crate::structs::wsfeed::*;
+use crate::{private::Private, ASync};
 
 pub struct WSFeed;
 
@@ -34,7 +39,7 @@ impl WSFeed {
         uri: &str,
         product_ids: &[&str],
         channels: &[ChannelType],
-    ) -> impl Stream<Item = Message, Error = WSError> {
+    ) -> impl Stream<Item = Result<Message, WSError>> {
         let subscribe = Subscribe {
             _type: SubscribeCmd::Subscribe,
             product_ids: product_ids.into_iter().map(|x| x.to_string()).collect(),
@@ -43,7 +48,7 @@ impl WSFeed {
                 .into_iter()
                 .map(|x| Channel::Name(x))
                 .collect::<Vec<_>>(),
-            auth: None
+            auth: None,
         };
 
         Self::new_with_sub(uri, subscribe)
@@ -53,28 +58,31 @@ impl WSFeed {
     pub fn new_with_sub(
         uri: &str,
         subsribe: Subscribe,
-    ) -> impl Stream<Item = Message, Error = WSError> {
+    ) -> impl Stream<Item = Result<Message, WSError>> {
         let url = Url::parse(uri).unwrap();
 
-        connect_async(url)
-            .map_err(WSError::Connect)
-            .and_then(move |(ws_stream, _)| {
+        let stream = connect_async(url).map_err(WSError::Connect);
+        let stream = {
+            stream.and_then(|(ws_stream, _)| async move {
                 debug!("WebSocket handshake has been successfully completed");
-                let (sink, stream) = ws_stream.split();
+                let (mut sink, stream) = ws_stream.split();
 
                 let subsribe = serde_json::to_string(&subsribe).unwrap();
 
-                sink.send(TMessage::Text(subsribe))
+                let ret = sink
+                    .send(TMessage::Text(subsribe))
                     .map_err(WSError::Send)
-                    .and_then(|_| {
-                        debug!("subsription sent");
-                        let stream = stream
-                            .filter(|msg| msg.is_text())
-                            .map_err(WSError::Read)
-                            .map(convert_msg);
-                        Ok(stream)
-                    })
-            }).flatten_stream()
+                    .await;
+                debug!("subsription sent");
+                ret.and_then(|_| {
+                    Ok(stream
+                        .try_filter(|msg| future::ready(msg.is_text()))
+                        .map_ok(convert_msg)
+                        .map_err(WSError::Read))
+                })
+            })
+        };
+        stream.try_flatten_stream()
     }
 
     // Constructor for simple subcription with product_ids and channels with auth
@@ -82,21 +90,23 @@ impl WSFeed {
         uri: &str,
         product_ids: &[&str],
         channels: &[ChannelType],
-        key: &str, secret: &str, passphrase: &str
-    ) -> impl Stream<Item = Message, Error = WSError> {
-
+        key: &str,
+        secret: &str,
+        passphrase: &str,
+    ) -> impl Stream<Item = Result<Message, WSError>> {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("leap-second")
             .as_secs();
 
-        let signature = Private::<ASync>::sign(secret, timestamp, Method::GET, "/users/self/verify", "");
+        let signature =
+            Private::<ASync>::sign(secret, timestamp, Method::GET, "/users/self/verify", "");
 
         let auth = Auth {
             signature,
             key: key.to_string(),
             passphrase: passphrase.to_string(),
-            timestamp: timestamp.to_string()
+            timestamp: timestamp.to_string(),
         };
 
         let subscribe = Subscribe {
@@ -107,10 +117,9 @@ impl WSFeed {
                 .into_iter()
                 .map(|x| Channel::Name(x))
                 .collect::<Vec<_>>(),
-            auth: Some(auth)
+            auth: Some(auth),
         };
 
         Self::new_with_sub(uri, subscribe)
     }
 }
-

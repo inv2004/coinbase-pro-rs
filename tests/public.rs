@@ -1,14 +1,11 @@
-extern crate chrono;
-extern crate coinbase_pro_rs;
-extern crate futures;
-
 mod common;
 
-use std::time::Instant;
+use self::common::delay;
 use chrono::prelude::*;
 use coinbase_pro_rs::structs::public::*;
 use coinbase_pro_rs::*;
-use common::delay;
+use futures::future::{self, FutureExt, TryFutureExt};
+use std::time::Instant;
 
 #[test]
 fn test_get_time() {
@@ -145,7 +142,7 @@ fn test_check_latency_async_block_on() {
     }
 }
 
-use futures::future::Future;
+use std::future::Future;
 
 #[test]
 fn test_check_latency_async() {
@@ -157,11 +154,11 @@ fn test_check_latency_async() {
         client.get_time().then(move |_| {
             let time = time.elapsed().subsec_millis();
             dbg!(time);
-            if time <= 150 {
+            future::ready(if time <= 150 {
                 Ok(time)
             } else {
                 Err(format!("{} > 100", time))
-            }
+            })
         })
     });
     runtime.block_on(f).unwrap();

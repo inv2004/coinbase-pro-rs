@@ -1,5 +1,5 @@
 use super::DateTime;
-use utils::f64_from_string;
+use crate::utils::f64_from_string;
 use uuid::Uuid;
 
 // Public
