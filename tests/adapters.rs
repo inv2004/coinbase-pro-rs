@@ -5,7 +5,8 @@ mod common;
 
 use coinbase_pro_rs::*;
 use common::delay;
-use tokio::prelude::Future;
+use futures::{future, TryFutureExt};
+use std::future::Future;
 
 #[test]
 fn test_sync() {
@@ -29,8 +30,10 @@ fn test_async() {
         assert!(time_str.contains("iso:"));
         assert!(time_str.contains("epoch:"));
         assert!(time_str.ends_with("}"));
-        Ok(())
+        future::ready(Ok(()))
     });
-    let mut rt = tokio::runtime::current_thread::Runtime::new().unwrap();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .build()
+        .unwrap();
     rt.block_on(time).ok();
 }
