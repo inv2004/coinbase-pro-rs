@@ -6,18 +6,19 @@ extern crate serde;
 extern crate sha2;
 extern crate tokio;
 
+use futures_util::future::TryFutureExt;
 use hyper::header::HeaderValue;
-use futures::Future;
 use hyper::{Body, Method, Request, Uri};
 use serde_json;
+use std::future::Future;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use crate::adapters::{Adapter, AdapterNew};
 use crate::error::*;
+use crate::private::hmac::{Hmac, Mac};
 use crate::structs::private::*;
 use crate::structs::reqs;
-use crate::private::hmac::{Hmac, Mac};
 
 use crate::public::Public;
 
@@ -41,7 +42,7 @@ impl<A> Private<A> {
         method: Method,
         uri: &str,
         body_str: &str,
-    ) -> impl Future<Item = U, Error = CBError>
+    ) -> impl Future<Output = Result<U, CBError>>
     where
         for<'de> U: serde::Deserialize<'de>,
     {
@@ -91,25 +92,24 @@ impl<A> Private<A> {
 
         let uri: Uri = (self._pub.uri.to_string() + _uri).parse().unwrap();
 
-        let mut req = Request::builder();
-        req.method(&method);
-        req.uri(uri);
+        let req = Request::builder().method(&method).uri(uri);
 
         let sign = Self::sign(&self.secret, timestamp, method, _uri, &body_str);
 
-        req.header("User-Agent", Public::<A>::USER_AGENT);
-        req.header("Content-Type", "Application/JSON");
-        //        req.header("Accept", "*/*");
-        req.header("CB-ACCESS-KEY", HeaderValue::from_str(&self.key).unwrap());
-        req.header("CB-ACCESS-SIGN", HeaderValue::from_str(&sign).unwrap());
-        req.header(
-            "CB-ACCESS-TIMESTAMP",
-            HeaderValue::from_str(&timestamp.to_string()).unwrap(),
-        );
-        req.header(
-            "CB-ACCESS-PASSPHRASE",
-            HeaderValue::from_str(&self.passphrase).unwrap(),
-        );
+        let req = req
+            .header("User-Agent", Public::<A>::USER_AGENT)
+            .header("Content-Type", "Application/JSON")
+            //        .header("Accept", "*/*")
+            .header("CB-ACCESS-KEY", HeaderValue::from_str(&self.key).unwrap())
+            .header("CB-ACCESS-SIGN", HeaderValue::from_str(&sign).unwrap())
+            .header(
+                "CB-ACCESS-TIMESTAMP",
+                HeaderValue::from_str(&timestamp.to_string()).unwrap(),
+            )
+            .header(
+                "CB-ACCESS-PASSPHRASE",
+                HeaderValue::from_str(&self.passphrase).unwrap(),
+            );
 
         req.body(body_str.into()).unwrap()
     }
@@ -117,7 +117,7 @@ impl<A> Private<A> {
     /// Creates a new Private struct
     pub fn new(uri: &str, key: &str, secret: &str, passphrase: &str) -> Self
     where
-        A: AdapterNew
+        A: AdapterNew,
     {
         Self {
             _pub: Public::new(uri),
@@ -186,12 +186,13 @@ impl<A> Private<A> {
     {
         let f = self
             .call_feature(Method::GET, &format!("/accounts/{}/ledger", id), "")
-            .map(|xs: Vec<AccountHistory>| {
+            .map_ok(|xs: Vec<AccountHistory>| {
                 xs.into_iter()
                     .map(|x| AccountHistory {
                         _type: (&x.details).into(),
                         ..x
-                    }).collect()
+                    })
+                    .collect()
             });
 
         self._pub.adapter.process(f)
@@ -232,13 +233,7 @@ impl<A> Private<A> {
 
     /// **Buy limit**
     /// Makes Buy limit order
-    pub fn buy_limit(
-        &self,
-        product_id: &str,
-        size: f64,
-        price: f64,
-        post_only: bool
-    ) -> A::Result
+    pub fn buy_limit(&self, product_id: &str, size: f64, price: f64, post_only: bool) -> A::Result
     where
         A: Adapter<Order> + 'static,
     {
@@ -247,19 +242,13 @@ impl<A> Private<A> {
             reqs::OrderSide::Buy,
             size,
             price,
-            post_only
+            post_only,
         ))
     }
 
     /// **Sell limit**
     /// Makes Sell limit order
-    pub fn sell_limit(
-        &self,
-        product_id: &str,
-        size: f64,
-        price: f64,
-        post_only: bool
-    ) -> A::Result
+    pub fn sell_limit(&self, product_id: &str, size: f64, price: f64, post_only: bool) -> A::Result
     where
         A: Adapter<Order> + 'static,
     {
@@ -268,7 +257,7 @@ impl<A> Private<A> {
             reqs::OrderSide::Sell,
             size,
             price,
-            post_only
+            post_only,
         ))
     }
 
@@ -303,8 +292,7 @@ impl<A> Private<A> {
     where
         A: Adapter<Uuid> + 'static,
     {
-        let f = self
-            .call_feature(Method::DELETE, dbg!(&format!("/orders/{}", id)), "");
+        let f = self.call_feature(Method::DELETE, dbg!(&format!("/orders/{}", id)), "");
 
         self._pub.adapter.process(f)
     }

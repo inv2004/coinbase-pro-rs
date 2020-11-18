@@ -5,12 +5,14 @@ extern crate serde_json;
 extern crate tokio;
 
 use chrono::SecondsFormat;
+use futures::future;
+use futures_util::future::TryFutureExt;
 use hyper::client::HttpConnector;
-use futures::{Future, Stream};
-use hyper::{Body, Client, Request, Uri};
+use hyper::{body::to_bytes, Body, Client, Request, Uri};
 use hyper_tls::HttpsConnector;
 use serde::Deserialize;
 use std::fmt::Debug;
+use std::future::Future;
 
 use super::adapters::*;
 use crate::error::*;
@@ -30,8 +32,7 @@ impl<A> Public<A> {
     fn request(&self, uri: &str) -> Request<Body> {
         let uri: Uri = (self.uri.to_string() + uri).parse().unwrap();
 
-        let mut req = Request::get(uri);
-        req.header("User-Agent", Self::USER_AGENT);
+        let req = Request::get(uri).header("User-Agent", Self::USER_AGENT);
         req.body(Body::empty()).unwrap()
     }
 
@@ -56,7 +57,7 @@ impl<A> Public<A> {
         self.client
             .request(request)
             .map_err(CBError::Http)
-            .and_then(|res| res.into_body().concat2().map_err(CBError::Http))
+            .and_then(|res| to_bytes(res.into_body()).map_err(CBError::Http))
             .and_then(|body| {
                 debug!("RES: {:?}", body);
                 let res = serde_json::from_slice(&body).map_err(|e| {
@@ -66,8 +67,8 @@ impl<A> Public<A> {
                             let data = String::from_utf8(body.to_vec()).unwrap();
                             CBError::Serde { error: e, data }
                         })
-                })?;
-                Ok(res)
+                });
+                future::ready(res)
             })
     }
 
@@ -86,8 +87,9 @@ impl<A> Public<A> {
     where
         A: AdapterNew,
     {
-        let https = HttpsConnector::new(4).unwrap();
+        let https = HttpsConnector::new();
         let client = Client::builder()
+            // Keep this for now
             .keep_alive(keep_alive)
             .build::<_, Body>(https);
         let uri = uri.to_string();

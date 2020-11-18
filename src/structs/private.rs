@@ -1,10 +1,8 @@
-use std::fmt;
-use uuid::Uuid;
-//use utils::f64_nan_from_string;
-//use utils::f64_opt_from_string;
 use super::reqs::OrderStop;
 use super::DateTime;
 use crate::utils::{datetime_from_string, f64_from_string, usize_from_string};
+use std::fmt;
+use uuid::Uuid;
 
 // Private
 

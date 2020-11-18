@@ -3,7 +3,12 @@
 extern crate url;
 
 use self::url::Url;
-use futures::{Future, Sink, Stream};
+use futures::{future, Sink, Stream};
+use futures_util::{
+    future::{FutureExt, TryFutureExt},
+    sink::SinkExt,
+    stream::{StreamExt, TryStreamExt},
+};
 use hyper::Method;
 use serde_json;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -53,29 +58,31 @@ impl WSFeed {
     pub fn new_with_sub(
         uri: &str,
         subsribe: Subscribe,
-    ) -> impl Stream<Item = Message, Error = WSError> {
+    ) -> impl Stream<Item = Result<Message, WSError>> {
         let url = Url::parse(uri).unwrap();
 
-        connect_async(url)
-            .map_err(WSError::Connect)
-            .and_then(move |(ws_stream, _)| {
+        let stream = connect_async(url).map_err(WSError::Connect);
+        let stream = {
+            stream.and_then(|(ws_stream, _)| async move {
                 debug!("WebSocket handshake has been successfully completed");
-                let (sink, stream) = ws_stream.split();
+                let (mut sink, stream) = ws_stream.split();
 
                 let subsribe = serde_json::to_string(&subsribe).unwrap();
 
-                sink.send(TMessage::Text(subsribe))
+                let ret = sink
+                    .send(TMessage::Text(subsribe))
                     .map_err(WSError::Send)
-                    .and_then(|_| {
-                        debug!("subsription sent");
-                        let stream = stream
-                            .filter(|msg| msg.is_text())
-                            .map_err(WSError::Read)
-                            .map(convert_msg);
-                        Ok(stream)
-                    })
+                    .await;
+                debug!("subsription sent");
+                ret.and_then(|_| {
+                    Ok(stream
+                        .try_filter(|msg| future::ready(msg.is_text()))
+                        .map_ok(convert_msg)
+                        .map_err(WSError::Read))
+                })
             })
-            .flatten_stream()
+        };
+        stream.try_flatten_stream()
     }
 
     // Constructor for simple subcription with product_ids and channels with auth
@@ -86,7 +93,7 @@ impl WSFeed {
         key: &str,
         secret: &str,
         passphrase: &str,
-    ) -> impl Stream<Item = Message, Error = WSError> {
+    ) -> impl Stream<Item = Result<Message, WSError>> {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("leap-second")

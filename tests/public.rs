@@ -145,7 +145,7 @@ fn test_check_latency_async_block_on() {
     }
 }
 
-use futures::future::Future;
+use std::future::Future;
 
 #[test]
 fn test_check_latency_async() {

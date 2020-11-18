@@ -4,7 +4,7 @@ extern crate tokio;
 
 use coinbase_pro_rs::structs::wsfeed::*;
 use coinbase_pro_rs::{WSFeed, WS_SANDBOX_URL};
-use futures::{Future, Stream};
+use std::future::{Future, Stream};
 
 fn main() {
     let stream = WSFeed::new(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Heartbeat]);
