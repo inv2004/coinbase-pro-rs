@@ -1,5 +1,3 @@
-extern crate tokio;
-
 use super::error::CBError;
 use std::future::Future;
 
@@ -67,7 +65,6 @@ impl<T> Adapter<T> for ASync {
 mod tests {
     use super::*;
     use crate::{
-        structs::reqs::{self, OrderTimeInForce, OrderTimeInForceCancelAfter},
         utils::delay,
         Public, SANDBOX_URL,
     };

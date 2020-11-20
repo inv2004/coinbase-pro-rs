@@ -1,8 +1,5 @@
 //! Contains structure which provides futures::Stream to websocket-feed of Coinbase api
 
-extern crate url;
-
-use self::url::Url;
 use futures::{future, Stream};
 use futures_util::{
     future::TryFutureExt,
@@ -13,6 +10,7 @@ use hyper::Method;
 use serde_json;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio_tungstenite::{connect_async, tungstenite::Message as TMessage};
+use url::Url;
 
 use crate::{private::Private, structs::wsfeed::*, ASync, CBError, WSError};
 

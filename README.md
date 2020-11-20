@@ -19,10 +19,6 @@ coinbase-pro-rs = "0.5.1"
 
 ### Async
 ```rust
-extern crate hyper;
-extern crate tokio;
-extern crate coinbase_pro_rs;
-
 use hyper::rt::Future;
 use coinbase_pro_rs::{Public, ASync, SANDBOX_URL};
 
@@ -41,8 +37,6 @@ fn main() {
 ```
 ### Sync
 ```rust
-extern crate coinbase_pro_rs;
-
 use coinbase_pro_rs::{Public, Sync, SANDBOX_URL};
 
 fn main() {
@@ -53,10 +47,6 @@ fn main() {
 ```
 ### Websocket
 ```rust
-extern crate futures;
-extern crate tokio;
-extern crate coinbase_pro_rs;
-
 use futures::{Future, Stream};
 use coinbase_pro_rs::{WSFeed, WS_SANDBOX_URL};
 use coinbase_pro_rs::structs::wsfeed::*;

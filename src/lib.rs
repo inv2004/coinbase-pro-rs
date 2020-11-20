@@ -33,8 +33,6 @@
 //! ```
 //! ### Sync
 //! ```
-//! extern crate coinbase_pro_rs;
-//!
 //! use coinbase_pro_rs::{Public, Sync, SANDBOX_URL};
 //!
 //! fn main() {

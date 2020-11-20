@@ -1,5 +1,3 @@
-extern crate serde;
-
 use super::DateTime;
 use crate::utils::{
     f64_from_string, f64_nan_from_string, f64_opt_from_string, uuid_opt_from_string,
