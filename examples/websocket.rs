@@ -1,20 +1,14 @@
-extern crate coinbase_pro_rs;
-extern crate futures;
-extern crate tokio;
-
-use coinbase_pro_rs::structs::wsfeed::*;
-use coinbase_pro_rs::{WSError, WSFeed, WS_SANDBOX_URL};
+use coinbase_pro_rs::{structs::wsfeed::*, CBError, WSFeed, WS_SANDBOX_URL};
 use future::ready;
-use futures::{future, Stream, StreamExt, TryStreamExt};
-use std::future::Future;
+use futures::{future, StreamExt};
 
 #[tokio::main]
 async fn main() {
     let stream = WSFeed::new(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Heartbeat]);
 
-    let stream = stream.take(10);
     stream
-        .for_each(|msg: Result<Message, WSError>| {
+        .take(10)
+        .for_each(|msg: Result<Message, CBError>| {
             match msg.unwrap() {
                 Message::Heartbeat {
                     sequence,

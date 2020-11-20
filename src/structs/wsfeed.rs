@@ -4,7 +4,7 @@ use super::DateTime;
 use crate::utils::{
     f64_from_string, f64_nan_from_string, f64_opt_from_string, uuid_opt_from_string,
 };
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -85,7 +85,7 @@ pub(crate) enum InputMessage {
     Error {
         message: String,
     },
-    InternalError(super::super::error::WSError), // in futures 0.3 probably TryStream
+    InternalError(crate::CBError), // in futures 0.3 probably TryStream
 }
 
 #[derive(Debug)]
@@ -106,7 +106,7 @@ pub enum Message {
     Error {
         message: String,
     },
-    InternalError(super::super::error::WSError), // in futures 0.3 probably TryStream
+    InternalError(crate::CBError), // in futures 0.3 probably TryStream
 }
 
 #[derive(Deserialize, Debug)]
@@ -474,7 +474,7 @@ impl<'de> Deserialize<'de> for Message {
 
 #[cfg(test)]
 mod tests {
-    use super::super::super::serde_json;
+    use serde_json;
     use super::*;
     use std::str::FromStr;
 

@@ -1,5 +1,4 @@
 use coinbase_pro_rs::{ASync, Public, SANDBOX_URL};
-use tokio_compat_02::FutureExt;
 
 #[tokio::main]
 async fn main() {

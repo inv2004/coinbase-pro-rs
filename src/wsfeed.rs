@@ -12,19 +12,16 @@ use futures_util::{
 use hyper::Method;
 use serde_json;
 use std::time::{SystemTime, UNIX_EPOCH};
-use tokio_tungstenite::connect_async;
+use tokio_tungstenite::{connect_async, tungstenite::Message as TMessage};
 
-use super::tokio_tungstenite::tungstenite::Message as TMessage;
-use crate::error::WSError;
-use crate::structs::wsfeed::*;
-use crate::{private::Private, ASync};
+use crate::{private::Private, structs::wsfeed::*, ASync, CBError, WSError};
 
 pub struct WSFeed;
 
 fn convert_msg(msg: TMessage) -> Message {
     match msg {
         TMessage::Text(str) => serde_json::from_str(&str).unwrap_or_else(|e| {
-            Message::InternalError(WSError::Serde {
+            Message::InternalError(CBError::Serde {
                 error: e,
                 data: str,
             })
@@ -39,7 +36,7 @@ impl WSFeed {
         uri: &str,
         product_ids: &[&str],
         channels: &[ChannelType],
-    ) -> impl Stream<Item = Result<Message, WSError>> {
+    ) -> impl Stream<Item = Result<Message, CBError>> {
         let subscribe = Subscribe {
             _type: SubscribeCmd::Subscribe,
             product_ids: product_ids.into_iter().map(|x| x.to_string()).collect(),
@@ -58,27 +55,27 @@ impl WSFeed {
     pub fn new_with_sub(
         uri: &str,
         subsribe: Subscribe,
-    ) -> impl Stream<Item = Result<Message, WSError>> {
+    ) -> impl Stream<Item = Result<Message, CBError>> {
         let url = Url::parse(uri).unwrap();
 
-        let stream = connect_async(url).map_err(WSError::Connect);
+        let stream = connect_async(url).map_err(|e| CBError::Websocket(WSError::Connect(e)));
         let stream = {
             stream.and_then(|(ws_stream, _)| async move {
-                debug!("WebSocket handshake has been successfully completed");
+                log::debug!("WebSocket handshake has been successfully completed");
                 let (mut sink, stream) = ws_stream.split();
 
                 let subsribe = serde_json::to_string(&subsribe).unwrap();
 
                 let ret = sink
                     .send(TMessage::Text(subsribe))
-                    .map_err(WSError::Send)
+                    .map_err(|e| CBError::Websocket(WSError::Send(e)))
                     .await;
-                debug!("subsription sent");
+                log::debug!("subsription sent");
                 ret.and_then(|_| {
                     Ok(stream
                         .try_filter(|msg| future::ready(msg.is_text()))
                         .map_ok(convert_msg)
-                        .map_err(WSError::Read))
+                        .map_err(|e| CBError::Websocket(WSError::Read(e))))
                 })
             })
         };
@@ -93,7 +90,7 @@ impl WSFeed {
         key: &str,
         secret: &str,
         passphrase: &str,
-    ) -> impl Stream<Item = Result<Message, WSError>> {
+    ) -> impl Stream<Item = Result<Message, CBError>> {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("leap-second")
