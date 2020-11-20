@@ -3,6 +3,7 @@
 use thiserror::Error;
 
 /// Coinbase-pro-rs error
+#[non_exhaustive]
 #[derive(Debug, Error)]
 pub enum CBError {
     /// Http error
@@ -34,6 +35,7 @@ pub enum CBError {
 }
 
 /// Websocket specific errors
+#[non_exhaustive]
 #[derive(Debug, Error)]
 pub enum WSError {
     /// Error making Websocket connection
