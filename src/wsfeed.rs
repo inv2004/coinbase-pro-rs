@@ -3,9 +3,9 @@
 extern crate url;
 
 use self::url::Url;
-use futures::{future, Sink, Stream};
+use futures::{future, Stream};
 use futures_util::{
-    future::{FutureExt, TryFutureExt},
+    future::TryFutureExt,
     sink::SinkExt,
     stream::{StreamExt, TryStreamExt},
 };

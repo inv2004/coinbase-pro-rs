@@ -59,7 +59,7 @@ impl<A> Public<A> {
             .map_err(CBError::Http)
             .and_then(|res| to_bytes(res.into_body()).map_err(CBError::Http))
             .and_then(|body| {
-                debug!("RES: {:?}", body);
+                debug!("RES: {:#?}", body);
                 let res = serde_json::from_slice(&body).map_err(|e| {
                     serde_json::from_slice(&body)
                         .map(CBError::Coinbase)
