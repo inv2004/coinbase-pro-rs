@@ -62,3 +62,44 @@ impl<T> Adapter<T> for ASync {
         Box::pin(f.compat())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        structs::reqs::{self, OrderTimeInForce, OrderTimeInForceCancelAfter},
+        utils::delay,
+        Public, SANDBOX_URL,
+    };
+    use futures::{future, TryFutureExt};
+
+    #[test]
+    fn test_sync() {
+        delay();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
+        let time = client.get_time().unwrap();
+        let time_str = format!("{:?}", time);
+        assert!(time_str.starts_with("Time {"));
+        assert!(time_str.contains("iso:"));
+        assert!(time_str.contains("epoch:"));
+        assert!(time_str.ends_with("}"));
+    }
+
+    #[test]
+    fn test_async() {
+        delay();
+        let client: Public<ASync> = Public::new(SANDBOX_URL);
+        let time = client.get_time().and_then(|time| {
+            let time_str = format!("{:?}", time);
+            assert!(time_str.starts_with("Time {"));
+            assert!(time_str.contains("iso:"));
+            assert!(time_str.contains("epoch:"));
+            assert!(time_str.ends_with("}"));
+            future::ready(Ok(()))
+        });
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        rt.block_on(time).ok();
+    }
+}

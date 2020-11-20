@@ -98,3 +98,11 @@ where
     let s = String::deserialize(d)?;
     (s + "").parse().map_err(de::Error::custom)
 }
+
+#[cfg(test)]
+static DELAY_TIMEOUT: u64 = 200;
+
+#[cfg(test)]
+pub fn delay() {
+    std::thread::sleep(std::time::Duration::from_millis(DELAY_TIMEOUT));
+}

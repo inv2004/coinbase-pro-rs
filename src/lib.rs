@@ -14,24 +14,21 @@
 //!
 //! ### Async
 //! ```
-//! extern crate hyper;
-//! extern crate tokio;
-//! extern crate coinbase_pro_rs;
-//!
-//! use hyper::rt::Future;
+//! use std::future::Future;
 //! use coinbase_pro_rs::{Public, ASync, SANDBOX_URL};
+//! use futures::{TryFutureExt};
 //!
-//! fn main() {
+//! #[tokio::main]
+//! async fn main() {
 //!     let client: Public<ASync> = Public::new_with_keep_alive(SANDBOX_URL, false);
 //!     // if keep_alive is not disables - tokio::run will hold the connection without exiting the example
-//!     let f = client.get_time()
+//!     client.get_time().await
 //!         .map_err(|_| ())
 //!         .and_then(|time| {
 //!             println!("Coinbase.time: {}", time.iso);
 //!             Ok(())
 //!         });
 //!
-//!     tokio::run(f);
 //! }
 //! ```
 //! ### Sync
@@ -48,55 +45,31 @@
 //! ```
 //! ### Websocket
 //! ```
-//! extern crate futures;
-//! extern crate tokio;
-//! extern crate coinbase_pro_rs;
-//!
-//! use futures::{Future, Stream};
-//! use coinbase_pro_rs::{WSFeed, WS_SANDBOX_URL};
+//! use futures::{Future, Stream, StreamExt, TryStreamExt};
+//! use coinbase_pro_rs::{WSFeed, CBError, WS_SANDBOX_URL};
 //! use coinbase_pro_rs::structs::wsfeed::*;
 //!
-//! fn main() {
+//! #[tokio::main]
+//! async fn main() {
 //!     let stream = WSFeed::new(WS_SANDBOX_URL,
 //!         &["BTC-USD"], &[ChannelType::Heartbeat]);
 //!
-//!     let f = stream
+//!     stream
 //!         .take(10)
-//!         .for_each(|msg| {
-//!         match msg {
+//!         .for_each(|msg: Result<Message, CBError>| async {
+//!         match msg.unwrap() {
 //!             Message::Heartbeat {sequence, last_trade_id, time, ..} => println!("{}: seq:{} id{}",
 //!                                                                                time, sequence, last_trade_id),
 //!             Message::Error {message} => println!("Error: {}", message),
 //!             Message::InternalError(_) => panic!("internal_error"),
 //!             other => println!("{:?}", other)
 //!         }
-//!         Ok(())
-//!     });
-//!
-//!     tokio::run(f.map_err(|_| panic!("stream fail")));
+//!     }).await;
 //! }
 //! ```
 
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate log;
-extern crate chrono;
-extern crate futures;
-extern crate hyper;
-extern crate hyper_tls;
-extern crate pretty_env_logger;
-extern crate serde;
-extern crate serde_json;
-extern crate time;
-extern crate tokio;
-extern crate tokio_tungstenite;
-extern crate uuid;
-
 pub mod adapters;
-pub mod error;
+mod error;
 pub mod private;
 pub mod public;
 pub mod structs;
@@ -104,12 +77,11 @@ mod utils;
 
 pub mod wsfeed;
 
-pub use adapters::{ASync, Sync};
-pub use error::CBError;
-pub use error::WSError;
-pub use private::Private;
-pub use public::Public;
-pub use wsfeed::WSFeed;
+pub use crate::adapters::{ASync, Sync};
+pub use crate::error::{CBError, WSError};
+pub use crate::private::Private;
+pub use crate::public::Public;
+pub use crate::wsfeed::WSFeed;
 
 pub type Result<T> = std::result::Result<T, CBError>;
 

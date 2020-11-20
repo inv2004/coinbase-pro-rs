@@ -1,5 +1,6 @@
 use super::DateTime;
 use crate::utils::f64_from_string;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 // Public

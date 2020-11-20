@@ -1,6 +1,7 @@
 use super::reqs::OrderStop;
 use super::DateTime;
 use crate::utils::{datetime_from_string, f64_from_string, usize_from_string};
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use uuid::Uuid;
 
