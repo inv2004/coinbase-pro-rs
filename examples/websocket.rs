@@ -1,6 +1,5 @@
-use coinbase_pro_rs::{structs::wsfeed::*, CBError, WSFeed, WS_SANDBOX_URL};
-use future::ready;
-use futures::{future, StreamExt};
+use coinbase_pro_rs::{structs::wsfeed::*, WSFeed, WS_SANDBOX_URL};
+use futures::{StreamExt, TryStreamExt};
 
 #[tokio::main]
 async fn main() {
@@ -8,8 +7,8 @@ async fn main() {
 
     stream
         .take(10)
-        .for_each(|msg: Result<Message, CBError>| {
-            match msg.unwrap() {
+        .try_for_each(|msg| async {
+            match msg {
                 Message::Heartbeat {
                     sequence,
                     last_trade_id,
@@ -20,9 +19,8 @@ async fn main() {
                 Message::InternalError(_) => panic!("internal_error"),
                 other => println!("{:?}", other),
             };
-            ready(())
+            Ok(())
         })
-        .await;
-
-    // f.map_err(|_| panic!("stream fail"));
+        .await
+        .expect("stream fail");
 }
