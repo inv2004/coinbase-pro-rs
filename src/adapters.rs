@@ -64,10 +64,7 @@ impl<T> Adapter<T> for ASync {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        utils::delay,
-        Public, SANDBOX_URL,
-    };
+    use crate::{utils::delay, Public, SANDBOX_URL};
     use futures::{future, TryFutureExt};
 
     #[test]

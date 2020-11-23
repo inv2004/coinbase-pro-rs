@@ -44,28 +44,27 @@ impl<A> Public<A> {
     pub(crate) fn call_future<U>(
         &self,
         request: Request<Body>,
-    ) -> impl Future<Output = Result<U, CBError>>
+    ) -> impl Future<Output = Result<U, CBError>> + 'static
     where
-        for<'de> U: serde::Deserialize<'de>,
+        for<'de> U: serde::Deserialize<'de> + 'static,
     {
         log::debug!("REQ: {:?}", request);
 
-        self.client
-            .request(request)
-            .map_err(CBError::Http)
-            .and_then(|res| to_bytes(res.into_body()).map_err(CBError::Http))
-            .and_then(|body| {
-                log::debug!("RES: {:#?}", body);
-                let res = serde_json::from_slice(&body).map_err(|e| {
-                    serde_json::from_slice(&body)
-                        .map(CBError::Coinbase)
-                        .unwrap_or_else(|_| {
-                            let data = String::from_utf8(body.to_vec()).unwrap();
-                            CBError::Serde { error: e, data }
-                        })
+        let res = self.client.request(request).map_err(CBError::Http);
+        async move {
+            let res = res.await?;
+            let body = to_bytes(res.into_body()).await.map_err(CBError::Http)?;
+            log::debug!("RES: {:#?}", body);
+            let res: Result<U, CBError> = serde_json::from_slice(&body).map_err(|e| {
+                let err = serde_json::from_slice(&body);
+                let err = err.map(CBError::Coinbase).unwrap_or_else(|_| {
+                    let data = String::from_utf8(body.to_vec()).unwrap();
+                    CBError::Serde { error: e, data }
                 });
-                future::ready(res)
-            })
+                err
+            });
+            res
+        }
     }
 
     pub(crate) fn call<U>(&self, request: Request<Body>) -> A::Result
@@ -320,40 +319,29 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_check_latency_async_block_on() {
+    #[tokio::test]
+    async fn test_check_latency_async_block_on() {
         delay();
-        let runtime = tokio::runtime::Runtime::new().unwrap();
         let client: Public<ASync> = Public::new(SANDBOX_URL);
-        let _ = runtime.block_on(client.get_time()).unwrap();
+        client.get_time().await.unwrap();
         let time = Instant::now();
-        let _ = runtime.block_on(client.get_time()).unwrap();
+        client.get_time().await.unwrap();
         let time = time.elapsed().subsec_millis();
         dbg!(time);
-        if time > 150 {
-            panic!("{} > 100", time);
-        }
+        assert!(time <= 150)
     }
 
-    #[test]
-    #[ignore] // Latency in tests isn't working
-    fn test_check_latency_async() {
+    #[tokio::test]
+    async fn test_check_latency_async() {
         delay();
-        let runtime = tokio::runtime::Runtime::new().unwrap();
         let client: Public<ASync> = Public::new(SANDBOX_URL);
-        let f = client.get_time().then(move |_| {
-            let time = Instant::now();
-            client.get_time().then(move |_| {
-                let time = time.elapsed().subsec_millis();
-                dbg!(time);
-                future::ready(if time <= 150 {
-                    Ok(time)
-                } else {
-                    Err(format!("{} > 100", time))
-                })
-            })
-        });
-        runtime.block_on(f).unwrap();
+        let _ = client.get_time().await.unwrap();
+        let time = Instant::now();
+        let _ = client.get_time().await.unwrap();
+        let time = time.elapsed().subsec_millis();
+
+        dbg!(time);
+        assert!(time <= 150, "Fast enough");
     }
 
     //    #[test]

@@ -14,7 +14,7 @@ pub struct Order<'a> {
     stop: Option<OrderStop>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum OrderSide {
     Buy,

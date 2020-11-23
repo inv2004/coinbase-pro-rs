@@ -29,7 +29,7 @@ pub enum SubscribeCmd {
     Subscribe,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum Channel {
     Name(ChannelType),
@@ -39,7 +39,7 @@ pub enum Channel {
     },
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum ChannelType {
     Heartbeat,
@@ -86,7 +86,7 @@ pub(crate) enum InputMessage {
     InternalError(crate::CBError), // in futures 0.3 probably TryStream
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Message {
     Subscriptions {
         channels: Vec<Channel>,
@@ -107,7 +107,7 @@ pub enum Message {
     InternalError(crate::CBError), // in futures 0.3 probably TryStream
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub enum Level2 {
     Snapshot {
         product_id: String,
@@ -120,7 +120,7 @@ pub enum Level2 {
     },
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Level2SnapshotRecord {
     #[serde(deserialize_with = "f64_from_string")]
     pub price: f64,
@@ -128,7 +128,7 @@ pub struct Level2SnapshotRecord {
     pub size: f64,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Level2UpdateRecord {
     pub side: super::reqs::OrderSide,
     #[serde(deserialize_with = "f64_from_string")]
@@ -137,7 +137,7 @@ pub struct Level2UpdateRecord {
     pub size: f64,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 #[serde(untagged)]
 #[serde(rename_all = "camelCase")]
 pub enum Ticker {
@@ -201,7 +201,7 @@ impl Ticker {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub enum Full {
     Received(Received),
     Open(Open),
@@ -252,7 +252,7 @@ impl Full {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 #[serde(tag = "order_type")]
 #[serde(rename_all = "camelCase")]
 pub enum Received {
@@ -287,7 +287,7 @@ pub enum Received {
     },
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Open {
     pub time: DateTime,
     pub product_id: String,
@@ -304,7 +304,7 @@ pub struct Open {
     pub profile_id: Option<Uuid>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum Done {
     Limit {
@@ -333,14 +333,14 @@ pub enum Done {
     },
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum Reason {
     Filled,
     Canceled,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Match {
     pub trade_id: usize,
     pub sequence: usize,
@@ -363,7 +363,7 @@ pub struct Match {
     pub profile_id: Option<Uuid>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Change {
     pub time: DateTime,
     pub sequence: usize,
@@ -389,7 +389,7 @@ pub struct Change {
     pub profile_id: Option<Uuid>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Activate {
     pub product_id: String,
     #[serde(deserialize_with = "f64_from_string")]
@@ -409,7 +409,7 @@ pub struct Activate {
     pub profile_id: Option<Uuid>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum StopType {
     Entry,
@@ -472,8 +472,8 @@ impl<'de> Deserialize<'de> for Message {
 
 #[cfg(test)]
 mod tests {
-    use serde_json;
     use super::*;
+    use serde_json;
     use std::str::FromStr;
 
     #[test]

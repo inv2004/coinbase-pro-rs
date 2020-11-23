@@ -1,5 +1,6 @@
 // use crate::structs::other::Error;
 #![forbid(missing_docs)]
+use serde::{Deserialize, Deserializer, Serialize};
 use thiserror::Error;
 
 /// Coinbase-pro-rs error
@@ -22,8 +23,8 @@ pub enum CBError {
     },
 
     /// Coinbase Error
-    #[error("coinbase: {0}")]
-    Coinbase(String),
+    #[error("coinbase: {0:?}")]
+    Coinbase(CoinbaseError),
 
     /// Websocket error
     #[error("websocket: {0}")]
@@ -32,6 +33,25 @@ pub enum CBError {
     /// Null error
     #[error("null")]
     Null,
+}
+
+impl PartialEq for CBError {
+    fn eq(&self, other: &Self) -> bool {
+        match self {
+            // Errors aren't equal
+            CBError::Http(_) => false,
+            CBError::Serde { .. } => false,
+            CBError::Coinbase(s) => {
+                if let CBError::Coinbase(o) = other {
+                    s == o
+                } else {
+                    false
+                }
+            }
+            CBError::Websocket(_) => false,
+            CBError::Null => true,
+        }
+    }
 }
 
 /// Websocket specific errors
@@ -51,8 +71,6 @@ pub enum WSError {
     Read(#[source] tokio_tungstenite::tungstenite::Error),
 }
 
-use serde::{Deserialize, Deserializer};
-
 impl<'de> Deserialize<'de> for WSError {
     fn deserialize<D>(_deserializer: D) -> Result<Self, D::Error>
     where
@@ -69,4 +87,9 @@ impl<'de> Deserialize<'de> for CBError {
     {
         unimplemented!()
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct CoinbaseError {
+    message: String,
 }

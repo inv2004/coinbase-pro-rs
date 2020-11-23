@@ -189,70 +189,71 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_subscription() {
+    #[tokio::test]
+    async fn test_subscription() {
         delay();
         let stream = WSFeed::new(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Heartbeat]);
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(async {
         stream
-        .take(1)
-        .try_for_each(move |msg| {
-            let str = format!("{:?}", msg);
-            assert_eq!(str, r#"Subscriptions { channels: [WithProduct { name: Heartbeat, product_ids: ["BTC-USD"] }] }"#);
-            future::ready(Ok(()))
-        }).await.map_err(|e| println!("{:?}", e))}
-    ).unwrap();
+            .take(1)
+            .try_for_each(|msg| {
+                assert_eq!(
+                    &msg,
+                    &Message::Subscriptions {
+                        channels: vec![Channel::WithProduct {
+                            name: ChannelType::Heartbeat,
+                            product_ids: vec!["BTC-USD".to_string()]
+                        }]
+                    }
+                );
+                future::ready(Ok(()))
+            })
+            .await
+            .map_err(|e| println!("{:?}", e))
+            .unwrap();
     }
 
-    #[test]
-    fn test_heartbeat() {
+    #[tokio::test]
+    async fn test_heartbeat() {
         delay();
         let found = Arc::new(AtomicBool::new(false));
         let found2 = found.clone();
         let stream = WSFeed::new(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Heartbeat]);
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(async {
-            stream
-                .take(3)
-                .try_for_each(move |msg| {
-                    let str = format!("{:?}", msg);
-                    if str.starts_with("Heartbeat { sequence: ") {
-                        found2.swap(true, Ordering::Relaxed);
-                    }
-                    future::ready(Ok(()))
-                })
-                .await
-                .map_err(|e| println!("{:?}", e))
-        })
-        .unwrap();
+        stream
+            .take(3)
+            .try_for_each(move |msg| {
+                let str = format!("{:?}", msg);
+                if str.starts_with("Heartbeat { sequence: ") {
+                    found2.swap(true, Ordering::Relaxed);
+                }
+                future::ready(Ok(()))
+            })
+            .await
+            .map_err(|e| println!("{:?}", e))
+            .unwrap();
 
         assert!(found.load(Ordering::Relaxed));
     }
 
-    #[test]
-    fn test_ticker() {
+    #[tokio::test]
+    async fn test_ticker() {
         delay();
         let found = Arc::new(AtomicBool::new(false));
         let found2 = found.clone();
 
         // hard to check in sandbox because low flow
         let stream = WSFeed::new(WS_URL, &["BTC-USD"], &[ChannelType::Ticker]);
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(async {
-            stream
-                .take(3)
-                .try_for_each(move |msg| {
-                    let str = format!("{:?}", msg);
-                    if str.contains("Ticker(Full { trade_id: ") {
-                        found2.swap(true, Ordering::Relaxed);
-                    }
-                    future::ready(Ok(()))
-                })
-                .await
-                .map_err(|e| println!("{:?}", e))
-        })
-        .unwrap();
+        stream
+            .take(3)
+            .try_for_each(move |msg| {
+                let str = format!("{:?}", msg);
+                if str.contains("Ticker(Full { trade_id: ") {
+                    found2.swap(true, Ordering::Relaxed);
+                }
+                future::ready(Ok(()))
+            })
+            .map_err(|e| println!("{:?}", e))
+            .await
+            .unwrap();
 
         assert!(found.load(Ordering::Relaxed));
     }
@@ -387,8 +388,8 @@ mod tests {
         assert!(found_open.load(Ordering::Relaxed));
     }
 
-    #[test]
-    fn test_user() {
+    #[tokio::test]
+    async fn test_user() {
         use crate::{ASync, Private, WSError, SANDBOX_URL};
 
         delay();
@@ -405,34 +406,42 @@ mod tests {
             PASSPHRASE,
         );
 
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(async move {
-            stream
-                .take(2)
-                .for_each(|msg| async {
-                    let str = format!("{:?}", msg.unwrap());
-                    if str.contains("Subscriptions") {
-                        let client: Private<ASync> =
-                            Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
-                        let _res: Result<(), WSError> = client
-                            .buy_limit("BTC-USD", 0.001_f64, 100.0_f64, true)
-                            .await
-                            .and_then(|_| Ok(()))
-                            .map_err(|_| {
-                                WSError::Read(tokio_tungstenite::tungstenite::Error::Utf8)
-                                // hm
-                            });
-                    // future::ready(res)
-                    } else {
-                        if str.contains("Full(Received(Limit") && str.contains("price: 100.0") {
-                            found_received_2.swap(true, Ordering::Relaxed);
+        stream
+            .take(2)
+            .try_for_each(move |msg| {
+                let found_received_2 = found_received_2.clone();
+                async move {
+                    match &msg {
+                        Message::Subscriptions { .. } => {
+                            let client: Private<ASync> =
+                                Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+                            let res: Result<(), CBError> = client
+                                .buy_limit("BTC-USD", 0.001_f64, 100.0_f64, true)
+                                .await
+                                .and_then(|_| Ok(()))
+                                .map_err(|_| {
+                                    CBError::Websocket(WSError::Read(
+                                        tokio_tungstenite::tungstenite::Error::Utf8,
+                                    ))
+                                    // hm
+                                });
+                            res
                         }
-                        // future::ready(Ok(()))
+                        Message::Full(Full::Received(Received::Limit { price, .. })) => {
+                            if (price - 100.0).abs() < 0.00001 {
+                                found_received_2.swap(true, Ordering::Relaxed);
+                            }
+                            Ok(())
+                        }
+                        _ => {
+                            assert!(false);
+                            Ok(())
+                        }
                     }
-                })
-                .await
-            // .map_err(|e| println!("{:?}", e))
-        });
+                }
+            })
+            .await
+            .unwrap();
 
         assert!(found_received.load(Ordering::Relaxed))
     }

@@ -10,9 +10,9 @@ use uuid::Uuid;
 
 use crate::adapters::{Adapter, AdapterNew};
 use crate::error::*;
-use hmac::{Hmac, Mac};
 use crate::structs::private::*;
 use crate::structs::reqs;
+use hmac::{Hmac, Mac};
 
 use crate::public::Public;
 
@@ -38,7 +38,7 @@ impl<A> Private<A> {
         body_str: &str,
     ) -> impl Future<Output = Result<U, CBError>>
     where
-        for<'de> U: serde::Deserialize<'de>,
+        for<'de> U: serde::Deserialize<'de> + 'static,
     {
         self._pub
             .call_future(self.request(method, uri, body_str.to_string()))
@@ -407,8 +407,7 @@ mod tests {
     use crate::{
         structs::reqs::{self, OrderTimeInForce, OrderTimeInForceCancelAfter},
         utils::delay,
-        SANDBOX_URL,
-        Sync,
+        Sync, SANDBOX_URL,
     };
 
     static KEY: &str = "9eaa4603717ffdc322771a933ae12501";
@@ -564,6 +563,7 @@ mod tests {
         delay();
         let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let order = client.buy_limit("BTC-USD", 1.0, 1.12, true).unwrap();
+        delay();
         let res = client.cancel_order(order.id).unwrap();
         assert_eq!(order.id, res);
     }
