@@ -1,5 +1,3 @@
-extern crate coinbase_pro_rs;
-
 use coinbase_pro_rs::{Private, Sync, SANDBOX_URL};
 
 static KEY: &str = "1d0dc0f7b4e808d430b95d8fed7df3ea";

@@ -1,6 +1,7 @@
 use super::reqs::OrderStop;
 use super::DateTime;
 use crate::utils::{datetime_from_string, f64_from_string, usize_from_string};
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use uuid::Uuid;
 
@@ -40,6 +41,7 @@ pub enum AccountHistoryType {
     Match,
     Rebate,
     Transfer,
+    Conversion,
     NotSet,
 }
 
@@ -49,6 +51,7 @@ impl Default for AccountHistoryType {
     }
 }
 
+#[non_exhaustive]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type", content = "details")]
 #[serde(rename_all = "camelCase")]
@@ -75,6 +78,9 @@ pub enum AccountHistoryDetails {
         transfer_id: Uuid,
         transfer_type: AccountHistoryDetailsTransferType,
     },
+    Conversion {
+        conversion_id: Uuid,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -91,6 +97,7 @@ impl<'a> From<&'a AccountHistoryDetails> for AccountHistoryType {
             AccountHistoryDetails::Match { .. } => AccountHistoryType::Match,
             AccountHistoryDetails::Transfer { .. } => AccountHistoryType::Transfer,
             AccountHistoryDetails::Rebate { .. } => AccountHistoryType::Rebate,
+            AccountHistoryDetails::Conversion { .. } => AccountHistoryType::Conversion,
         }
     }
 }

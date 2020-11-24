@@ -1,7 +1,7 @@
 use serde::de::{self, Deserialize, Deserializer, Visitor};
 use std::fmt;
-use uuid::Uuid;
 use std::str::FromStr;
+use uuid::Uuid;
 
 struct F64InQuotes;
 
@@ -70,23 +70,23 @@ impl<'de> Visitor<'de> for UsizeInQuotes {
     }
 
     fn visit_u64<E>(self, id: u64) -> Result<Self::Value, E>
-        where
-            E: de::Error,
+    where
+        E: de::Error,
     {
         Ok(id as usize)
     }
 
     fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
-        where
-            E: de::Error,
+    where
+        E: de::Error,
     {
         s.parse().map_err(de::Error::custom)
     }
 }
 
 pub fn usize_from_string<'de, D>(d: D) -> Result<usize, D::Error>
-    where
-        D: Deserializer<'de>,
+where
+    D: Deserializer<'de>,
 {
     d.deserialize_any(UsizeInQuotes)
 }
@@ -97,4 +97,12 @@ where
 {
     let s = String::deserialize(d)?;
     (s + "").parse().map_err(de::Error::custom)
+}
+
+#[cfg(test)]
+static DELAY_TIMEOUT: u64 = 200;
+
+#[cfg(test)]
+pub fn delay() {
+    std::thread::sleep(std::time::Duration::from_millis(DELAY_TIMEOUT));
 }
