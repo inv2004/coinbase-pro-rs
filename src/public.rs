@@ -1,7 +1,6 @@
 //! Contains structure which provides access to Public section of Coinbase api
 
 use chrono::SecondsFormat;
-use futures::future;
 use futures_util::future::TryFutureExt;
 use hyper::client::HttpConnector;
 use hyper::{body::to_bytes, Body, Client, Request, Uri};
@@ -189,7 +188,6 @@ mod tests {
     use super::*;
     use crate::*;
     use chrono::prelude::*;
-    use futures::future::{self, FutureExt};
     use std::time::Instant;
 
     static DELAY_TIMEOUT: u64 = 200;
@@ -315,7 +313,7 @@ mod tests {
         let time = time.elapsed().subsec_millis();
         dbg!(time);
         if time > 150 {
-            panic!("{} > 100", time);
+            panic!("{} > 150", time);
         }
     }
 
