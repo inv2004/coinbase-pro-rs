@@ -5,7 +5,6 @@ use std::cell::RefCell;
 use std::fmt::Debug;
 use std::{io, pin::Pin};
 use tokio::runtime::Runtime;
-use tokio_compat_02::FutureExt;
 
 pub trait Adapter<T> {
     type Result: Sized;
@@ -37,7 +36,7 @@ where
     where
         F: Future<Output = Result<T, CBError>> + 'static,
     {
-        self.0.borrow_mut().block_on(f.compat())
+        self.0.borrow_mut().block_on(f)
     }
 }
 
@@ -57,7 +56,7 @@ impl<T> Adapter<T> for ASync {
     where
         F: Future<Output = Result<T, CBError>> + 'static,
     {
-        Box::pin(f.compat())
+        Box::pin(f)
     }
 }
 
@@ -91,9 +90,7 @@ mod tests {
             assert!(time_str.ends_with("}"));
             future::ready(Ok(()))
         });
-        let rt = tokio::runtime::Builder::new_current_thread()
-            .build()
-            .unwrap();
+        let rt = Runtime::new().unwrap();
         rt.block_on(time).ok();
     }
 }
