@@ -111,5 +111,4 @@ by request
 <https://github.com/inv2004/orderbook-rs>
 
 ### Tests
-cargo test -- --test-threads=1
-// to avoid "Rate limit exceeded" error
+cargo test 
