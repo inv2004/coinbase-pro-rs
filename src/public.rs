@@ -312,6 +312,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(not(feature = "latency-tests"), ignore)] // region & opt-level dependent
     #[serial]
     fn test_check_latency() {
         delay();
@@ -321,12 +322,11 @@ mod tests {
         let _ = client.get_time().unwrap();
         let time = time.elapsed().subsec_millis();
         dbg!(time);
-        if time > 150 {
-            panic!("{} > 100", time);
-        }
+        assert!(time <= 150, "too slow")
     }
 
     #[tokio::test]
+    #[cfg_attr(not(feature = "latency-tests"), ignore)] // region & opt-level dependent
     #[serial]
     async fn test_check_latency_async_block_on() {
         delay();
@@ -336,10 +336,11 @@ mod tests {
         client.get_time().await.unwrap();
         let time = time.elapsed().subsec_millis();
         dbg!(time);
-        assert!(time <= 150)
+        assert!(time <= 150, "too slow")
     }
 
     #[tokio::test]
+    #[cfg_attr(not(feature = "latency-tests"), ignore)] // region & opt-level dependent
     #[serial]
     async fn test_check_latency_async() {
         delay();
@@ -350,7 +351,7 @@ mod tests {
         let time = time.elapsed().subsec_millis();
 
         dbg!(time);
-        assert!(time <= 150, "Fast enough");
+        assert!(time <= 150, "too slow")
     }
 
     //    #[test]

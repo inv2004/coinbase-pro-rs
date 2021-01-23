@@ -10,6 +10,9 @@ readme = "README.md"
 categories = [ "api-bindings", "cryptography::cryptocurrencies" ]
 keywords = [ "exchange", "coinbase", "bitcoin", "websocket" ]
 
+[features]
+latency-tests = []
+
 [dependencies]
 base64 = "0.10.0"
 bytes = "0.5.0"
