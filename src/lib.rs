@@ -81,6 +81,10 @@ pub use crate::private::Private;
 pub use crate::public::Public;
 pub use crate::wsfeed::WSFeed;
 
+#[cfg(test)]
+#[macro_use]
+extern crate serial_test;
+
 pub type Result<T> = std::result::Result<T, CBError>;
 
 /// https://api.pro.coinbase.com
