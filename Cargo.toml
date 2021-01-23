@@ -10,6 +10,9 @@ readme = "README.md"
 categories = [ "api-bindings", "cryptography::cryptocurrencies" ]
 keywords = [ "exchange", "coinbase", "bitcoin", "websocket" ]
 
+[features]
+latency-tests = []
+
 [dependencies]
 base64 = "0.10.0"
 bytes = "0.5.0"
@@ -21,9 +24,9 @@ hyper = { version = "0.13.9", features = ["stream"] }
 hyper-tls = "0.4.3"
 log = "0.4.4"
 pretty_env_logger = "0.3.0"
-serde = "1.0.101"
-serde_derive = "1.0.101"
-serde_json = "1.0.41"
+serde = { version = "1", features = ["derive"]}
+serde_derive = "1"
+serde_json = "1"
 sha2 = "0.8.0"
 thiserror = "1.0.22"
 time = "0.1.41"
@@ -32,3 +35,6 @@ tokio-compat-02 = "0.1"
 tokio-tungstenite = { version = "0.12.0", features = ["tls"] }
 url = "2.1.0"
 uuid = { version = "0.8.1", features = [ "serde", "v4" ] }
+
+[dev-dependencies]
+serial_test = "0.5.1"

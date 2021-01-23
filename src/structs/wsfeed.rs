@@ -120,6 +120,15 @@ pub enum Level2 {
     },
 }
 
+impl Level2 {
+    pub fn product_id(&self) -> &str {
+        match self {
+            Level2::Snapshot { product_id, .. } => product_id,
+            Level2::L2update { product_id, .. } => product_id,
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, PartialEq)]
 pub struct Level2SnapshotRecord {
     #[serde(deserialize_with = "f64_from_string")]
@@ -176,6 +185,13 @@ impl Ticker {
         match self {
             Ticker::Full { time, .. } => Some(time),
             Ticker::Empty { .. } => None,
+        }
+    }
+
+    pub fn product_id(&self) -> &str {
+        match self {
+            Ticker::Full { product_id, .. } => product_id,
+            Ticker::Empty { product_id, .. } => product_id,
         }
     }
 
@@ -248,6 +264,19 @@ impl Full {
             Full::Match(Match { sequence, .. }) => Some(sequence),
             Full::Change(Change { sequence, .. }) => Some(sequence),
             Full::Activate(Activate { .. }) => None,
+        }
+    }
+
+    pub fn product_id(&self) -> &str {
+        match self {
+            Full::Received(Received::Limit { product_id, .. }) => product_id,
+            Full::Received(Received::Market { product_id, .. }) => product_id,
+            Full::Open(Open { product_id, .. }) => product_id,
+            Full::Done(Done::Limit { product_id, .. }) => product_id,
+            Full::Done(Done::Market { product_id, .. }) => product_id,
+            Full::Match(Match { product_id, .. }) => product_id,
+            Full::Change(Change { product_id, .. }) => product_id,
+            Full::Activate(Activate { product_id, .. }) => product_id,
         }
     }
 }

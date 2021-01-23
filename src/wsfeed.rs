@@ -52,7 +52,7 @@ impl WSFeed {
     // Constructor for extended subcription via Subscribe structure
     pub fn new_with_sub(
         uri: &str,
-        subsribe: Subscribe,
+        subscribe: Subscribe,
     ) -> impl Stream<Item = Result<Message, CBError>> {
         let url = Url::parse(uri).unwrap();
 
@@ -62,10 +62,10 @@ impl WSFeed {
                 log::debug!("WebSocket handshake has been successfully completed");
                 let (mut sink, stream) = ws_stream.split();
 
-                let subsribe = serde_json::to_string(&subsribe).unwrap();
+                let subscribe = serde_json::to_string(&subscribe).unwrap();
 
                 let ret = sink
-                    .send(TMessage::Text(subsribe))
+                    .send(TMessage::Text(subscribe))
                     .map_err(|e| CBError::Websocket(WSError::Send(e)))
                     .await;
                 log::debug!("subsription sent");
@@ -121,7 +121,6 @@ impl WSFeed {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
     use crate::{utils::delay, WSFeed, WS_SANDBOX_URL, WS_URL};
     use futures::{
@@ -140,7 +139,6 @@ mod tests {
 
     #[test]
     fn test_subscribe() {
-        delay();
         let s = Subscribe {
             _type: SubscribeCmd::Subscribe,
             product_ids: vec!["BTC-USD".to_string()],
@@ -163,7 +161,6 @@ mod tests {
 
     #[test]
     fn test_subscribe_auth() {
-        delay();
         let s = Subscribe {
             _type: SubscribeCmd::Subscribe,
             product_ids: vec!["BTC-USD".to_string()],
@@ -190,6 +187,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_subscription() {
         delay();
         let stream = WSFeed::new(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Heartbeat]);
@@ -213,6 +211,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_heartbeat() {
         delay();
         let found = Arc::new(AtomicBool::new(false));
@@ -235,6 +234,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_ticker() {
         delay();
         let found = Arc::new(AtomicBool::new(false));
@@ -259,6 +259,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_level2() {
         delay();
         let found_snapshot = Arc::new(AtomicBool::new(false));
@@ -296,6 +297,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_match() {
         delay();
         let found_match = Arc::new(AtomicBool::new(false));
@@ -331,6 +333,8 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
+    #[serial]
     fn test_full() {
         delay();
         let found_received_limit = Arc::new(AtomicBool::new(false));
@@ -351,7 +355,7 @@ mod tests {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
             stream
-                .take(3000)
+                .take(5000)
                 .try_for_each(move |msg| {
                     let str = format!("{:?}", msg);
                     if str.starts_with(
@@ -389,6 +393,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_user() {
         use crate::{ASync, Private, WSError, SANDBOX_URL};
 

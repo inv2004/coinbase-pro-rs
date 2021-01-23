@@ -68,6 +68,7 @@ mod tests {
     use futures::{future, TryFutureExt};
 
     #[test]
+    #[serial]
     fn test_sync() {
         delay();
         let client: Public<Sync> = Public::new(SANDBOX_URL);
@@ -80,6 +81,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_async() {
         delay();
         let client: Public<ASync> = Public::new(SANDBOX_URL);
