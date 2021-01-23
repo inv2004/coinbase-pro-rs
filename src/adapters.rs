@@ -10,7 +10,7 @@ pub trait Adapter<T> {
     type Result: Sized;
     fn process<F>(&self, f: F) -> Self::Result
     where
-        F: Future<Output = Result<T, CBError>> + 'static;
+        F: Future<Output = Result<T, CBError>> + Send + 'static;
 }
 
 pub trait AdapterNew: Sized {
@@ -34,7 +34,7 @@ where
     type Result = Result<T, CBError>;
     fn process<F>(&self, f: F) -> Self::Result
     where
-        F: Future<Output = Result<T, CBError>> + 'static,
+        F: Future<Output = Result<T, CBError>> + Send + 'static,
     {
         self.0.borrow_mut().block_on(f)
     }
@@ -50,11 +50,11 @@ impl AdapterNew for ASync {
 }
 
 impl<T> Adapter<T> for ASync {
-    type Result = Pin<Box<dyn Future<Output = Result<T, CBError>>>>;
+    type Result = Pin<Box<dyn Future<Output = Result<T, CBError>> + Send>>;
 
     fn process<F>(&self, f: F) -> Self::Result
     where
-        F: Future<Output = Result<T, CBError>> + 'static,
+        F: Future<Output = Result<T, CBError>> + Send + 'static,
     {
         Box::pin(f)
     }
