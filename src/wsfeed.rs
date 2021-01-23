@@ -333,6 +333,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     #[serial]
     fn test_full() {
         delay();
@@ -354,7 +355,7 @@ mod tests {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
             stream
-                .take(3000)
+                .take(5000)
                 .try_for_each(move |msg| {
                     let str = format!("{:?}", msg);
                     if str.starts_with(
