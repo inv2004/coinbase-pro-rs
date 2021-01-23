@@ -52,7 +52,7 @@ impl WSFeed {
     // Constructor for extended subcription via Subscribe structure
     pub fn new_with_sub(
         uri: &str,
-        subsribe: Subscribe,
+        subscribe: Subscribe,
     ) -> impl Stream<Item = Result<Message, CBError>> {
         let url = Url::parse(uri).unwrap();
 
@@ -62,10 +62,10 @@ impl WSFeed {
                 log::debug!("WebSocket handshake has been successfully completed");
                 let (mut sink, stream) = ws_stream.split();
 
-                let subsribe = serde_json::to_string(&subsribe).unwrap();
+                let subscribe = serde_json::to_string(&subscribe).unwrap();
 
                 let ret = sink
-                    .send(TMessage::Text(subsribe))
+                    .send(TMessage::Text(subscribe))
                     .map_err(|e| CBError::Websocket(WSError::Send(e)))
                     .await;
                 log::debug!("subsription sent");
