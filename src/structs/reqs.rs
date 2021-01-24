@@ -67,6 +67,26 @@ impl<'a> Order<'a> {
         Self::market(product_id, OrderSide::Sell, size)
     }
 
+    pub fn market_funds<T: Into<Cow<'a, str>>>(product_id: T, side: OrderSide, funds: f64) -> Self {
+        Order {
+            product_id: product_id.into(),
+            client_oid: None,
+            side,
+            _type: OrderType::Market {
+                _type: MarketType::Funds { funds },
+            },
+            stop: None,
+        }
+    }
+
+    pub fn buy_market_funds<T: Into<Cow<'a, str>>>(product_id: T, funds: f64) -> Self {
+        Self::market_funds(product_id, OrderSide::Buy, funds)
+    }
+
+    pub fn sell_market_funds<T: Into<Cow<'a, str>>>(product_id: T, funds: f64) -> Self {
+        Self::market_funds(product_id, OrderSide::Sell, funds)
+    }
+
     pub fn limit<T: Into<Cow<'a, str>>>(
         product_id: T,
         side: OrderSide,
