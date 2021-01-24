@@ -115,6 +115,13 @@ impl<A> Public<A> {
         self.get_pub("/products")
     }
 
+    pub fn get_product(&self, product_id: &str) -> A::Result
+    where
+        A: Adapter<Product> + 'static,
+    {
+        self.get_pub(&format!("/products/{}", product_id))
+    }
+
     pub fn get_book<T>(&self, product_id: &str) -> A::Result
     where
         A: Adapter<Book<T>> + 'static,
@@ -214,6 +221,16 @@ mod tests {
         delay();
         let client: Public<Sync> = Public::new(SANDBOX_URL);
         let products = client.get_products().unwrap();
+        let str = format!("{:?}", products);
+        assert!(str.contains("{ id: \"BTC-USD\""));
+    }
+
+    #[test]
+    #[serial]
+    fn test_get_product() {
+        delay();
+        let client: Public<Sync> = Public::new(SANDBOX_URL);
+        let products = client.get_product("BTC-USD").unwrap();
         let str = format!("{:?}", products);
         assert!(str.contains("{ id: \"BTC-USD\""));
     }
