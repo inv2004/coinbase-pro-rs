@@ -10,6 +10,9 @@ readme = "README.md"
 categories = [ "api-bindings", "cryptography::cryptocurrencies" ]
 keywords = [ "exchange", "coinbase", "bitcoin", "websocket" ]
 
+[features]
+latency-tests = []
+
 [dependencies]
 base64 = "0.13.0"
 bytes = "1.0.1"
@@ -31,3 +34,6 @@ tokio = { version = "1.0.2", features = ["full"] }
 tokio-tungstenite = { version = "0.13.0", features = ["tls"] }
 url = "2.1.0"
 uuid = { version = "0.8.1", features = [ "serde", "v4" ] }
+
+[dev-dependencies]
+serial_test = "0.5.1"

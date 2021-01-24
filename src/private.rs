@@ -420,6 +420,7 @@ mod tests {
     static PASSPHRASE: &str = "sandbox";
 
     #[test]
+    #[serial]
     fn test_get_accounts() {
         delay();
         let client: Private<crate::Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
@@ -429,6 +430,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_account() {
         delay();
         //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
@@ -450,6 +452,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_account_hist() {
         delay();
         //        super::super::pretty_env_logger::init_custom_env("RUST_LOG=trace");
@@ -467,6 +470,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     #[ignore]
     fn test_get_account_holds() {
         delay();
@@ -487,7 +491,6 @@ mod tests {
 
     #[test]
     fn test_new_order_ser() {
-        delay();
         let order = reqs::Order::buy_market("BTC-UST", 1.1);
         let str = serde_json::to_string(&order).unwrap();
         assert_eq!(
@@ -497,6 +500,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     #[ignore] // sandbox price is too high
     fn test_set_order_limit() {
         delay();
@@ -512,6 +516,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_set_order_limit_gtc() {
         delay();
         let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
@@ -529,6 +534,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_set_order_stop() {
         delay();
         let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
@@ -547,6 +553,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     #[ignore] // sandbox price is too high
     fn test_set_order_market() {
         delay();
@@ -563,6 +570,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_cancel_order() {
         delay();
         let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
@@ -573,6 +581,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_cancel_all() {
         delay();
         let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
@@ -584,6 +593,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     #[ignore]
     fn test_get_orders() {
         delay();
@@ -595,6 +605,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_order() {
         delay();
         let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
@@ -604,6 +615,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_fills() {
         delay();
         let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
@@ -615,6 +627,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     #[ignore]
     fn test_get_trailing_volume() {
         delay();
@@ -625,6 +638,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_pub() {
         delay();
         let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);

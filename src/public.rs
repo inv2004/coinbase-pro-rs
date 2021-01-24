@@ -196,6 +196,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_time() {
         delay();
         let client: Public<Sync> = Public::new(SANDBOX_URL);
@@ -208,6 +209,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_products() {
         delay();
         let client: Public<Sync> = Public::new(SANDBOX_URL);
@@ -217,6 +219,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     #[ignore] // rate limits
     fn test_get_book() {
         delay();
@@ -238,6 +241,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_ticker() {
         delay();
         let client: Public<Sync> = Public::new(SANDBOX_URL);
@@ -249,6 +253,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_trades() {
         delay();
         let client: Public<Sync> = Public::new(SANDBOX_URL);
@@ -259,6 +264,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_candles() {
         delay();
         let client: Public<Sync> = Public::new(SANDBOX_URL);
@@ -273,6 +279,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_stats24h() {
         delay();
         let client: Public<Sync> = Public::new(SANDBOX_URL);
@@ -285,6 +292,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_get_currencies() {
         delay();
         let client: Public<Sync> = Public::new(SANDBOX_URL);
@@ -303,6 +311,8 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(not(feature = "latency-tests"), ignore)] // region & opt-level dependent
+    #[serial]
     fn test_check_latency() {
         delay();
         let client: Public<Sync> = Public::new(SANDBOX_URL);
@@ -311,12 +321,12 @@ mod tests {
         let _ = client.get_time().unwrap();
         let time = time.elapsed().subsec_millis();
         dbg!(time);
-        if time > 500 {
-            panic!("{} > 500", time);
-        }
+        assert!(time <= 500, "too slow")
     }
 
     #[tokio::test]
+    #[cfg_attr(not(feature = "latency-tests"), ignore)] // region & opt-level dependent
+    #[serial]
     async fn test_check_latency_async_block_on() {
         delay();
         let client: Public<ASync> = Public::new(SANDBOX_URL);
@@ -325,10 +335,12 @@ mod tests {
         client.get_time().await.unwrap();
         let time = time.elapsed().subsec_millis();
         dbg!(time);
-        assert!(time <= 150)
+        assert!(time <= 150, "too slow")
     }
 
     #[tokio::test]
+    #[cfg_attr(not(feature = "latency-tests"), ignore)] // region & opt-level dependent
+    #[serial]
     async fn test_check_latency_async() {
         delay();
         let client: Public<ASync> = Public::new(SANDBOX_URL);
@@ -338,7 +350,7 @@ mod tests {
         let time = time.elapsed().subsec_millis();
 
         dbg!(time);
-        assert!(time <= 150, "Fast enough");
+        assert!(time <= 150, "too slow")
     }
 
     //    #[test]
