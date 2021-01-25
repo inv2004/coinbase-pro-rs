@@ -1,7 +1,6 @@
 //! Contains structure which provides access to Public section of Coinbase api
 
 use chrono::SecondsFormat;
-use futures_util::future::TryFutureExt;
 use hyper::client::HttpConnector;
 use hyper::{body::to_bytes, Body, Client, Request, Uri};
 use hyper_tls::HttpsConnector;
@@ -49,9 +48,9 @@ impl<A> Public<A> {
     {
         log::debug!("REQ: {:?}", request);
 
-        let res = self.client.request(request).map_err(CBError::Http);
+        let res = self.client.request(request);
         async move {
-            let res = res.await?;
+            let res = res.await.map_err(CBError::Http)?;
             let body = to_bytes(res.into_body()).await.map_err(CBError::Http)?;
             log::debug!("RES: {:#?}", body);
             let res: Result<U, CBError> = serde_json::from_slice(&body).map_err(|e| {
@@ -322,7 +321,7 @@ mod tests {
         let _ = client.get_time().unwrap();
         let time = time.elapsed().subsec_millis();
         dbg!(time);
-        assert!(time <= 150, "too slow")
+        assert!(time <= 500, "too slow")
     }
 
     #[tokio::test]

@@ -12,9 +12,13 @@ use crate::adapters::{Adapter, AdapterNew};
 use crate::error::*;
 use crate::structs::private::*;
 use crate::structs::reqs;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, Mac, NewMac};
+use sha2::Sha256;
 
 use crate::public::Public;
+
+// Create alias for HMAC-SHA256
+type HmacSha256 = Hmac<Sha256>;
 
 pub struct Private<Adapter> {
     _pub: Public<Adapter>,
@@ -26,9 +30,9 @@ pub struct Private<Adapter> {
 impl<A> Private<A> {
     pub fn sign(secret: &str, timestamp: u64, method: Method, uri: &str, body_str: &str) -> String {
         let key = base64::decode(secret).expect("base64::decode secret");
-        let mut mac: Hmac<sha2::Sha256> = Hmac::new_varkey(&key).expect("Hmac::new(key)");
-        mac.input((timestamp.to_string() + method.as_str() + uri + body_str).as_bytes());
-        base64::encode(&mac.result().code())
+        let mut mac = HmacSha256::new_varkey(&key).expect("Hmac::new(key)");
+        mac.update((timestamp.to_string() + method.as_str() + uri + body_str).as_bytes());
+        base64::encode(&mac.finalize().into_bytes())
     }
 
     fn call_feature<U>(

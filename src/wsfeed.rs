@@ -355,7 +355,7 @@ mod tests {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
             stream
-                .take(5000)
+                .take(10000)
                 .try_for_each(move |msg| {
                     let str = format!("{:?}", msg);
                     if str.starts_with(
@@ -385,7 +385,7 @@ mod tests {
         .unwrap();
 
         assert!(found_received_limit.load(Ordering::Relaxed));
-        //    assert!(_found_received_market.load(Ordering::Relaxed));
+        // assert!(_found_received_market.load(Ordering::Relaxed));
         assert!(found_match.load(Ordering::Relaxed));
         assert!(found_done_limit.load(Ordering::Relaxed));
         assert!(found_done_market.load(Ordering::Relaxed));
