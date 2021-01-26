@@ -371,7 +371,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore] // checks compilation only
     async fn send_test() {
         let client: Public<ASync> = Public::new(SANDBOX_URL);
         tokio::spawn(client.get_products()).await;
