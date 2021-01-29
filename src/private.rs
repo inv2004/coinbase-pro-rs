@@ -260,7 +260,7 @@ impl<A> Private<A> {
     }
 
     /// **Buy market**
-    /// Makes Buy marker order
+    /// Makes Buy market order with desired amount in base currency, eg: BTC if product_id is BTC-USD
     pub fn buy_market(&self, product_id: &str, size: f64) -> A::Result
     where
         A: Adapter<Order> + 'static,
@@ -268,13 +268,37 @@ impl<A> Private<A> {
         self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Buy, size))
     }
 
+    /// Makes Buy market order with desired amount in quoted currency, eg: USD if product_id is BTC-USD
+    pub fn buy_market_funds(&self, product_id: &str, funds: f64) -> A::Result
+    where
+        A: Adapter<Order> + 'static,
+    {
+        self.set_order(reqs::Order::market_funds(
+            product_id,
+            reqs::OrderSide::Buy,
+            funds,
+        ))
+    }
+
     /// **Sell market**
-    /// Makes Sell marker order
+    /// Makes Sell market order with desired amount in base currency, eg: BTC if product_id is BTC-USD
     pub fn sell_market(&self, product_id: &str, size: f64) -> A::Result
     where
         A: Adapter<Order> + 'static,
     {
         self.set_order(reqs::Order::market(product_id, reqs::OrderSide::Sell, size))
+    }
+
+    /// Makes Sell market order with desired amount in quoted currency, eg: USD if product_id is BTC-USD
+    pub fn sell_market_funds(&self, product_id: &str, funds: f64) -> A::Result
+    where
+        A: Adapter<Order> + 'static,
+    {
+        self.set_order(reqs::Order::market_funds(
+            product_id,
+            reqs::OrderSide::Sell,
+            funds,
+        ))
     }
 
     //    pub fn buy<'a>(&self) -> OrderBuilder<'a> {}    // TODO: OrderBuilder
@@ -501,6 +525,27 @@ mod tests {
 
     #[test]
     #[serial]
+    fn test_buy_market_funds() {
+        delay();
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+        let order = client.buy_market_funds("BTC-USD", 10.0).unwrap();
+        let str = format!("{:?}", order);
+        assert!(str.contains("side: Buy"));
+        assert!(str.contains("_type: Market { size: 0.0, funds: "));
+    }
+
+    #[test]
+    #[serial]
+    fn test_sell_market_funds() {
+        delay();
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+        let order = client.sell_market_funds("BTC-USD", 10.0).unwrap();
+        let str = format!("{:?}", order);
+        assert!(str.contains("side: Sell"));
+        assert!(str.contains("_type: Market { size: 0.0, funds: "));
+    }
+
+    #[test]
     #[ignore] // sandbox price is too high
     fn test_set_order_limit() {
         delay();
