@@ -1,4 +1,4 @@
 language: rust
 script:
   - cargo build --all
-  - cargo test --all --no-fail-fast -- --test-threads=1
+  - cargo test --all --no-fail-fast

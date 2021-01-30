@@ -370,6 +370,13 @@ mod tests {
         assert!(time <= 150, "too slow")
     }
 
+    #[tokio::test]
+    #[ignore] // checks compilation only
+    async fn send_test() {
+        let client: Public<ASync> = Public::new(SANDBOX_URL);
+        tokio::spawn(client.get_products()).await;
+    }
+
     //    #[test]
     //    fn test_tls() { // it hangs
     //        let https = HttpsConnector::new(4).unwrap();
