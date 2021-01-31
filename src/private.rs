@@ -657,6 +657,38 @@ mod tests {
         let order = client.buy_limit("BTC-USD", 1.0, 1.12, true).unwrap();
         let order_res = client.get_order(order.id).unwrap();
         assert_eq!(order.id, order_res.id);
+        assert!(order_res.specified_funds.is_none());
+        assert!(order_res.funds.is_none());
+        assert!(order_res.done_at.is_none());
+        assert!(order_res.done_reason.is_none());
+    }
+
+    #[test]
+    #[serial]
+    fn test_get_order_market() {
+        delay();
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+        let order = client.buy_market("BTC-USD", 1.0).unwrap();
+        let order_res = client.get_order(order.id).unwrap();
+        assert_eq!(order.id, order_res.id);
+        assert!(order_res.specified_funds.is_none());
+        assert!(order_res.funds.is_some());
+        assert!(order_res.done_at.is_some());
+        assert_eq!("filled", order_res.done_reason.unwrap());
+    }
+
+    #[test]
+    #[serial]
+    fn test_get_order_market_funds() {
+        delay();
+        let client: Private<Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+        let order = client.buy_market_funds("BTC-USD", 10.0).unwrap();
+        let order_res = client.get_order(order.id).unwrap();
+        assert_eq!(order.id, order_res.id);
+        assert_eq!(10.0, order_res.specified_funds.unwrap());
+        assert!(order_res.funds.is_some());
+        assert!(order_res.done_at.is_some());
+        assert_eq!("filled", order_res.done_reason.unwrap());
     }
 
     #[test]
