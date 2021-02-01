@@ -49,8 +49,8 @@
 //!
 //! #[tokio::main]
 //! async fn main() {
-//!     let stream = WSFeed::new(WS_SANDBOX_URL,
-//!         &["BTC-USD"], &[ChannelType::Heartbeat]);
+//!     let stream = WSFeed::connect(WS_SANDBOX_URL,
+//!         &["BTC-USD"], &[ChannelType::Heartbeat]).await.unwrap();
 //!
 //!     stream
 //!         .take(10)

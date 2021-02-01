@@ -1,11 +1,8 @@
 //! Contains structure which provides futures::Stream to websocket-feed of Coinbase api
 
-use futures::{future, Stream};
-use futures_util::{
-    future::TryFutureExt,
-    sink::SinkExt,
-    stream::{StreamExt, TryStreamExt},
-};
+use async_trait::async_trait;
+use futures::{future, Sink, Stream};
+use futures_util::{sink::SinkExt, stream::TryStreamExt};
 use hyper::Method;
 use serde_json;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -30,11 +27,11 @@ fn convert_msg(msg: TMessage) -> Message {
 
 impl WSFeed {
     // Constructor for simple subcription with product_ids and channels
-    pub fn new(
+    pub async fn connect(
         uri: &str,
         product_ids: &[&str],
         channels: &[ChannelType],
-    ) -> impl Stream<Item = Result<Message, CBError>> {
+    ) -> Result<impl CBStream + CBSink, CBError> {
         let subscribe = Subscribe {
             _type: SubscribeCmd::Subscribe,
             product_ids: product_ids.into_iter().map(|x| x.to_string()).collect(),
@@ -46,49 +43,44 @@ impl WSFeed {
             auth: None,
         };
 
-        Self::new_with_sub(uri, subscribe)
+        Self::connect_with_sub(uri, subscribe).await
     }
 
     // Constructor for extended subcription via Subscribe structure
-    pub fn new_with_sub(
+    pub async fn connect_with_sub(
         uri: &str,
         subscribe: Subscribe,
-    ) -> impl Stream<Item = Result<Message, CBError>> {
+    ) -> Result<impl CBStream + CBSink, CBError> {
         let url = Url::parse(uri).unwrap();
 
-        let stream = connect_async(url).map_err(|e| CBError::Websocket(WSError::Connect(e)));
-        let stream = {
-            stream.and_then(|(ws_stream, _)| async move {
-                log::debug!("WebSocket handshake has been successfully completed");
-                let (mut sink, stream) = ws_stream.split();
+        let stream = connect_async(url)
+            .await
+            .map_err(|e| CBError::Websocket(WSError::Connect(e)))?
+            .0;
+        log::debug!("WebSocket handshake has been successfully completed");
 
-                let subscribe = serde_json::to_string(&subscribe).unwrap();
+        let mut stream = stream
+            .try_filter(|msg| future::ready(msg.is_text()))
+            .map_ok(convert_msg)
+            .sink_map_err(|e| CBError::Websocket(WSError::Send(e)))
+            .map_err(|e| CBError::Websocket(WSError::Read(e)));
 
-                let ret = sink
-                    .send(TMessage::Text(subscribe))
-                    .map_err(|e| CBError::Websocket(WSError::Send(e)))
-                    .await;
-                log::debug!("subsription sent");
-                ret.and_then(|_| {
-                    Ok(stream
-                        .try_filter(|msg| future::ready(msg.is_text()))
-                        .map_ok(convert_msg)
-                        .map_err(|e| CBError::Websocket(WSError::Read(e))))
-                })
-            })
-        };
-        stream.try_flatten_stream()
+        let subscribe = serde_json::to_string(&subscribe).unwrap();
+        stream.send(TMessage::Text(subscribe)).await?;
+        log::debug!("subsription sent");
+
+        Ok(stream)
     }
 
     // Constructor for simple subcription with product_ids and channels with auth
-    pub fn new_with_auth(
+    pub async fn connect_with_auth(
         uri: &str,
         product_ids: &[&str],
         channels: &[ChannelType],
         key: &str,
         secret: &str,
         passphrase: &str,
-    ) -> impl Stream<Item = Result<Message, CBError>> {
+    ) -> Result<impl CBStream + CBSink, CBError> {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("leap-second")
@@ -115,9 +107,39 @@ impl WSFeed {
             auth: Some(auth),
         };
 
-        Self::new_with_sub(uri, subscribe)
+        Self::connect_with_sub(uri, subscribe).await
     }
 }
+
+impl<T> CBSink for T where T: Sink<TMessage, Error = CBError> + Unpin + Send {}
+
+#[async_trait]
+pub trait CBSink: Sink<TMessage, Error = CBError> + Unpin + Send {
+    async fn subscribe(
+        &mut self,
+        product_ids: &[&str],
+        channels: &[ChannelType],
+        auth: Option<Auth>,
+    ) -> Result<(), CBError> {
+        let subscribe = Subscribe {
+            _type: SubscribeCmd::Subscribe,
+            product_ids: product_ids.into_iter().map(|x| x.to_string()).collect(),
+            channels: channels
+                .to_vec()
+                .into_iter()
+                .map(|x| Channel::Name(x))
+                .collect::<Vec<_>>(),
+            auth,
+        };
+        let subscribe = serde_json::to_string(&subscribe).unwrap();
+        self.send(TMessage::Text(subscribe)).await
+    }
+}
+
+impl<T> CBStream for T where T: Stream<Item = Result<Message, CBError>> + Unpin + Send {}
+
+#[async_trait]
+pub trait CBStream: Stream<Item = Result<Message, CBError>> + Unpin + Send {}
 
 #[cfg(test)]
 mod tests {
@@ -190,7 +212,9 @@ mod tests {
     #[serial]
     async fn test_subscription() {
         delay();
-        let stream = WSFeed::new(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Heartbeat]);
+        let stream = WSFeed::connect(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Heartbeat])
+            .await
+            .unwrap();
         stream
             .take(1)
             .try_for_each(|msg| {
@@ -216,7 +240,9 @@ mod tests {
         delay();
         let found = Arc::new(AtomicBool::new(false));
         let found2 = found.clone();
-        let stream = WSFeed::new(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Heartbeat]);
+        let stream = WSFeed::connect(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Heartbeat])
+            .await
+            .unwrap();
         stream
             .take(3)
             .try_for_each(move |msg| {
@@ -241,7 +267,9 @@ mod tests {
         let found2 = found.clone();
 
         // hard to check in sandbox because low flow
-        let stream = WSFeed::new(WS_URL, &["BTC-USD"], &[ChannelType::Ticker]);
+        let stream = WSFeed::connect(WS_URL, &["BTC-USD"], &[ChannelType::Ticker])
+            .await
+            .unwrap();
         stream
             .take(3)
             .try_for_each(move |msg| {
@@ -251,16 +279,15 @@ mod tests {
                 }
                 future::ready(Ok(()))
             })
-            .map_err(|e| println!("{:?}", e))
             .await
             .unwrap();
 
         assert!(found.load(Ordering::Relaxed));
     }
 
-    #[test]
+    #[tokio::test]
     #[serial]
-    fn test_level2() {
+    async fn test_level2() {
         delay();
         let found_snapshot = Arc::new(AtomicBool::new(false));
         let found_snapshot_2 = found_snapshot.clone();
@@ -268,37 +295,36 @@ mod tests {
         let found_l2update_2 = found_l2update.clone();
 
         // hard to check in sandbox because low flow
-        let stream = WSFeed::new(WS_URL, &["BTC-USD"], &[ChannelType::Level2]);
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(async {
-            stream
-                .take(3)
-                .try_for_each(move |msg| {
-                    let str = format!("{:?}", msg);
-                    if str.starts_with(
-                        "Level2(Snapshot { product_id: \"BTC-USD\", bids: [Level2SnapshotRecord",
-                    ) && !found_l2update_2.load(Ordering::Relaxed)
-                    {
-                        found_snapshot_2.swap(true, Ordering::Relaxed);
-                    } else if str.starts_with(
-                        "Level2(L2update { product_id: \"BTC-USD\", changes: [Level2UpdateRecord",
-                    ) {
-                        found_l2update_2.swap(true, Ordering::Relaxed);
-                    }
-                    future::ready(Ok(()))
-                })
-                .await
-                .map_err(|e| println!("{:?}", e))
-        })
-        .unwrap();
+        let stream = WSFeed::connect(WS_URL, &["BTC-USD"], &[ChannelType::Level2])
+            .await
+            .unwrap();
+        stream
+            .take(3)
+            .try_for_each(move |msg| {
+                let str = format!("{:?}", msg);
+                if str.starts_with(
+                    "Level2(Snapshot { product_id: \"BTC-USD\", bids: [Level2SnapshotRecord",
+                ) && !found_l2update_2.load(Ordering::Relaxed)
+                {
+                    found_snapshot_2.swap(true, Ordering::Relaxed);
+                } else if str.starts_with(
+                    "Level2(L2update { product_id: \"BTC-USD\", changes: [Level2UpdateRecord",
+                ) {
+                    found_l2update_2.swap(true, Ordering::Relaxed);
+                }
+                future::ready(Ok(()))
+            })
+            .await
+            .map_err(|e| println!("{:?}", e))
+            .unwrap();
 
         assert!(found_snapshot.load(Ordering::Relaxed));
         assert!(found_l2update.load(Ordering::Relaxed));
     }
 
-    #[test]
+    #[tokio::test]
     #[serial]
-    fn test_match() {
+    async fn test_match() {
         delay();
         let found_match = Arc::new(AtomicBool::new(false));
         let found_match_2 = found_match.clone();
@@ -306,7 +332,9 @@ mod tests {
         let found_full_2 = found_full.clone();
 
         // hard to check in sandbox because low flow
-        let stream = WSFeed::new(WS_URL, &["BTC-USD"], &[ChannelType::Matches]);
+        let stream = WSFeed::connect(WS_URL, &["BTC-USD"], &[ChannelType::Matches])
+            .await
+            .unwrap();
         let f = stream.take(3).try_for_each(move |msg| {
             //            let str = format!("{:?}", msg);
             //            println!("{}", str);
@@ -325,17 +353,16 @@ mod tests {
             future::ready(Ok(()))
         });
 
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(f).map_err(|e| println!("{:?}", e)).unwrap();
+        f.await.map_err(|e| println!("{:?}", e)).unwrap();
 
         assert!(found_match.load(Ordering::Relaxed));
         assert!(found_full.load(Ordering::Relaxed));
     }
 
-    #[test]
+    #[tokio::test]
     #[ignore]
     #[serial]
-    fn test_full() {
+    async fn test_full() {
         delay();
         let found_received_limit = Arc::new(AtomicBool::new(false));
         let found_received_limit_2 = found_received_limit.clone();
@@ -351,7 +378,9 @@ mod tests {
         let found_match_2 = found_match.clone();
 
         // hard to check in sandbox because low flow
-        let stream = WSFeed::new(WS_URL, &["BTC-USD"], &[ChannelType::Full]);
+        let stream = WSFeed::connect(WS_URL, &["BTC-USD"], &[ChannelType::Full])
+            .await
+            .unwrap();
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
             stream
@@ -402,14 +431,16 @@ mod tests {
         let found_received = Arc::new(AtomicBool::new(false));
         let found_received_2 = found_received.clone();
 
-        let stream = WSFeed::new_with_auth(
+        let stream = WSFeed::connect_with_auth(
             WS_SANDBOX_URL,
             &["BTC-USD"],
             &[ChannelType::User],
             KEY,
             SECRET,
             PASSPHRASE,
-        );
+        )
+        .await
+        .unwrap();
 
         stream
             .take(2)
@@ -449,5 +480,54 @@ mod tests {
             .unwrap();
 
         assert!(found_received.load(Ordering::Relaxed))
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_dynamic_subscription() {
+        delay();
+
+        let stream = WSFeed::connect(WS_URL, &[], &[]).await.unwrap();
+        let (tx, mut rx) = stream.split();
+
+        let pids = vec!["ETH-USD", "BTC-USD"];
+
+        async fn subscribe_with_delay(mut tx: impl CBSink, pids: Vec<&str>) {
+            for pid in pids {
+                tx.subscribe(&[pid], &[ChannelType::Full], None)
+                    .await
+                    .unwrap();
+                println!("{:?} subscription request sent.", pid);
+                tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+            }
+        }
+
+        tokio::spawn(subscribe_with_delay(tx, pids.clone()));
+
+        // current connect function emits empty subscription message with empty product_ids & channels.
+        rx.next().await;
+
+        let mut cnt = 0;
+        while let Some(msg) = rx.next().await {
+            let msg = msg.unwrap();
+            if let Message::Subscriptions { ref channels } = msg {
+                cnt += 1;
+                assert_eq!(
+                    channels,
+                    &vec![Channel::WithProduct {
+                        name: ChannelType::Full,
+                        product_ids: pids[..cnt]
+                            .iter()
+                            .map(|pid| pid.to_string())
+                            .collect::<Vec<_>>()
+                    }]
+                );
+
+                if cnt == pids.len() {
+                    break;
+                }
+            }
+            println!("{:?}", msg);
+        }
     }
 }
