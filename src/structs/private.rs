@@ -1,6 +1,6 @@
 use super::reqs::OrderStop;
 use super::DateTime;
-use crate::utils::{datetime_from_string, f64_from_string, usize_from_string};
+use crate::utils::{datetime_from_string, f64_from_string, f64_opt_from_string, usize_from_string};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use uuid::Uuid;
@@ -132,10 +132,18 @@ pub struct Order {
     pub product_id: String,
     pub side: super::reqs::OrderSide,
     pub stp: Option<String>, // Options because its not in get_orders, but in set_order
+    #[serde(default)]
+    #[serde(deserialize_with = "f64_opt_from_string")]
+    pub funds: Option<f64>,
+    #[serde(default)]
+    #[serde(deserialize_with = "f64_opt_from_string")]
+    pub specified_funds: Option<f64>,
     #[serde(flatten)]
     pub _type: OrderType,
     pub post_only: bool,
     pub created_at: DateTime,
+    pub done_at: Option<DateTime>,
+    pub done_reason: Option<String>,
     #[serde(deserialize_with = "f64_from_string")]
     pub fill_fees: f64,
     #[serde(deserialize_with = "f64_from_string")]
