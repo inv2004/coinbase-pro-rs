@@ -35,7 +35,7 @@ pub struct AccountHistory {
     pub details: AccountHistoryDetails, // variants are not not clear
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum AccountHistoryType {
     Fee,
     Match,
@@ -83,7 +83,7 @@ pub enum AccountHistoryDetails {
     },
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub enum AccountHistoryDetailsTransferType {
     Deposit,
@@ -115,7 +115,7 @@ pub struct AccountHolds {
     pub _ref: Uuid,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub enum AccountHoldsType {
     Order,
@@ -180,7 +180,7 @@ pub enum OrderType {
     },
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "time_in_force")]
 pub enum OrderTimeInForce {
     GTC,
@@ -192,7 +192,7 @@ pub enum OrderTimeInForce {
     FOK,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub enum OrderStatus {
     Open,
@@ -232,7 +232,7 @@ pub struct Fill {
     pub side: super::reqs::OrderSide,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum FillLiquidity {
     M,

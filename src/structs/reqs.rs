@@ -14,7 +14,7 @@ pub struct Order<'a> {
     stop: Option<OrderStop>,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub enum OrderSide {
     Buy,
@@ -38,7 +38,7 @@ pub enum OrderType {
     },
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(untagged)]
 #[serde(rename_all = "camelCase")]
 pub enum MarketType {
@@ -168,7 +168,7 @@ impl<'a> Order<'a> {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "time_in_force")]
 pub enum OrderTimeInForce {
     GTC,
@@ -179,7 +179,7 @@ pub enum OrderTimeInForce {
     FOK,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub enum OrderTimeInForceCancelAfter {
     Min,
@@ -194,7 +194,7 @@ pub struct OrderStop {
     _type: OrderStopType,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub enum OrderStopType {
     Loss,
