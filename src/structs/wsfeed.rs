@@ -384,8 +384,16 @@ pub struct Match {
     pub side: super::reqs::OrderSide,
     pub taker_user_id: Option<String>,
     pub taker_profile_id: Option<Uuid>,
+    #[serde(default)]
+    #[serde(deserialize_with = "f64_opt_from_string")]
+    pub taker_fee_rate: Option<f64>,
+
     pub maker_user_id: Option<String>,
     pub maker_profile_id: Option<Uuid>,
+    #[serde(default)]
+    #[serde(deserialize_with = "f64_opt_from_string")]
+    pub maker_fee_rate: Option<f64>,
+
     pub user_id: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "uuid_opt_from_string")]
