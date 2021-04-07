@@ -424,6 +424,17 @@ impl<A> Private<A> {
         self.call_get("/users/self/trailing-volume")
     }
 
+    /// **Fees**
+    ///
+    /// This request will return your current maker & taker fee rates, as well as your 30-day trailing volume.
+    /// Quoted rates are subject to change. More information on fees can found on the support page.
+    pub fn get_fees(&self) -> A::Result
+    where
+        A: Adapter<Fees> + 'static
+    {
+        self.call_get("/fees")
+    }
+
     pub fn public(&self) -> &Public<A> {
         &self._pub
     }
@@ -725,5 +736,14 @@ mod tests {
         assert!(time_str.contains("iso:"));
         assert!(time_str.contains("epoch:"));
         assert!(time_str.ends_with("}"));
+    }
+
+    #[test]
+    #[serial]
+    fn test_fees() {
+        delay();
+        let client: Private<crate::Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+        let fees = client.get_fees().unwrap();
+        println!("fees {:?}", fees);
     }
 }
