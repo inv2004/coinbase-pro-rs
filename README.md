@@ -90,6 +90,7 @@ fn main() {
   - [ ] Withdrawals
   - [ ] Payment Methods
   - [ ] Coinbase Accounts
+  - [x] Fees
   - [ ] Reports
   - [x] User Account
 - [x] Market Data

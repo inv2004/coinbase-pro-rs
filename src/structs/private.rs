@@ -248,3 +248,13 @@ pub struct TrailingVolume {
     pub volume: f64,
     pub recorded_at: DateTime,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Fees {
+    #[serde(deserialize_with = "f64_from_string")]
+    pub maker_fee_rate: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub taker_fee_rate: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub usd_volume: f64,
+}
