@@ -1,7 +1,9 @@
-use serde::de::{self, Deserialize, Deserializer, Visitor};
+use serde::de::{self, Visitor};
+use serde::{Deserialize, Deserializer};
 use std::fmt;
 use std::str::FromStr;
 use uuid::Uuid;
+use chrono::{Utc};
 
 struct F64InQuotes;
 
@@ -97,6 +99,29 @@ where
 {
     let s = String::deserialize(d)?;
     (s + "").parse().map_err(de::Error::custom)
+}
+
+pub fn datetime_with_tz_from_string<'de, D>(d: D) -> Result<super::structs::DateTime, D::Error>
+    where
+        D: Deserializer<'de>,
+{
+    const FORMAT: &str = "%Y-%m-%d %H:%M:%S%.f%#z";
+    let s = String::deserialize(d)?;
+    match chrono::DateTime::parse_from_str(&s, FORMAT).map_err(de::Error::custom) {
+        Ok(dt) => Ok(dt.with_timezone(&Utc)),
+        Err(err) => Err(err),
+    }
+}
+
+pub fn option_datetime_with_tz_from_string<'de, D>(d: D) -> Result<Option<super::structs::DateTime>, D::Error>
+    where
+        D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    struct Wrapper(#[serde(deserialize_with = "datetime_with_tz_from_string")] super::structs::DateTime);
+
+    let v = Option::deserialize(d)?;
+    Ok(v.map(|Wrapper(a)| a))
 }
 
 #[cfg(test)]
