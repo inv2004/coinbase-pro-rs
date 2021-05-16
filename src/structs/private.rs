@@ -272,8 +272,8 @@ pub struct Transfer {
     #[serde(default)]
     #[serde(deserialize_with = "option_datetime_with_tz_from_string")]
     pub canceled_at: Option<DateTime>,
-    #[serde(deserialize_with = "datetime_with_tz_from_string")]
-    pub processed_at: DateTime,
+    #[serde(deserialize_with = "option_datetime_with_tz_from_string")]
+    pub processed_at: Option<DateTime>,
     pub account_id: Uuid,
     pub user_id: String,
     pub user_nonce: Option<String>,
