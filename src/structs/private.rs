@@ -1,6 +1,6 @@
 use super::reqs::OrderStop;
 use super::DateTime;
-use crate::utils::{datetime_from_string, f64_from_string, f64_opt_from_string, usize_from_string};
+use crate::utils::{option_datetime_with_tz_from_string, datetime_with_tz_from_string, datetime_from_string, f64_from_string, f64_opt_from_string, usize_from_string};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use uuid::Uuid;
@@ -257,4 +257,80 @@ pub struct Fees {
     pub taker_fee_rate: f64,
     #[serde(deserialize_with = "f64_from_string")]
     pub usd_volume: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Transfer {
+    pub id: Uuid,
+    #[serde(rename = "type")]
+    pub _type: TransferType,
+    #[serde(deserialize_with = "datetime_with_tz_from_string")]
+    pub created_at: DateTime,
+    #[serde(default)]
+    #[serde(deserialize_with = "option_datetime_with_tz_from_string")]
+    pub completed_at: Option<DateTime>,
+    #[serde(default)]
+    #[serde(deserialize_with = "option_datetime_with_tz_from_string")]
+    pub canceled_at: Option<DateTime>,
+    #[serde(deserialize_with = "option_datetime_with_tz_from_string")]
+    pub processed_at: Option<DateTime>,
+    pub account_id: Uuid,
+    pub user_id: String,
+    pub user_nonce: Option<String>,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub amount: f64,
+    #[serde(default)]
+    pub currency: Option<String>,
+    pub details: TransferDetails
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TransferDetails {
+    #[serde(default)]
+    pub destination_tag: Option<String>,
+    #[serde(default)]
+    pub sent_to_address: Option<String>,
+    #[serde(default)]
+    pub coinbase_account_id: Option<String>,
+    #[serde(default)]
+    pub destination_tag_name: Option<String>,
+    #[serde(default)]
+    pub coinbase_withdrawal_id: Option<String>,
+    #[serde(default)]
+    pub coinbase_transaction_id: Option<String>,
+    #[serde(default)]
+    pub crypto_transaction_hash: Option<String>,
+    #[serde(default)]
+    pub coinbase_payment_method_id: Option<String>,
+    #[serde(deserialize_with = "f64_opt_from_string")]
+    #[serde(default)]
+    pub fee: Option<f64>,
+    #[serde(deserialize_with = "f64_opt_from_string")]
+    #[serde(default)]
+    pub subtotal: Option<f64>,
+    #[serde(default)]
+    pub crypto_address: Option<String>,
+    #[serde(default)]
+    pub crypto_transaction_id: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum TransferType {
+    Deposit,
+    Withdraw,
+    InternalDeposit,
+    InternalWithdraw
+}
+
+impl fmt::Display for TransferType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let res = match self {
+            TransferType::Deposit => "deposit",
+            TransferType::Withdraw => "withdraw",
+            TransferType::InternalDeposit => "internal_deposit",
+            TransferType::InternalWithdraw => "internal_withdraw"
+        };
+        write!(f, "{}", res)
+    }
 }

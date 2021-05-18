@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::adapters::{Adapter, AdapterNew};
 use crate::error::*;
 use crate::structs::private::*;
-use crate::structs::reqs;
+use crate::structs::{reqs, DateTime};
 use hmac::{Hmac, Mac, NewMac};
 use sha2::Sha256;
 
@@ -435,6 +435,34 @@ impl<A> Private<A> {
         self.call_get("/fees")
     }
 
+    pub fn get_transfers(&self, transfer_type: Option<TransferType>, profile_id: Option<String>, before: Option<DateTime>, after: Option<DateTime>, limit: Option<usize>) -> A::Result
+    where
+        A: Adapter<Vec<Transfer>> + 'static
+    {
+        let param_type = transfer_type
+            .map(|x| format!("&type={}", x))
+            .unwrap_or_default();
+        let param_profile_id = profile_id
+            .map(|x| format!("&profile_id={}", x))
+            .unwrap_or_default();
+        let param_before = before
+            .map(|x| format!("&before={}", x))
+            .unwrap_or_default();
+        let param_after = after
+            .map(|x| format!("&after={}", x))
+            .unwrap_or_default();
+        let param_limit = limit
+            .map(|x| format!("&limit={}", x))
+            .unwrap_or_default();
+
+        let mut param = (param_type + &param_profile_id + &param_before + &param_after + &param_limit).into_bytes();
+        if !param.is_empty() {
+            param[0] = b'?';
+        }
+
+        self.call_get(&format!("/transfers{}", String::from_utf8(param).unwrap()))
+    }
+
     pub fn public(&self) -> &Public<A> {
         &self._pub
     }
@@ -745,5 +773,14 @@ mod tests {
         let client: Private<crate::Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
         let fees = client.get_fees().unwrap();
         println!("fees {:?}", fees);
+    }
+
+    #[test]
+    #[serial]
+    fn test_get_transfers() {
+        delay();
+        let client: Private<crate::Sync> = Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
+        let fees = client.get_transfers(None, None, None, None, None).unwrap();
+        println!("transfers {:?}", fees);
     }
 }

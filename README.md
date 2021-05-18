@@ -87,7 +87,9 @@ fn main() {
   - [x] Orders
   - [x] Fills
   - [ ] Deposits
+    - [x] List
   - [ ] Withdrawals
+    - [x] List
   - [ ] Payment Methods
   - [ ] Coinbase Accounts
   - [x] Fees
