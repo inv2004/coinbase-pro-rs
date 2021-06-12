@@ -52,8 +52,10 @@ use coinbase_pro_rs::{WSFeed, WS_SANDBOX_URL};
 use coinbase_pro_rs::structs::wsfeed::*;
 
 fn main() {
-    let stream = WSFeed::new(WS_SANDBOX_URL,
-        &["BTC-USD"], &[ChannelType::Heartbeat]);
+    let stream = WSFeed::connect(WS_SANDBOX_URL,
+        &["BTC-USD"], &[ChannelType::Heartbeat])
+        .await
+        .unwrap();
 
     let f = stream
         .take(10)
@@ -114,4 +116,4 @@ by request
 <https://github.com/inv2004/orderbook-rs>
 
 ### Tests
-cargo test 
+cargo test
