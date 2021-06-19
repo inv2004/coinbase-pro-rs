@@ -72,6 +72,7 @@ pub(crate) enum InputMessage {
     L2update {
         product_id: String,
         changes: Vec<Level2UpdateRecord>,
+        time: DateTime,
     },
     LastMatch(Match),
     Received(Received),
@@ -117,6 +118,7 @@ pub enum Level2 {
     L2update {
         product_id: String,
         changes: Vec<Level2UpdateRecord>,
+        time: DateTime,
     },
 }
 
@@ -125,6 +127,13 @@ impl Level2 {
         match self {
             Level2::Snapshot { product_id, .. } => product_id,
             Level2::L2update { product_id, .. } => product_id,
+        }
+    }
+
+    pub fn time(&self) -> Option<&DateTime> {
+        match self {
+            Level2::Snapshot { .. } => None,
+            Level2::L2update { time, .. } => Some(time),
         }
     }
 }
@@ -481,9 +490,11 @@ impl From<InputMessage> for Message {
             InputMessage::L2update {
                 product_id,
                 changes,
+                time,
             } => Message::Level2(Level2::L2update {
                 product_id,
                 changes,
+                time,
             }),
             InputMessage::LastMatch(_match) => Message::Match(_match),
             InputMessage::Received(_match) => Message::Full(Full::Received(_match)),
