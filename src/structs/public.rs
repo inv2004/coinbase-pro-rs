@@ -17,6 +17,9 @@ pub struct Currency {
     pub name: String,
     #[serde(deserialize_with = "f64_from_string")]
     pub min_size: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub max_precision: f64,
+    pub status: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
