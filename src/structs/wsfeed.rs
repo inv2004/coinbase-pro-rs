@@ -43,6 +43,7 @@ pub enum Channel {
 #[serde(rename_all = "camelCase")]
 pub enum ChannelType {
     Heartbeat,
+    Status,
     Ticker,
     Level2,
     Matches,
@@ -62,6 +63,10 @@ pub(crate) enum InputMessage {
         last_trade_id: usize,
         product_id: String,
         time: DateTime,
+    },
+    Status {
+        products: Vec<StatusProduct>,
+        currencies: Vec<StatusCurrency>
     },
     Ticker(Ticker),
     Snapshot {
@@ -97,6 +102,10 @@ pub enum Message {
         last_trade_id: usize,
         product_id: String,
         time: DateTime,
+    },
+    Status {
+        products: Vec<StatusProduct>,
+        currencies: Vec<StatusCurrency>
     },
     Ticker(Ticker),
     Level2(Level2),
@@ -136,6 +145,47 @@ impl Level2 {
             Level2::L2update { time, .. } => Some(time),
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct StatusProduct {
+    id: String,
+    base_currency: String,
+    quote_currency: String,
+    #[serde(deserialize_with = "f64_from_string")]
+    base_min_size: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    base_max_size: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+
+    base_increment: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+
+    quote_increment: f64,
+    display_name: String,
+    status: String,
+    status_message: String,
+    #[serde(deserialize_with = "f64_from_string")]
+    min_market_funds: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    max_market_funds: f64,
+    post_only: bool,
+    limit_only: bool,
+    cancel_only: bool,
+    fx_stablecoin: bool
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct StatusCurrency {
+    id: String,
+    name: String,
+    #[serde(deserialize_with = "f64_from_string")]
+    min_size: f64,
+    status: String,
+    status_message: String,
+    #[serde(deserialize_with = "f64_from_string")]
+    max_precision: f64,
+    convertible_to: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -496,6 +546,13 @@ impl From<InputMessage> for Message {
                 changes,
                 time,
             }),
+            InputMessage::Status {
+                currencies,
+                products
+            } => Message::Status {
+                currencies,
+                products
+            },
             InputMessage::LastMatch(_match) => Message::Match(_match),
             InputMessage::Received(_match) => Message::Full(Full::Received(_match)),
             InputMessage::Open(open) => Message::Full(Full::Open(open)),
