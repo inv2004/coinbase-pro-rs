@@ -182,6 +182,47 @@ mod tests {
     }
 
     #[test]
+    fn test_status() {
+        let s = Subscribe {
+            _type: SubscribeCmd::Subscribe,
+            product_ids: vec!["BTC-USD".to_string()],
+            channels: vec![Channel::Name(ChannelType::Status)],
+            auth: None,
+        };
+
+        let str = serde_json::to_string(&s).unwrap();
+        assert_eq!(
+            str,
+            r#"{"type":"subscribe","product_ids":["BTC-USD"],"channels":["status"]}"#
+        );
+    }
+    #[tokio::test]
+    #[serial]
+    async fn test_status_stream() {
+        delay();
+        let found = Arc::new(AtomicBool::new(false));
+        let found2 = found.clone();
+        let stream = WSFeed::connect(WS_SANDBOX_URL, &["BTC-USD"], &[ChannelType::Status])
+            .await
+            .unwrap();
+        stream
+            .take(2 )
+            .try_for_each(|msg| {
+                println!("{:?}", msg);
+                let str = format!("{:?}", msg);
+                if str.contains("Status { products:") {
+                    found2.swap(true, Ordering::Relaxed);
+                }
+                future::ready(Ok(()))
+            })
+            .await
+            .map_err(|e| println!("{:?}", e))
+            .unwrap();
+
+        assert!(found.load(Ordering::Relaxed));
+    }
+
+    #[test]
     fn test_subscribe_auth() {
         let s = Subscribe {
             _type: SubscribeCmd::Subscribe,
