@@ -149,43 +149,43 @@ impl Level2 {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct StatusProduct {
-    id: String,
-    base_currency: String,
-    quote_currency: String,
+    pub id: String,
+    pub base_currency: String,
+    pub quote_currency: String,
     #[serde(deserialize_with = "f64_from_string")]
-    base_min_size: f64,
+    pub base_min_size: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    base_max_size: f64,
-    #[serde(deserialize_with = "f64_from_string")]
-
-    base_increment: f64,
+    pub base_max_size: f64,
     #[serde(deserialize_with = "f64_from_string")]
 
-    quote_increment: f64,
-    display_name: String,
-    status: String,
-    status_message: String,
+    pub base_increment: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    min_market_funds: f64,
+
+    pub quote_increment: f64,
+    pub display_name: String,
+    pub status: String,
+    pub status_message: String,
     #[serde(deserialize_with = "f64_from_string")]
-    max_market_funds: f64,
-    post_only: bool,
-    limit_only: bool,
-    cancel_only: bool,
-    fx_stablecoin: bool
+    pub min_market_funds: f64,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub max_market_funds: f64,
+    pub post_only: bool,
+    pub limit_only: bool,
+    pub cancel_only: bool,
+    pub fx_stablecoin: bool
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct StatusCurrency {
-    id: String,
-    name: String,
+    pub id: String,
+    pub name: String,
     #[serde(deserialize_with = "f64_from_string")]
-    min_size: f64,
-    status: String,
-    status_message: String,
+    pub min_size: f64,
+    pub status: String,
+    pub status_message: String,
     #[serde(deserialize_with = "f64_from_string")]
-    max_precision: f64,
-    convertible_to: Vec<String>,
+    pub max_precision: f64,
+    pub convertible_to: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
