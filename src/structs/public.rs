@@ -12,14 +12,34 @@ pub struct Time {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct CurrencyDetails {
+    #[serde(rename = "type")]
+    pub _type: Option<CurrencyDetailsType>,
+    pub symbol: Option<String>,
+    pub network_confirmations: Option<u32>,
+    pub sort_order: Option<u32>,
+    pub crypto_address_link: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum CurrencyDetailsType {
+    Crypto,
+    Fiat,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Currency {
     pub id: String,
     pub name: String,
     #[serde(deserialize_with = "f64_from_string")]
     pub min_size: f64,
+    pub status: String,
+    pub message: Option<String>,
     #[serde(deserialize_with = "f64_from_string")]
     pub max_precision: f64,
-    pub status: String,
+    pub convertible_to: Option<Vec<String>>,
+    pub details: CurrencyDetails,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -29,23 +49,31 @@ pub struct Product {
     pub base_currency: String,
     pub quote_currency: String,
     #[serde(deserialize_with = "f64_from_string")]
-    pub base_increment: f64,
-    #[serde(deserialize_with = "f64_from_string")]
     pub quote_increment: f64,
     #[serde(deserialize_with = "f64_from_string")]
-    pub base_min_size: f64,
-    #[serde(deserialize_with = "f64_from_string")]
-    pub base_max_size: f64,
+    pub base_increment: f64,
     #[serde(deserialize_with = "f64_from_string")]
     pub min_market_funds: f64,
-    #[serde(deserialize_with = "f64_from_string")]
-    pub max_market_funds: f64,
-    pub status: String,
+    pub margin_enabled: bool,
+    pub status: ProductStatus,
     pub status_message: String,
     pub cancel_only: bool,
     pub limit_only: bool,
     pub post_only: bool,
     pub trading_disabled: bool,
+    pub fx_stablecoin: bool,
+    #[serde(deserialize_with = "f64_from_string")]
+    pub max_slippage_percentage: f64,
+    pub auction_mode: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum ProductStatus {
+    Online,
+    Offline,
+    Internal,
+    Delisted,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -1,6 +1,9 @@
 use super::reqs::OrderStop;
 use super::DateTime;
-use crate::utils::{option_datetime_with_tz_from_string, datetime_with_tz_from_string, datetime_from_string, f64_from_string, f64_opt_from_string, usize_from_string};
+use crate::utils::{
+    datetime_from_string, datetime_with_tz_from_string, f64_from_string, f64_opt_from_string,
+    option_datetime_with_tz_from_string, usize_from_string,
+};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use uuid::Uuid;
@@ -18,6 +21,7 @@ pub struct Account {
     #[serde(deserialize_with = "f64_from_string")]
     pub hold: f64,
     pub profile_id: Uuid,
+    pub trading_enabled: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -219,6 +223,8 @@ impl fmt::Display for OrderStatus {
 pub struct Fill {
     pub trade_id: usize,
     pub product_id: String,
+    pub user_id: String,
+    pub profile_id: String,
     #[serde(deserialize_with = "f64_from_string")]
     pub price: f64,
     #[serde(deserialize_with = "f64_from_string")]
@@ -230,6 +236,7 @@ pub struct Fill {
     pub fee: f64,
     pub settled: bool,
     pub side: super::reqs::OrderSide,
+    pub usd_volume: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -255,8 +262,9 @@ pub struct Fees {
     pub maker_fee_rate: f64,
     #[serde(deserialize_with = "f64_from_string")]
     pub taker_fee_rate: f64,
-    #[serde(deserialize_with = "f64_from_string")]
-    pub usd_volume: f64,
+    #[serde(deserialize_with = "f64_opt_from_string")]
+    #[serde(default)]
+    pub usd_volume: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -281,7 +289,7 @@ pub struct Transfer {
     pub amount: f64,
     #[serde(default)]
     pub currency: Option<String>,
-    pub details: TransferDetails
+    pub details: TransferDetails,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -320,7 +328,7 @@ pub enum TransferType {
     Deposit,
     Withdraw,
     InternalDeposit,
-    InternalWithdraw
+    InternalWithdraw,
 }
 
 impl fmt::Display for TransferType {
@@ -329,7 +337,7 @@ impl fmt::Display for TransferType {
             TransferType::Deposit => "deposit",
             TransferType::Withdraw => "withdraw",
             TransferType::InternalDeposit => "internal_deposit",
-            TransferType::InternalWithdraw => "internal_withdraw"
+            TransferType::InternalWithdraw => "internal_withdraw",
         };
         write!(f, "{}", res)
     }

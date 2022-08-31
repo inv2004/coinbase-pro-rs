@@ -318,12 +318,12 @@ mod tests {
         let currency = currencies.iter().find(|x| x.id == "BTC").unwrap();
         assert_eq!(
             format!("{:?}", currency),
-            "Currency { id: \"BTC\", name: \"Bitcoin\", min_size: 0.00000001 }"
+            "Currency { id: \"BTC\", name: \"Bitcoin\", min_size: 1e-8, status: \"online\", message: Some(\"\"), max_precision: 1e-8, convertible_to: Some([]), details: CurrencyDetails { _type: Some(Crypto), symbol: Some(\"\"), network_confirmations: Some(2), sort_order: Some(3), crypto_address_link: Some(\"https://live.blockcypher.com/btc/address/{{address}}\") } }"
         );
         let currency = currencies.iter().find(|x| x.id == "USD").unwrap();
         assert_eq!(
             format!("{:?}", currency),
-            "Currency { id: \"USD\", name: \"United States Dollar\", min_size: 0.01 }"
+            "Currency { id: \"USD\", name: \"United States Dollar\", min_size: 0.01, status: \"online\", message: Some(\"\"), max_precision: 0.01, convertible_to: Some([\"USDC\"]), details: CurrencyDetails { _type: Some(Fiat), symbol: Some(\"$\"), network_confirmations: None, sort_order: Some(0), crypto_address_link: None } }"
         );
     }
 
