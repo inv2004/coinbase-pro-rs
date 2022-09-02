@@ -493,7 +493,7 @@ mod tests {
                             let client: Private<ASync> =
                                 Private::new(SANDBOX_URL, KEY, SECRET, PASSPHRASE);
                             let res: Result<(), CBError> = client
-                                .buy_limit("BTC-USD", 0.001_f64, 100.0_f64, true)
+                                .buy_limit("BTC-USD", 1_f64, 100.0_f64, true)
                                 .await
                                 .and_then(|_| Ok(()))
                                 .map_err(|_| {
@@ -531,7 +531,7 @@ mod tests {
         let stream = WSFeed::connect(WS_URL, &[], &[]).await.unwrap();
         let (tx, mut rx) = stream.split();
 
-        let pids = vec!["ETH-USD", "BTC-USD"];
+        let pids = vec!["BTC-USD", "ETH-USD"];
 
         async fn subscribe_with_delay(mut tx: impl CBSink, pids: Vec<&str>) {
             for pid in pids {
