@@ -80,10 +80,11 @@ impl<A> Public<A> {
     where
         A: AdapterNew,
     {
+        let max_idle = if keep_alive { std::usize::MAX } else { 0 };
+
         let https = HttpsConnector::new();
         let client = Client::builder()
-            // Keep this for now
-            .keep_alive(keep_alive)
+            .pool_max_idle_per_host(max_idle)
             .build::<_, Body>(https);
         let uri = uri.to_string();
 
