@@ -329,6 +329,32 @@ mod tests {
 
     #[tokio::test]
     #[serial]
+    async fn test_ticker_batch() {
+        delay();
+        let found = Arc::new(AtomicBool::new(false));
+        let found2 = found.clone();
+
+        // hard to check in sandbox because low flow
+        let stream = WSFeed::connect(WS_URL, &["BTC-USD"], &[ChannelType::TickerBatch])
+            .await
+            .unwrap();
+        stream
+            .take(3)
+            .try_for_each(move |msg| {
+                let str = format!("{:?}", msg);
+                if str.contains("Ticker(Full { trade_id: ") {
+                    found2.swap(true, Ordering::Relaxed);
+                }
+                future::ready(Ok(()))
+            })
+            .await
+            .unwrap();
+
+        assert!(found.load(Ordering::Relaxed));
+    }
+
+    #[tokio::test]
+    #[serial]
     async fn test_level2() {
         delay();
         let found_snapshot = Arc::new(AtomicBool::new(false));
