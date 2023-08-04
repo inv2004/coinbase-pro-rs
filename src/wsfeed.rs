@@ -66,6 +66,7 @@ impl WSFeed {
             .map_err(|e| CBError::Websocket(WSError::Read(e)));
 
         let subscribe = serde_json::to_string(&subscribe).unwrap();
+
         stream.send(TMessage::Text(subscribe)).await?;
         log::debug!("subsription sent");
 
@@ -206,7 +207,7 @@ mod tests {
             .await
             .unwrap();
         stream
-            .take(2 )
+            .take(2)
             .try_for_each(|msg| {
                 println!("{:?}", msg);
                 let str = format!("{:?}", msg);
@@ -309,6 +310,32 @@ mod tests {
 
         // hard to check in sandbox because low flow
         let stream = WSFeed::connect(WS_URL, &["BTC-USD"], &[ChannelType::Ticker])
+            .await
+            .unwrap();
+        stream
+            .take(3)
+            .try_for_each(move |msg| {
+                let str = format!("{:?}", msg);
+                if str.contains("Ticker(Full { trade_id: ") {
+                    found2.swap(true, Ordering::Relaxed);
+                }
+                future::ready(Ok(()))
+            })
+            .await
+            .unwrap();
+
+        assert!(found.load(Ordering::Relaxed));
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_ticker_batch() {
+        delay();
+        let found = Arc::new(AtomicBool::new(false));
+        let found2 = found.clone();
+
+        // hard to check in sandbox because low flow
+        let stream = WSFeed::connect(WS_URL, &["BTC-USD"], &[ChannelType::TickerBatch])
             .await
             .unwrap();
         stream
