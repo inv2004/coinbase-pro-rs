@@ -45,6 +45,8 @@ pub enum ChannelType {
     Heartbeat,
     Status,
     Ticker,
+    #[serde(rename = "ticker_1000")]
+    TickerBatch,
     Level2,
     Matches,
     Full,
@@ -66,9 +68,10 @@ pub(crate) enum InputMessage {
     },
     Status {
         products: Vec<StatusProduct>,
-        currencies: Vec<StatusCurrency>
+        currencies: Vec<StatusCurrency>,
     },
     Ticker(Ticker),
+    TickerBatch(Ticker),
     Snapshot {
         product_id: String,
         bids: Vec<Level2SnapshotRecord>,
@@ -105,9 +108,10 @@ pub enum Message {
     },
     Status {
         products: Vec<StatusProduct>,
-        currencies: Vec<StatusCurrency>
+        currencies: Vec<StatusCurrency>,
     },
     Ticker(Ticker),
+    TickerBatch(Ticker),
     Level2(Level2),
     Match(Match),
     Full(Full),
@@ -164,7 +168,7 @@ pub struct StatusProduct {
     pub post_only: bool,
     pub limit_only: bool,
     pub cancel_only: bool,
-    pub fx_stablecoin: bool
+    pub fx_stablecoin: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -520,6 +524,7 @@ impl From<InputMessage> for Message {
                 time,
             },
             InputMessage::Ticker(ticker) => Message::Ticker(ticker),
+            InputMessage::TickerBatch(ticker) => Message::TickerBatch(ticker),
             InputMessage::Snapshot {
                 product_id,
                 bids,
@@ -540,10 +545,10 @@ impl From<InputMessage> for Message {
             }),
             InputMessage::Status {
                 currencies,
-                products
+                products,
             } => Message::Status {
                 currencies,
-                products
+                products,
             },
             InputMessage::LastMatch(_match) => Message::Match(_match),
             InputMessage::Received(_match) => Message::Full(Full::Received(_match)),

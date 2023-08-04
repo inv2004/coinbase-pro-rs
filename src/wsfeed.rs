@@ -66,6 +66,7 @@ impl WSFeed {
             .map_err(|e| CBError::Websocket(WSError::Read(e)));
 
         let subscribe = serde_json::to_string(&subscribe).unwrap();
+
         stream.send(TMessage::Text(subscribe)).await?;
         log::debug!("subsription sent");
 
@@ -206,7 +207,7 @@ mod tests {
             .await
             .unwrap();
         stream
-            .take(2 )
+            .take(2)
             .try_for_each(|msg| {
                 println!("{:?}", msg);
                 let str = format!("{:?}", msg);
